@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Athlete Performance Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg:#f2f3f5; --surface:#fff; --surface-alt:#f8f9fa;
+    --border:#e4e6ea; --text-primary:#0d1117; --text-secondary:#444c56; --text-muted:#7a8290;
+    --accent:#1a56db; --accent-light:#ebf0fd;
+    --c-exceeds-bg:#f0fdf4; --c-exceeds-text:#14532d;
+    --c-meets-bg:#eff6ff;   --c-meets-text:#1e3a5f;
+    --c-near-bg:#fffbeb;    --c-near-text:#78350f;
+    --c-below-bg:#fff7ed;   --c-below-text:#7c2d12;
+    --c-priority-bg:#fef2f2;--c-priority-text:#7f1d1d;
+    --radius:8px; --radius-lg:12px;
+  }
+  body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif; background:var(--bg); color:var(--text-primary); font-size:13px; line-height:1.5; min-height:100vh; }
+  .app { display:grid; grid-template-columns:248px 1fr; min-height:100vh; }
+
+  .sidebar { background:var(--surface); border-right:1px solid var(--border); display:flex; flex-direction:column; position:sticky; top:0; height:100vh; overflow:hidden; }
+  .sb-brand { padding:18px 16px 14px; border-bottom:1px solid var(--border); }
+  .sb-brand h1 { font-size:14px; font-weight:700; }
+  .sb-brand p  { font-size:10px; color:var(--text-muted); text-transform:uppercase; letter-spacing:.08em; margin-top:2px; }
+  .sb-search { padding:10px 12px; border-bottom:1px solid var(--border); }
+  .sb-search input { width:100%; padding:6px 10px; font-size:12px; background:var(--surface-alt); border:1px solid var(--border); border-radius:6px; color:var(--text-primary); outline:none; }
+  .sb-search input:focus { border-color:var(--accent); }
+  .sb-search input::placeholder { color:var(--text-muted); }
+  .alist { flex:1; overflow-y:auto; padding:6px 0; }
+  .aitem { display:flex; align-items:center; gap:10px; padding:8px 14px; cursor:pointer; border-left:2px solid transparent; }
+  .aitem:hover { background:var(--surface-alt); }
+  .aitem.active { background:var(--accent-light); border-left-color:var(--accent); }
+  .av { width:32px; height:32px; border-radius:50%; background:var(--accent-light); color:var(--accent); display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; flex-shrink:0; }
+  .aitem.active .av { background:var(--accent); color:#fff; }
+  .ameta { flex:1; min-width:0; }
+  .aname { font-size:13px; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .apos  { font-size:11px; color:var(--text-muted); }
+  .sdot  { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+  .settings-bar { display:flex; align-items:center; justify-content:space-between; padding:10px 14px; border-top:1px solid var(--border); background:var(--surface-alt); }
+  .settings-bar span { font-size:11px; color:var(--text-muted); }
+  .btn     { display:inline-flex; align-items:center; gap:6px; padding:8px 16px; background:var(--accent); color:#fff; border:none; border-radius:var(--radius); font-size:13px; font-weight:600; cursor:pointer; margin-top:12px; }
+  .btn:hover { background:#1447c0; }
+  .btn-sm  { padding:5px 12px; font-size:12px; background:var(--surface-alt); color:var(--text-secondary); border:1px solid var(--border); border-radius:var(--radius); cursor:pointer; font-weight:500; }
+  .btn-sm:hover { background:var(--border); }
+
+  .main { padding:24px 28px; display:flex; flex-direction:column; gap:20px; }
+  .state-screen { display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:60vh; gap:12px; color:var(--text-muted); text-align:center; }
+  .state-screen h2 { font-size:16px; font-weight:600; color:var(--text-secondary); }
+  .state-screen p  { font-size:13px; max-width:440px; line-height:1.6; }
+  .config-box { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-lg); padding:24px 28px; max-width:540px; width:100%; text-align:left; }
+  .config-box h3 { font-size:15px; font-weight:700; margin-bottom:6px; }
+  .config-box p  { font-size:12px; color:var(--text-secondary); margin-bottom:16px; line-height:1.6; }
+  .config-box label { font-size:12px; font-weight:600; display:block; margin-bottom:4px; margin-top:12px; }
+  .config-box input { width:100%; padding:8px 12px; font-size:13px; border:1px solid var(--border); border-radius:var(--radius); outline:none; color:var(--text-primary); }
+  .config-box input:focus { border-color:var(--accent); }
+  .hint { font-size:11px; color:var(--text-muted); margin-top:8px; line-height:1.6; }
+
+  .profile-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-lg); padding:18px 20px; display:flex; gap:16px; align-items:flex-start; }
+  .pav { width:52px; height:52px; border-radius:50%; background:var(--accent-light); color:var(--accent); display:flex; align-items:center; justify-content:center; font-size:17px; font-weight:700; flex-shrink:0; }
+  .pinfo h2    { font-size:20px; font-weight:700; letter-spacing:-.02em; }
+  .pinfo .pmeta { font-size:12px; color:var(--text-secondary); margin-top:3px; }
+  .ptags { display:flex; gap:6px; margin-top:10px; flex-wrap:wrap; }
+  .ptag  { font-size:11px; padding:3px 9px; border-radius:20px; background:var(--surface-alt); border:1px solid var(--border); color:var(--text-secondary); }
+  .ptag.inj { background:#fffbeb; border-color:#fbbf24; color:#92400e; }
+
+  .cat-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; }
+  .cat-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:12px 14px; }
+  .cat-name   { font-size:10px; color:var(--text-muted); text-transform:uppercase; letter-spacing:.07em; font-weight:600; margin-bottom:5px; }
+  .cat-status { font-size:13px; font-weight:600; }
+
+  .sec-heading { font-size:10px; color:var(--text-muted); text-transform:uppercase; letter-spacing:.08em; font-weight:600; margin-bottom:8px; padding-left:2px; }
+  .tab-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-lg); overflow:hidden; }
+  .tabs { display:flex; border-bottom:1px solid var(--border); background:var(--surface-alt); }
+  .tab { padding:10px 18px; font-size:13px; font-weight:500; color:var(--text-muted); cursor:pointer; border-bottom:2px solid transparent; }
+  .tab:hover { color:var(--text-primary); }
+  .tab.active { color:var(--accent); border-bottom-color:var(--accent); background:var(--surface); }
+  .tc { display:none; }
+  .tc.active { display:block; }
+
+  .results-body { padding:18px 20px; display:flex; flex-direction:column; gap:18px; }
+  table { width:100%; border-collapse:collapse; font-size:12px; }
+  thead th { padding:7px 14px; text-align:left; font-size:10px; font-weight:600; color:var(--text-muted); letter-spacing:.06em; text-transform:uppercase; background:var(--surface-alt); border-bottom:1px solid var(--border); }
+  tbody td { padding:10px 14px; border-bottom:1px solid #f3f4f6; vertical-align:middle; }
+  tbody tr:last-child td { border-bottom:none; }
+  tbody tr:hover { background:#fafbfc; }
+  td.lbl { color:var(--text-secondary); }
+  .miss  { color:var(--text-muted); font-style:italic; font-size:11px; }
+  .rval  { font-size:14px; font-weight:600; }
+  .runit { font-size:11px; color:var(--text-muted); margin-left:3px; }
+  .rsub  { font-size:11px; color:var(--text-muted); margin-left:6px; }
+  .delta { font-size:12px; font-weight:600; }
+  .pill  { display:inline-flex; align-items:center; gap:5px; padding:3px 10px; border-radius:20px; font-size:11px; font-weight:600; white-space:nowrap; }
+  .pill-dot { width:6px; height:6px; border-radius:50%; display:inline-block; }
+  .p4{background:var(--c-exceeds-bg);color:var(--c-exceeds-text)}
+  .p3{background:var(--c-meets-bg);color:var(--c-meets-text)}
+  .p2{background:var(--c-near-bg);color:var(--c-near-text)}
+  .p1{background:var(--c-below-bg);color:var(--c-below-text)}
+  .p0{background:var(--c-priority-bg);color:var(--c-priority-text)}
+  .status-key { display:flex; flex-wrap:wrap; gap:6px; padding:14px 20px; border-top:1px solid var(--border); background:var(--surface-alt); align-items:center; }
+  .key-label  { font-size:10px; color:var(--text-muted); font-weight:600; text-transform:uppercase; letter-spacing:.06em; margin-right:4px; }
+
+  .charts-body { padding:18px 20px; display:flex; flex-direction:column; gap:14px; }
+  .chart-grid  { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  .chart-wrap  { background:var(--surface-alt); border:1px solid var(--border); border-radius:var(--radius); padding:14px 16px; }
+  .chart-title { font-size:11px; font-weight:600; color:var(--text-secondary); text-transform:uppercase; letter-spacing:.06em; margin-bottom:10px; }
+  .chart-note  { font-size:11px; color:var(--text-muted); display:flex; gap:16px; flex-wrap:wrap; }
+
+  /* calc badge */
+  .calc-badge { display:inline-block; font-size:10px; background:#f0f4ff; color:#4a6fa5; border:1px solid #ccd9f0; border-radius:4px; padding:1px 5px; margin-left:6px; font-weight:500; vertical-align:middle; }
+
+  @media(max-width:900px){
+    .app{grid-template-columns:1fr}
+    .sidebar{position:static;height:auto}
+    .cat-grid{grid-template-columns:repeat(2,1fr)}
+    .chart-grid{grid-template-columns:1fr}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="sb-brand">
+      <h1>Performance Dashboard</h1>
+      <p>Individual Coaching</p>
+    </div>
+    <div class="sb-search">
+      <input id="sq" type="text" placeholder="Search athlete…" oninput="filterAthletes(this.value)">
+    </div>
+    <div class="alist" id="alist">
+      <div style="padding:16px;font-size:12px;color:#7a8290;text-align:center">Connect Google Sheet to load athletes</div>
+    </div>
+    <div class="settings-bar">
+      <span id="sheetStatus">No sheet connected</span>
+      <button class="btn-sm" onclick="showConfig()">⚙ Settings</button>
+    </div>
+  </aside>
+  <main class="main" id="main"></main>
+</div>
+
+<script>
+// ─── NORMATIVE BANDS ─────────────────────────────────────────────────────────
+// All values for professional male football / futsal players
+// Sources: Haugen et al., Buchheit & Laursen, Comfort et al., McMahon et al.,
+//          Loturco et al., Dos'Santos et al., Thomas et al., Murtagh et al.
+// lb:true = lower is better (sprint times only)
+// The 'display' key = what the dashboard shows (always the calculated/normalised value)
+
+const NORMS = {
+  broad_jump:   { min:220,  max:260,  u:'cm',       lb:false, label:'Broad jump',         cat:'jump'     },
+  slbj_L:       { min:100,  max:130,  u:'cm',       lb:false, label:'SL broad jump — L',  cat:'jump'     },
+  slbj_R:       { min:100,  max:130,  u:'cm',       lb:false, label:'SL broad jump — R',  cat:'jump'     },
+  slbj_LSI:     { min:90,   max:100,  u:'%',        lb:false, label:'SL broad jump LSI',  cat:'jump'     },
+  triple_hop:   { min:600,  max:700,  u:'cm',       lb:false, label:'Triple hop',         cat:'jump'     },
+  cmj:          { min:35,   max:55,   u:'cm',       lb:false, label:'CMJ',                cat:'jump'     },
+  sj:           { min:30,   max:50,   u:'cm',       lb:false, label:'Squat jump (SJ)',    cat:'jump'     },
+  dj:           { min:30,   max:50,   u:'cm',       lb:false, label:'Drop jump (DJ)',     cat:'jump'     },
+  rsi:          { min:1.0,  max:2.0,  u:'RSI',      lb:false, label:'RSI',               cat:'jump'     },
+  eur:          { min:0.90, max:1.15, u:'EUR',      lb:false, label:'EUR',               cat:'jump'     },
+  dsi:          { min:0.60, max:1.00, u:'DSI',      lb:false, label:'DSI',               cat:'jump'     },
+  mas:          { min:5.0,  max:6.2,  u:'m/s',      lb:false, label:'MAS',               cat:'aero'     },
+  vo2max:       { min:58,   max:68,   u:'ml/kg/min',lb:false, label:'Est. VO₂ max',      cat:'aero'     },
+  sq_1rm_bw:    { min:1.5,  max:2.0,  u:'×BW',      lb:false, label:'Back squat',        cat:'strength' },
+  tb_1rm_bw:    { min:2.0,  max:2.8,  u:'×BW',      lb:false, label:'Trap bar DL',       cat:'strength' },
+  bp_1rm_bw:    { min:0.9,  max:1.3,  u:'×BW',      lb:false, label:'Bench press',       cat:'strength' },
+  imtp:         { min:2.5,  max:3.5,  u:'N/kg',     lb:false, label:'IMTP',              cat:'strength' },
+  sprint10:     { min:1.65, max:1.80, u:'s',        lb:true,  label:'10m sprint',        cat:'speed'    },
+  sprint20:     { min:2.85, max:3.05, u:'s',        lb:true,  label:'20m sprint',        cat:'speed'    },
+  max_vel:      { min:9.8,  max:11.5, u:'m/s',      lb:false, label:'Max velocity (fly)',cat:'speed'    },
+};
+
+const CAT_LABELS = { jump:'Jump / Power', aero:'Aerobic', strength:'Strength', speed:'Speed' };
+const CAT_ORDER  = ['jump','aero','strength','speed'];
+const SL  = ['Priority Area','Below Benchmark','Near Benchmark','Meets Benchmark','Exceeds Benchmark'];
+const SC  = ['p0','p1','p2','p3','p4'];
+const SD  = ['#dc2626','#c2410c','#b45309','#1a56db','#16a34a'];
+const CC  = ['#1a56db','#7c3aed','#0891b2','#16a34a','#dc2626','#c2410c','#6b7280'];
+
+// ─── CALCULATIONS ─────────────────────────────────────────────────────────────
+
+// Epley formula: estimated 1RM from load × reps
+function epley(load, reps) {
+  load = parseFloat(load); reps = parseFloat(reps);
+  if (isNaN(load) || isNaN(reps) || load <= 0) return null;
+  if (reps === 1) return load;
+  return +(load * (1 + reps / 30)).toFixed(1);
+}
+
+// MAS from 5-min TT distance (metres)
+function masFromDist(dist) {
+  dist = parseFloat(dist);
+  if (isNaN(dist) || dist <= 0) return null;
+  return +(dist / 300).toFixed(2); // distance / 300 seconds
+}
+
+// VO2max estimate from MAS (Léger & Boucher)
+function vo2FromMas(mas) {
+  mas = parseFloat(mas);
+  if (isNaN(mas)) return null;
+  return +(mas * 3.5 - 0.0226).toFixed(1);
+}
+
+// LSI from L and R
+function calcLSI(L, R) {
+  L = parseFloat(L); R = parseFloat(R);
+  if (isNaN(L) || isNaN(R) || L <= 0 || R <= 0) return null;
+  return +(Math.min(L,R) / Math.max(L,R) * 100).toFixed(1);
+}
+
+// BW ratio
+function bwRatio(load1rm, bw) {
+  if (load1rm == null || bw == null || bw <= 0) return null;
+  return +(load1rm / bw).toFixed(2);
+}
+
+// IMTP N/kg
+function imtpRatio(force_N, bw_kg) {
+  force_N = parseFloat(force_N); bw_kg = parseFloat(bw_kg);
+  if (isNaN(force_N) || isNaN(bw_kg) || bw_kg <= 0) return null;
+  return +(force_N / bw_kg).toFixed(2);
+}
+
+// ─── Derive all calculated values for one test session row ───────────────────
+function deriveSession(row, bw_kg) {
+  const bw = parseFloat(bw_kg);
+  const d  = {};
+
+  // Jump — direct cm values
+  d.broad_jump = parseFloat(row.broad_jump_cm) || null;
+  d.slbj_L     = parseFloat(row.slbj_L_cm)    || null;
+  d.slbj_R     = parseFloat(row.slbj_R_cm)    || null;
+  d.slbj_LSI   = calcLSI(row.slbj_L_cm, row.slbj_R_cm);
+  d.triple_hop = parseFloat(row.triple_hop_cm) || null;
+  d.cmj        = parseFloat(row.cmj_cm)        || null;
+  d.sj         = parseFloat(row.sj_cm)         || null;
+  d.dj         = parseFloat(row.dj_cm)         || null;
+  d.rsi        = parseFloat(row.rsi)           || null;
+  d.eur        = parseFloat(row.eur)           || null;
+  d.dsi        = parseFloat(row.dsi)           || null;
+
+  // Aerobic — MAS from distance, VO2 from MAS
+  d.mas_raw_dist = parseFloat(row.tt5min_dist_m) || null;
+  d.mas          = masFromDist(row.tt5min_dist_m);
+  d.vo2max       = (d.mas != null) ? vo2FromMas(d.mas) : (parseFloat(row.vo2max) || null);
+
+  // Strength — estimate 1RM then BW ratio
+  const sq1rm  = epley(row.sq_kg, row.sq_reps);
+  const tb1rm  = epley(row.tb_kg, row.tb_reps);
+  const bp1rm  = epley(row.bp_kg, row.bp_reps);
+  d.sq_1rm     = sq1rm;
+  d.tb_1rm     = tb1rm;
+  d.bp_1rm     = bp1rm;
+  d.sq_kg_raw  = parseFloat(row.sq_kg)  || null;
+  d.sq_reps_raw= parseFloat(row.sq_reps)|| null;
+  d.tb_kg_raw  = parseFloat(row.tb_kg)  || null;
+  d.tb_reps_raw= parseFloat(row.tb_reps)|| null;
+  d.bp_kg_raw  = parseFloat(row.bp_kg)  || null;
+  d.bp_reps_raw= parseFloat(row.bp_reps)|| null;
+  d.sq_1rm_bw  = bwRatio(sq1rm,  bw);
+  d.tb_1rm_bw  = bwRatio(tb1rm,  bw);
+  d.bp_1rm_bw  = bwRatio(bp1rm,  bw);
+  d.imtp_raw_N = parseFloat(row.imtp_N) || null;
+  d.imtp       = imtpRatio(row.imtp_N,  bw_kg);
+
+  // Speed — direct from Vuemotion
+  d.sprint10   = parseFloat(row.sprint10_s)  || null;
+  d.sprint20   = parseFloat(row.sprint20_s)  || null;
+  d.max_vel    = parseFloat(row.max_vel_ms)  || null;
+
+  d.test_date  = row.test_date;
+  return d;
+}
+
+// ─── BENCHMARK SCORING ───────────────────────────────────────────────────────
+function bs(v, nk) {
+  const n = NORMS[nk];
+  if (!n || v == null || isNaN(v)) return null;
+  if (n.lb) {
+    if (v <= n.min)         return 4;
+    if (v <= n.max)         return 3;
+    if (v <= n.min * 1.10)  return 2;
+    if (v <= n.min * 1.20)  return 1;
+    return 0;
+  } else {
+    if (v >= n.max)         return 4;
+    if (v >= n.min)         return 3;
+    if (v >= n.min * 0.90)  return 2;
+    if (v >= n.min * 0.80)  return 1;
+    return 0;
+  }
+}
+
+function pill(s) {
+  if (s === null) return '';
+  return `<span class="pill ${SC[s]}"><span class="pill-dot" style="background:${SD[s]}"></span>${SL[s]}</span>`;
+}
+
+function dHtml(val, prev, lb) {
+  if (val == null || prev == null || isNaN(val) || isNaN(prev)) return '<span class="miss">—</span>';
+  const d = ((val - prev) / prev * 100);
+  const imp = lb ? d < 0 : d > 0;
+  const unc = Math.abs(d) < 0.5;
+  const col = unc ? '#7a8290' : imp ? '#16a34a' : '#dc2626';
+  const arr = unc ? '→' : imp ? '↑' : '↓';
+  return `<span class="delta" style="color:${col}">${arr} ${d > 0 ? '+' : ''}${d.toFixed(1)}%</span>`;
+}
+
+function catLabel(avg) {
+  if (avg === null) return null;
+  if (avg >= 3.5) return { l:'Strong Area',     c:'#16a34a' };
+  if (avg >= 2.5) return { l:'On Track',        c:'#1a56db' };
+  if (avg >= 1.5) return { l:'Developing Area', c:'#c2410c' };
+  return               { l:'Priority Focus',   c:'#dc2626' };
+}
+
+function catCard(catKey, keys, d) {
+  const scores = keys.map(k => bs(d[k], k)).filter(s => s !== null);
+  if (!scores.length) return `<div class="cat-card"><div class="cat-name">${CAT_LABELS[catKey]}</div><div class="cat-status" style="color:#7a8290">No data</div></div>`;
+  const avg = scores.reduce((a,b)=>a+b,0) / scores.length;
+  const cl  = catLabel(avg);
+  return `<div class="cat-card" style="border-left:3px solid ${cl.c}">
+    <div class="cat-name">${CAT_LABELS[catKey]}</div>
+    <div class="cat-status" style="color:${cl.c}">${cl.l}</div>
+  </div>`;
+}
+
+function sidebarCol(d) {
+  if (!d) return '#7a8290';
+  const allKeys = Object.keys(NORMS);
+  const scores  = allKeys.map(k => bs(d[k], k)).filter(s => s !== null);
+  if (!scores.length) return '#7a8290';
+  const avg = scores.reduce((a,b)=>a+b,0) / scores.length;
+  return avg >= 3.5 ? '#16a34a' : avg >= 2.5 ? '#1a56db' : avg >= 1.5 ? '#c2410c' : '#dc2626';
+}
+
+// ─── ROW BUILDER ─────────────────────────────────────────────────────────────
+function mRow(nk, val, prevVal, subtext) {
+  const n = NORMS[nk];
+  if (!n) return '';
+  if (val == null || isNaN(val)) return `<tr><td class="lbl">${n.label}</td><td colspan="3" class="miss">— not tested</td></tr>`;
+  const s = bs(val, n);
+  const sub = subtext ? `<span class="rsub">${subtext}</span>` : '';
+  return `<tr>
+    <td class="lbl">${n.label}</td>
+    <td><span class="rval">${val}</span><span class="runit">${n.u}</span>${sub}</td>
+    <td>${pill(s)}</td>
+    <td>${dHtml(val, prevVal, n.lb)}</td>
+  </tr>`;
+}
+
+// Strength row — shows raw input + estimated 1RM + ratio
+function strengthRow(nk, d, pv, label) {
+  const n    = NORMS[nk];
+  const val  = d[nk];
+  const prev = pv ? pv[nk] : null;
+  const prefix = nk.split('_1rm_bw')[0]; // sq, tb, bp
+  const kg   = d[prefix+'_kg_raw'];
+  const reps = d[prefix+'_reps_raw'];
+  const rm1  = d[prefix+'_1rm'];
+  if (val == null) return `<tr><td class="lbl">${label}</td><td colspan="3" class="miss">— not tested</td></tr>`;
+  const s = bs(val, n);
+  let sub = '';
+  if (reps != null && reps > 1) sub = `<span class="rsub">(${kg} kg × ${reps} → est. 1RM ${rm1} kg)</span>`;
+  else if (rm1 != null) sub = `<span class="rsub">(1RM ${rm1} kg)</span>`;
+  return `<tr>
+    <td class="lbl">${label}</td>
+    <td><span class="rval">${val}</span><span class="runit">×BW</span>${sub}<span class="calc-badge">auto</span></td>
+    <td>${pill(s)}</td>
+    <td>${dHtml(val, prev, false)}</td>
+  </tr>`;
+}
+
+// ─── DATA STATE ───────────────────────────────────────────────────────────────
+let athleteMap = {};
+let selectedId = null;
+let searchQ    = '';
+
+// ─── GOOGLE SHEETS ────────────────────────────────────────────────────────────
+function getConfig() { try { return JSON.parse(localStorage.getItem('dashConfig')||'{}'); } catch(e){ return {}; } }
+function saveConfig(cfg) { localStorage.setItem('dashConfig', JSON.stringify(cfg)); }
+
+async function fetchSheet(url) {
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`HTTP ${res.status} — check the sheet URL`);
+  return res.text();
+}
+
+function parseCSV(text) {
+  const lines = text.trim().split('\n').map(l => {
+    const cols = []; let cur = ''; let inQ = false;
+    for (let i = 0; i < l.length; i++) {
+      if (l[i] === '"') { inQ = !inQ; }
+      else if (l[i] === ',' && !inQ) { cols.push(cur.trim()); cur = ''; }
+      else { cur += l[i]; }
+    }
+    cols.push(cur.trim());
+    return cols;
+  });
+  const headers = lines[0].map(h => h.trim());
+  return lines.slice(1).filter(r => r.some(c => c)).map(r => {
+    const obj = {};
+    headers.forEach((h,i) => { obj[h] = (r[i]||'').trim(); });
+    return obj;
+  });
+}
+
+async function loadData() {
+  const cfg = getConfig();
+  if (!cfg.athletesUrl || !cfg.resultsUrl) { showSetup(); return; }
+  showLoading();
+  try {
+    const [aText, rText] = await Promise.all([fetchSheet(cfg.athletesUrl), fetchSheet(cfg.resultsUrl)]);
+    const athletes = parseCSV(aText);
+    const results  = parseCSV(rText);
+
+    athleteMap = {};
+    athletes.forEach(a => { athleteMap[a.id] = { ...a, sessions:[] }; });
+    results.forEach(r => {
+      if (athleteMap[r.athlete_id]) {
+        const derived = deriveSession(r, athleteMap[r.athlete_id].weight_kg);
+        athleteMap[r.athlete_id].sessions.push(derived);
+      }
+    });
+    Object.values(athleteMap).forEach(a => {
+      a.sessions.sort((x,y) => new Date(y.test_date) - new Date(x.test_date));
+    });
+
+    document.getElementById('sheetStatus').textContent = `${athletes.length} athletes · ${results.length} sessions`;
+    renderList();
+    const ids = Object.keys(athleteMap);
+    if (ids.length) { selectedId = ids[0]; renderMain(); }
+  } catch(e) {
+    showError(e.message);
+  }
+}
+
+// ─── STATE SCREENS ────────────────────────────────────────────────────────────
+function showSetup() {
+  document.getElementById('main').innerHTML = `
+    <div class="state-screen">
+      <div class="config-box">
+        <h3>Connect your Google Sheet</h3>
+        <p>Paste the published CSV URLs for your two sheet tabs. See <strong>SETUP.md</strong> for step-by-step instructions.</p>
+        <label>Athletes tab — published CSV URL</label>
+        <input id="urlA" type="text" placeholder="https://docs.google.com/spreadsheets/d/…/pub?gid=0&single=true&output=csv">
+        <label>Test results tab — published CSV URL</label>
+        <input id="urlR" type="text" placeholder="https://docs.google.com/spreadsheets/d/…/pub?gid=1&single=true&output=csv">
+        <button class="btn" onclick="connectSheet()">Connect sheet</button>
+        <p class="hint">URLs are saved in your browser only. Nothing is sent to any server.</p>
+      </div>
+    </div>`;
+}
+
+function showLoading() {
+  document.getElementById('main').innerHTML = `<div class="state-screen"><h2>Loading…</h2><p>Fetching data from Google Sheets</p></div>`;
+}
+
+function showError(msg) {
+  document.getElementById('main').innerHTML = `
+    <div class="state-screen">
+      <h2>Could not load data</h2>
+      <p>${msg}</p>
+      <button class="btn" onclick="showSetup()">Update settings</button>
+    </div>`;
+}
+
+function showConfig() {
+  const cfg = getConfig();
+  document.getElementById('main').innerHTML = `
+    <div class="state-screen">
+      <div class="config-box">
+        <h3>Sheet settings</h3>
+        <p>Update your published CSV URLs below.</p>
+        <label>Athletes tab URL</label>
+        <input id="urlA" type="text" value="${cfg.athletesUrl||''}">
+        <label>Test results tab URL</label>
+        <input id="urlR" type="text" value="${cfg.resultsUrl||''}">
+        <button class="btn" onclick="connectSheet()">Save & reload</button>
+        <button class="btn-sm" style="margin-top:12px;margin-left:8px" onclick="loadData()">Cancel</button>
+      </div>
+    </div>`;
+}
+
+function connectSheet() {
+  const a = document.getElementById('urlA').value.trim();
+  const r = document.getElementById('urlR').value.trim();
+  if (!a || !r) { alert('Please enter both URLs.'); return; }
+  saveConfig({ athletesUrl:a, resultsUrl:r });
+  loadData();
+}
+
+// ─── SIDEBAR ──────────────────────────────────────────────────────────────────
+function filterAthletes(v) { searchQ = v.toLowerCase(); renderList(); }
+
+function renderList() {
+  const el   = document.getElementById('alist');
+  const list = Object.values(athleteMap).filter(a =>
+    a.name.toLowerCase().includes(searchQ) || (a.position||'').toLowerCase().includes(searchQ)
+  );
+  if (!list.length) { el.innerHTML = '<div style="padding:16px;font-size:12px;color:#7a8290;text-align:center">No athletes found</div>'; return; }
+  el.innerHTML = list.map(a => {
+    const initials = a.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+    const latest   = a.sessions[0] || null;
+    return `<div class="aitem${a.id===selectedId?' active':''}" onclick="selectAthlete('${a.id}')">
+      <div class="av">${initials}</div>
+      <div class="ameta">
+        <div class="aname">${a.name}</div>
+        <div class="apos">${a.position||'—'} · ${a.age||'—'}y</div>
+      </div>
+      <div class="sdot" style="background:${sidebarCol(latest)}"></div>
+    </div>`;
+  }).join('');
+}
+
+function selectAthlete(id) { selectedId = id; renderList(); renderMain(); }
+
+// ─── TAB SWITCH ───────────────────────────────────────────────────────────────
+function switchTab(t) {
+  document.querySelectorAll('.tab').forEach(e => e.classList.toggle('active', e.dataset.t===t));
+  document.querySelectorAll('.tc').forEach(e  => e.classList.toggle('active', e.dataset.t===t));
+  if (t==='trends') setTimeout(drawCharts, 60);
+}
+
+// ─── MAIN RENDER ──────────────────────────────────────────────────────────────
+function renderMain() {
+  const a = athleteMap[selectedId];
+  if (!a) return;
+  const d  = a.sessions[0];
+  const pv = a.sessions[1] || null;
+  if (!d) {
+    document.getElementById('main').innerHTML = `<div class="state-screen"><h2>${a.name}</h2><p>No test sessions recorded yet.</p></div>`;
+    return;
+  }
+
+  const initials = a.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+  const inj = a.injury_hx ? `<span class="ptag inj">⚠ Injury hx</span><span class="ptag" style="font-size:10px">${a.injury_hx}</span>` : '';
+
+  // Category status cards
+  const jumpKeys     = ['broad_jump','slbj_LSI','triple_hop','cmj','sj','dj','rsi','eur','dsi'];
+  const aeroKeys     = ['mas','vo2max'];
+  const strengthKeys = ['sq_1rm_bw','tb_1rm_bw','bp_1rm_bw','imtp'];
+  const speedKeys    = ['sprint10','sprint20','max_vel'];
+
+  document.getElementById('main').innerHTML = `
+    <div class="profile-card">
+      <div class="pav">${initials}</div>
+      <div class="pinfo">
+        <h2>${a.name}</h2>
+        <p class="pmeta">${a.position||'—'} · ${a.age||'—'} yrs · ${a.height_cm||'—'} cm · ${a.weight_kg||'—'} kg · Last tested ${d.test_date||'—'}</p>
+        <div class="ptags">
+          <span class="ptag">Remote coaching</span>
+          <span class="ptag">Professional football / futsal</span>
+          <span class="ptag">${a.sessions.length} test session${a.sessions.length!==1?'s':''}</span>
+          ${inj}
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="sec-heading">Performance category status</div>
+      <div class="cat-grid">
+        ${catCard('jump',     jumpKeys,     d)}
+        ${catCard('aero',     aeroKeys,     d)}
+        ${catCard('strength', strengthKeys, d)}
+        ${catCard('speed',    speedKeys,    d)}
+      </div>
+    </div>
+
+    <div class="tab-card">
+      <div class="tabs">
+        <div class="tab active" data-t="results" onclick="switchTab('results')">Latest Results</div>
+        <div class="tab" data-t="trends"  onclick="switchTab('trends')">Trend Charts</div>
+      </div>
+
+      <div class="tc active" data-t="results">
+        <div class="results-body">
+
+          <div>
+            <div class="sec-heading">Jump / Power</div>
+            <table>
+              <thead><tr><th>Test</th><th>Result</th><th>Test result status</th><th>vs previous</th></tr></thead>
+              <tbody>
+                ${mRow('broad_jump',  d.broad_jump,  pv?.broad_jump)}
+                ${mRow('slbj_L',      d.slbj_L,      pv?.slbj_L)}
+                ${mRow('slbj_R',      d.slbj_R,      pv?.slbj_R)}
+                ${d.slbj_LSI!=null ? mRow('slbj_LSI', d.slbj_LSI, pv?.slbj_LSI, '(auto-calculated)') : ''}
+                ${mRow('triple_hop',  d.triple_hop,  pv?.triple_hop)}
+                ${mRow('cmj',         d.cmj,         pv?.cmj)}
+                ${mRow('sj',          d.sj,          pv?.sj)}
+                ${mRow('dj',          d.dj,          pv?.dj)}
+                ${mRow('rsi',         d.rsi,         pv?.rsi)}
+                ${mRow('eur',         d.eur,         pv?.eur)}
+                ${mRow('dsi',         d.dsi,         pv?.dsi)}
+              </tbody>
+            </table>
+          </div>
+
+          <div>
+            <div class="sec-heading">Aerobic fitness</div>
+            <table>
+              <thead><tr><th>Test</th><th>Result</th><th>Test result status</th><th>vs previous</th></tr></thead>
+              <tbody>
+                <tr>
+                  <td class="lbl">MAS (5-min TT)</td>
+                  <td>
+                    <span class="rval">${d.mas??'—'}</span><span class="runit">m/s</span>
+                    ${d.mas_raw_dist!=null?`<span class="rsub">(${d.mas_raw_dist} m covered)</span>`:''}
+                    ${d.mas!=null?'<span class="calc-badge">auto</span>':''}
+                  </td>
+                  <td>${pill(bs(d.mas,'mas'))}</td>
+                  <td>${dHtml(d.mas, pv?.mas, false)}</td>
+                </tr>
+                <tr>
+                  <td class="lbl">Est. VO₂ max</td>
+                  <td>
+                    <span class="rval">${d.vo2max??'—'}</span><span class="runit">ml/kg/min</span>
+                    ${d.mas!=null?'<span class="calc-badge">auto</span>':''}
+                  </td>
+                  <td>${pill(bs(d.vo2max,'vo2max'))}</td>
+                  <td>${dHtml(d.vo2max, pv?.vo2max, false)}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div>
+            <div class="sec-heading">Strength</div>
+            <table>
+              <thead><tr><th>Test</th><th>Result</th><th>Test result status</th><th>vs previous</th></tr></thead>
+              <tbody>
+                ${strengthRow('sq_1rm_bw', d, pv, 'Back squat')}
+                ${strengthRow('tb_1rm_bw', d, pv, 'Trap bar DL')}
+                ${strengthRow('bp_1rm_bw', d, pv, 'Bench press')}
+                ${d.imtp!=null ? mRow('imtp', d.imtp, pv?.imtp, `(${d.imtp_raw_N} N raw)`) : `<tr><td class="lbl">IMTP</td><td colspan="3" class="miss">— not tested</td></tr>`}
+              </tbody>
+            </table>
+          </div>
+
+          <div>
+            <div class="sec-heading">Speed (Vuemotion)</div>
+            <table>
+              <thead><tr><th>Test</th><th>Result</th><th>Test result status</th><th>vs previous</th></tr></thead>
+              <tbody>
+                ${mRow('sprint10', d.sprint10, pv?.sprint10)}
+                ${mRow('sprint20', d.sprint20, pv?.sprint20)}
+                ${mRow('max_vel',  d.max_vel,  pv?.max_vel)}
+              </tbody>
+            </table>
+          </div>
+
+        </div>
+        <div class="status-key">
+          <span class="key-label">Status key</span>
+          ${[4,3,2,1,0].map(s=>`<span class="pill ${SC[s]}"><span class="pill-dot" style="background:${SD[s]}"></span>${SL[s]}</span>`).join('')}
+          <span style="margin-left:8px;font-size:11px;color:#7a8290"><span class="calc-badge">auto</span> = calculated from your raw input</span>
+        </div>
+      </div>
+
+      <div class="tc" data-t="trends">
+        <div class="charts-body">
+          <div class="chart-grid" id="chartGrid"></div>
+          <div class="chart-note">
+            <span>▪ Shaded region = normative band</span>
+            <span>▪ Dashed line = lower normative boundary</span>
+            <span>▪ Sprint times: downward trend = improvement</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+// ─── CHARTS ───────────────────────────────────────────────────────────────────
+let CI = {};
+
+function mkChart(id, labels, datasets, yLabel, nMin, nMax) {
+  if (CI[id]) { CI[id].destroy(); delete CI[id]; }
+  const el = document.getElementById(id);
+  if (!el) return;
+  const allV = datasets.flatMap(d=>d.data).filter(v=>v!=null&&!isNaN(v));
+  if (!allV.length) { el.parentElement.style.display='none'; return; }
+  el.parentElement.style.display='';
+  const dMin = Math.min(...allV,nMin), dMax = Math.max(...allV,nMax);
+  const pad  = (dMax-dMin)*0.22;
+  CI[id] = new Chart(el.getContext('2d'), {
+    type:'line',
+    data:{ labels, datasets:[
+      { label:'_nu', data:labels.map(()=>nMax), borderColor:'transparent', backgroundColor:'rgba(26,86,219,0.07)', fill:'+1', pointRadius:0, tension:0, borderWidth:0 },
+      { label:'_nl', data:labels.map(()=>nMin), borderColor:'rgba(26,86,219,0.22)', backgroundColor:'transparent', fill:false, pointRadius:0, tension:0, borderDash:[4,3], borderWidth:1.5 },
+      ...datasets
+    ]},
+    options:{
+      responsive:true, maintainAspectRatio:true, aspectRatio:1.9,
+      plugins:{
+        legend:{ display:datasets.length>1, position:'bottom', labels:{ font:{size:10}, boxWidth:10, padding:8, filter:i=>!i.text.startsWith('_') }},
+        tooltip:{ filter:i=>!i.dataset.label.startsWith('_'), callbacks:{ label:c=>`${c.dataset.label}: ${c.parsed.y} ${yLabel}` }}
+      },
+      scales:{
+        x:{ ticks:{font:{size:10}}, grid:{display:false} },
+        y:{ min:+(dMin-pad).toFixed(2), max:+(dMax+pad).toFixed(2), ticks:{font:{size:10},maxTicksLimit:4}, grid:{color:'rgba(0,0,0,0.05)'}, title:{display:true,text:yLabel,font:{size:10}} }
+      }
+    }
+  });
+}
+
+function ls(col,dash=[]){ return {borderColor:col,backgroundColor:col,fill:false,tension:0.3,pointRadius:4,pointHoverRadius:6,borderWidth:2,borderDash:dash,spanGaps:true}; }
+
+function drawCharts() {
+  const a = athleteMap[selectedId];
+  if (!a||!a.sessions.length) return;
+  const sessions = [...a.sessions].reverse();
+  const lb = sessions.map(s=>s.test_date);
+
+  function ser(key,col,dash=[]){
+    return { label:NORMS[key]?.label||key, ...ls(col,dash), data:sessions.map(s=>s[key]) };
+  }
+
+  const charts = [
+    { id:'ch-jump',     title:'Broad jump / Triple hop',   u:'cm',   nk:'broad_jump',  datasets:[ser('broad_jump',CC[0]),ser('triple_hop',CC[2],[5,3])] },
+    { id:'ch-lsi',      title:'SL Broad jump LSI',         u:'%',    nk:'slbj_LSI',    datasets:[ser('slbj_LSI',CC[1])] },
+    { id:'ch-cmj',      title:'CMJ / SJ / DJ',             u:'cm',   nk:'cmj',         datasets:[ser('cmj',CC[0]),ser('sj',CC[1],[5,3]),ser('dj',CC[2],[2,2])] },
+    { id:'ch-rsi',      title:'RSI / EUR / DSI',           u:'ratio',nk:'rsi',         datasets:[ser('rsi',CC[0]),ser('eur',CC[1],[5,3]),ser('dsi',CC[2],[2,2])] },
+    { id:'ch-mas',      title:'MAS — 5-min time trial',    u:'m/s',  nk:'mas',         datasets:[ser('mas',CC[3])] },
+    { id:'ch-strength', title:'Strength ratios (×BW)',     u:'×BW',  nk:'sq_1rm_bw',   datasets:[ser('sq_1rm_bw',CC[4]),ser('tb_1rm_bw',CC[5],[5,3]),ser('bp_1rm_bw',CC[6],[2,2])] },
+    { id:'ch-sprint',   title:'Sprint times',              u:'s',    nk:'sprint10',    datasets:[ser('sprint10',CC[0]),ser('sprint20',CC[1],[5,3])] },
+    { id:'ch-vel',      title:'Max velocity — 20m fly',    u:'m/s',  nk:'max_vel',     datasets:[ser('max_vel',CC[4])] },
+  ];
+
+  const grid = document.getElementById('chartGrid');
+  if (!grid) return;
+  grid.innerHTML = charts.map(ch=>`<div class="chart-wrap" id="wrap-${ch.id}"><div class="chart-title">${ch.title}</div><canvas id="${ch.id}"></canvas></div>`).join('');
+  charts.forEach(ch=>{
+    const n = NORMS[ch.nk];
+    if (n) mkChart(ch.id, lb, ch.datasets, ch.u, n.min, n.max);
+  });
+}
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+loadData();
+</script>
+</body>
+</html>
