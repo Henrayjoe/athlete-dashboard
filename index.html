@@ -20,7 +20,6 @@
   }
   body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif; background:var(--bg); color:var(--text-primary); font-size:13px; line-height:1.5; min-height:100vh; }
   .app { display:grid; grid-template-columns:248px 1fr; min-height:100vh; }
-
   .sidebar { background:var(--surface); border-right:1px solid var(--border); display:flex; flex-direction:column; position:sticky; top:0; height:100vh; overflow:hidden; }
   .sb-brand { padding:18px 16px 14px; border-bottom:1px solid var(--border); }
   .sb-brand h1 { font-size:14px; font-weight:700; }
@@ -41,15 +40,14 @@
   .sdot  { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
   .settings-bar { display:flex; align-items:center; justify-content:space-between; padding:10px 14px; border-top:1px solid var(--border); background:var(--surface-alt); }
   .settings-bar span { font-size:11px; color:var(--text-muted); }
-  .btn     { display:inline-flex; align-items:center; gap:6px; padding:8px 16px; background:var(--accent); color:#fff; border:none; border-radius:var(--radius); font-size:13px; font-weight:600; cursor:pointer; margin-top:12px; }
+  .btn { display:inline-flex; align-items:center; gap:6px; padding:8px 16px; background:var(--accent); color:#fff; border:none; border-radius:var(--radius); font-size:13px; font-weight:600; cursor:pointer; margin-top:12px; }
   .btn:hover { background:#1447c0; }
-  .btn-sm  { padding:5px 12px; font-size:12px; background:var(--surface-alt); color:var(--text-secondary); border:1px solid var(--border); border-radius:var(--radius); cursor:pointer; font-weight:500; }
+  .btn-sm { padding:5px 12px; font-size:12px; background:var(--surface-alt); color:var(--text-secondary); border:1px solid var(--border); border-radius:var(--radius); cursor:pointer; font-weight:500; }
   .btn-sm:hover { background:var(--border); }
-
   .main { padding:24px 28px; display:flex; flex-direction:column; gap:20px; }
-  .state-screen { display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:60vh; gap:12px; color:var(--text-muted); text-align:center; }
+  .state-screen { display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:60vh; gap:12px; text-align:center; }
   .state-screen h2 { font-size:16px; font-weight:600; color:var(--text-secondary); }
-  .state-screen p  { font-size:13px; max-width:440px; line-height:1.6; }
+  .state-screen p  { font-size:13px; color:var(--text-muted); max-width:440px; line-height:1.6; }
   .config-box { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-lg); padding:24px 28px; max-width:540px; width:100%; text-align:left; }
   .config-box h3 { font-size:15px; font-weight:700; margin-bottom:6px; }
   .config-box p  { font-size:12px; color:var(--text-secondary); margin-bottom:16px; line-height:1.6; }
@@ -57,7 +55,6 @@
   .config-box input { width:100%; padding:8px 12px; font-size:13px; border:1px solid var(--border); border-radius:var(--radius); outline:none; color:var(--text-primary); }
   .config-box input:focus { border-color:var(--accent); }
   .hint { font-size:11px; color:var(--text-muted); margin-top:8px; line-height:1.6; }
-
   .profile-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-lg); padding:18px 20px; display:flex; gap:16px; align-items:flex-start; }
   .pav { width:52px; height:52px; border-radius:50%; background:var(--accent-light); color:var(--accent); display:flex; align-items:center; justify-content:center; font-size:17px; font-weight:700; flex-shrink:0; }
   .pinfo h2    { font-size:20px; font-weight:700; letter-spacing:-.02em; }
@@ -65,12 +62,10 @@
   .ptags { display:flex; gap:6px; margin-top:10px; flex-wrap:wrap; }
   .ptag  { font-size:11px; padding:3px 9px; border-radius:20px; background:var(--surface-alt); border:1px solid var(--border); color:var(--text-secondary); }
   .ptag.inj { background:#fffbeb; border-color:#fbbf24; color:#92400e; }
-
   .cat-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; }
   .cat-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:12px 14px; }
   .cat-name   { font-size:10px; color:var(--text-muted); text-transform:uppercase; letter-spacing:.07em; font-weight:600; margin-bottom:5px; }
   .cat-status { font-size:13px; font-weight:600; }
-
   .sec-heading { font-size:10px; color:var(--text-muted); text-transform:uppercase; letter-spacing:.08em; font-weight:600; margin-bottom:8px; padding-left:2px; }
   .tab-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-lg); overflow:hidden; }
   .tabs { display:flex; border-bottom:1px solid var(--border); background:var(--surface-alt); }
@@ -79,7 +74,6 @@
   .tab.active { color:var(--accent); border-bottom-color:var(--accent); background:var(--surface); }
   .tc { display:none; }
   .tc.active { display:block; }
-
   .results-body { padding:18px 20px; display:flex; flex-direction:column; gap:18px; }
   table { width:100%; border-collapse:collapse; font-size:12px; }
   thead th { padding:7px 14px; text-align:left; font-size:10px; font-weight:600; color:var(--text-muted); letter-spacing:.06em; text-transform:uppercase; background:var(--surface-alt); border-bottom:1px solid var(--border); }
@@ -99,23 +93,58 @@
   .p2{background:var(--c-near-bg);color:var(--c-near-text)}
   .p1{background:var(--c-below-bg);color:var(--c-below-text)}
   .p0{background:var(--c-priority-bg);color:var(--c-priority-text)}
+  .calc-badge { display:inline-block; font-size:10px; background:#f0f4ff; color:#4a6fa5; border:1px solid #ccd9f0; border-radius:4px; padding:1px 5px; margin-left:5px; font-weight:500; vertical-align:middle; }
   .status-key { display:flex; flex-wrap:wrap; gap:6px; padding:14px 20px; border-top:1px solid var(--border); background:var(--surface-alt); align-items:center; }
   .key-label  { font-size:10px; color:var(--text-muted); font-weight:600; text-transform:uppercase; letter-spacing:.06em; margin-right:4px; }
-
   .charts-body { padding:18px 20px; display:flex; flex-direction:column; gap:14px; }
   .chart-grid  { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
   .chart-wrap  { background:var(--surface-alt); border:1px solid var(--border); border-radius:var(--radius); padding:14px 16px; }
   .chart-title { font-size:11px; font-weight:600; color:var(--text-secondary); text-transform:uppercase; letter-spacing:.06em; margin-bottom:10px; }
   .chart-note  { font-size:11px; color:var(--text-muted); display:flex; gap:16px; flex-wrap:wrap; }
+  .print-header { display:none; }
 
-  /* calc badge */
-  .calc-badge { display:inline-block; font-size:10px; background:#f0f4ff; color:#4a6fa5; border:1px solid #ccd9f0; border-radius:4px; padding:1px 5px; margin-left:6px; font-weight:500; vertical-align:middle; }
+
+  .feedback-wrap { padding:18px 20px; display:flex; flex-direction:column; gap:16px; }
+  .feedback-empty { display:flex; flex-direction:column; align-items:center; justify-content:center; padding:40px 20px; gap:14px; text-align:center; }
+  .feedback-empty p { font-size:13px; color:var(--text-muted); max-width:360px; line-height:1.6; }
+  .feedback-empty h3 { font-size:15px; font-weight:600; color:var(--text-secondary); }
+  .feedback-loading { display:flex; flex-direction:column; align-items:center; justify-content:center; padding:48px 20px; gap:12px; }
+  .feedback-loading p { font-size:13px; color:var(--text-muted); }
+  .spinner { width:28px; height:28px; border:3px solid var(--border); border-top-color:var(--accent); border-radius:50%; animation:spin .8s linear infinite; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+  .feedback-section { background:var(--surface-alt); border:1px solid var(--border); border-radius:var(--radius-lg); overflow:hidden; }
+  .feedback-section-head { display:flex; align-items:center; justify-content:space-between; padding:12px 16px; border-bottom:1px solid var(--border); background:var(--surface); }
+  .feedback-section-label { font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:.07em; }
+  .feedback-section-label span { font-size:10px; font-weight:400; color:var(--text-muted); margin-left:8px; text-transform:none; letter-spacing:0; }
+  .feedback-text { padding:16px 18px; font-size:13px; line-height:1.75; color:var(--text-primary); white-space:pre-wrap; }
+  .copy-btn { display:inline-flex; align-items:center; gap:5px; font-size:11px; padding:4px 10px; background:var(--surface); border:1px solid var(--border); border-radius:6px; cursor:pointer; color:var(--text-secondary); font-weight:500; }
+  .copy-btn:hover { background:var(--accent-light); color:var(--accent); border-color:var(--accent); }
+  .copy-btn.copied { background:#f0fdf4; color:#16a34a; border-color:#16a34a; }
+  .feedback-meta { font-size:11px; color:var(--text-muted); padding:0 18px 12px; }
+  .regenerate-row { display:flex; justify-content:flex-end; padding-top:4px; }
+  @media print {
+    body { background:#fff; font-size:11px; }
+    .app { display:block; }
+    .sidebar, .no-print, .settings-bar { display:none !important; }
+    .main { padding:0; }
+    .print-header { display:flex; align-items:center; gap:14px; padding-bottom:14px; margin-bottom:14px; border-bottom:2px solid #0d1117; }
+    .print-header img { height:32px; }
+    .print-header-meta { font-size:12px; color:#444c56; display:flex; flex-direction:column; }
+    .print-header-meta strong { font-size:15px; color:#0d1117; }
+    .profile-card, .cat-card, .chart-wrap, .tab-card { border:1px solid #ccc !important; box-shadow:none !important; }
+    .tabs { display:none !important; }
+    .tc { display:block !important; }
+    .tc.active { display:block !important; }
+    table { font-size:10px; }
+    .chart-grid { grid-template-columns:1fr 1fr; page-break-inside:avoid; }
+    .chart-wrap { page-break-inside:avoid; }
+    .test-section, .results-body > div { page-break-inside:avoid; }
+    a { color:inherit; text-decoration:none; }
+  }
 
   @media(max-width:900px){
-    .app{grid-template-columns:1fr}
-    .sidebar{position:static;height:auto}
-    .cat-grid{grid-template-columns:repeat(2,1fr)}
-    .chart-grid{grid-template-columns:1fr}
+    .app{grid-template-columns:1fr} .sidebar{position:static;height:auto}
+    .cat-grid{grid-template-columns:repeat(2,1fr)} .chart-grid{grid-template-columns:1fr}
   }
 </style>
 </head>
@@ -123,531 +152,448 @@
 <div class="app">
   <aside class="sidebar">
     <div class="sb-brand">
+      <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAfQAAAH0CAYAAADL1t+KAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAEs2lUWHRYTUw6Y29tLmFkb2JlLnhtcAAAAAAAPD94cGFja2V0IGJlZ2luPSfvu78nIGlkPSdXNU0wTXBDZWhpSHpyZVN6TlRjemtjOWQnPz4KPHg6eG1wbWV0YSB4bWxuczp4PSdhZG9iZTpuczptZXRhLyc+CjxyZGY6UkRGIHhtbG5zOnJkZj0naHR0cDovL3d3dy53My5vcmcvMTk5OS8wMi8yMi1yZGYtc3ludGF4LW5zIyc+CgogPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9JycKICB4bWxuczpBdHRyaWI9J2h0dHA6Ly9ucy5hdHRyaWJ1dGlvbi5jb20vYWRzLzEuMC8nPgogIDxBdHRyaWI6QWRzPgogICA8cmRmOlNlcT4KICAgIDxyZGY6bGkgcmRmOnBhcnNlVHlwZT0nUmVzb3VyY2UnPgogICAgIDxBdHRyaWI6Q3JlYXRlZD4yMDI1LTExLTIzPC9BdHRyaWI6Q3JlYXRlZD4KICAgICA8QXR0cmliOkV4dElkPmRhMTFiNjZhLTBlZTgtNDcxMS1hODA2LWRmMWYyNDczY2M2YTwvQXR0cmliOkV4dElkPgogICAgIDxBdHRyaWI6RmJJZD41MjUyNjU5MTQxNzk1ODA8L0F0dHJpYjpGYklkPgogICAgIDxBdHRyaWI6VG91Y2hUeXBlPjI8L0F0dHJpYjpUb3VjaFR5cGU+CiAgICA8L3JkZjpsaT4KICAgPC9yZGY6U2VxPgogIDwvQXR0cmliOkFkcz4KIDwvcmRmOkRlc2NyaXB0aW9uPgoKIDxyZGY6RGVzY3JpcHRpb24gcmRmOmFib3V0PScnCiAgeG1sbnM6ZGM9J2h0dHA6Ly9wdXJsLm9yZy9kYy9lbGVtZW50cy8xLjEvJz4KICA8ZGM6dGl0bGU+CiAgIDxyZGY6QWx0PgogICAgPHJkZjpsaSB4bWw6bGFuZz0neC1kZWZhdWx0Jz5GT09UQkFMTEZJVCAtIDE8L3JkZjpsaT4KICAgPC9yZGY6QWx0PgogIDwvZGM6dGl0bGU+CiA8L3JkZjpEZXNjcmlwdGlvbj4KCiA8cmRmOkRlc2NyaXB0aW9uIHJk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" alt="FOOTBALLFIT" style="width:140px;height:auto;margin-bottom:8px;display:block;max-width:100%">
       <h1>Performance Dashboard</h1>
       <p>Individual Coaching</p>
     </div>
-    <div class="sb-search">
-      <input id="sq" type="text" placeholder="Search athlete…" oninput="filterAthletes(this.value)">
-    </div>
-    <div class="alist" id="alist">
-      <div style="padding:16px;font-size:12px;color:#7a8290;text-align:center">Connect Google Sheet to load athletes</div>
-    </div>
-    <div class="settings-bar">
-      <span id="sheetStatus">No sheet connected</span>
-      <button class="btn-sm" onclick="showConfig()">⚙ Settings</button>
-    </div>
+    <div class="sb-search"><input id="sq" type="text" placeholder="Search athlete…" oninput="filterAthletes(this.value)"></div>
+    <div class="alist" id="alist"><div style="padding:16px;font-size:12px;color:#7a8290;text-align:center">Connect Google Sheet to load athletes</div></div>
+    <div class="settings-bar"><span id="sheetStatus">No sheet connected</span><button class="btn-sm" onclick="showConfig()">⚙ Settings</button></div>
   </aside>
   <main class="main" id="main"></main>
 </div>
-
 <script>
 // ─── NORMATIVE BANDS ─────────────────────────────────────────────────────────
-// All values for professional male football / futsal players
-// Sources: Haugen et al., Buchheit & Laursen, Comfort et al., McMahon et al.,
-//          Loturco et al., Dos'Santos et al., Thomas et al., Murtagh et al.
-// lb:true = lower is better (sprint times only)
-// The 'display' key = what the dashboard shows (always the calculated/normalised value)
+// Sources:
+//   Jump/RSI:  Badby, Comfort et al. JSS 2025; McMahon et al. Sensors 2022
+//   EUR:       McGuigan et al. JSCR 2006
+//   DSI:       Thomas, Dos'Santos, Jones. Sports 2017
+//   IMTP:      Badby et al. JSS 2025 (professional soccer N/kg benchmarks)
+//   Aerobic:   Cardamone et al. Front Physiol 2025 (Serie A VO2 ~61.5); Buchheit & Laursen
+//   Strength:  Comfort et al. JSCR 2019; professional football literature
+//   Speed:     Haugen et al. IJSPP 2019
+// lb:true = lower is better
 
 const NORMS = {
-  broad_jump:   { min:220,  max:260,  u:'cm',       lb:false, label:'Broad jump',         cat:'jump'     },
-  slbj_L:       { min:100,  max:130,  u:'cm',       lb:false, label:'SL broad jump — L',  cat:'jump'     },
-  slbj_R:       { min:100,  max:130,  u:'cm',       lb:false, label:'SL broad jump — R',  cat:'jump'     },
-  slbj_LSI:     { min:90,   max:100,  u:'%',        lb:false, label:'SL broad jump LSI',  cat:'jump'     },
-  triple_hop:   { min:600,  max:700,  u:'cm',       lb:false, label:'Triple hop',         cat:'jump'     },
-  cmj:          { min:35,   max:55,   u:'cm',       lb:false, label:'CMJ',                cat:'jump'     },
-  sj:           { min:30,   max:50,   u:'cm',       lb:false, label:'Squat jump (SJ)',    cat:'jump'     },
-  dj:           { min:30,   max:50,   u:'cm',       lb:false, label:'Drop jump (DJ)',     cat:'jump'     },
-  rsi:          { min:1.0,  max:2.0,  u:'RSI',      lb:false, label:'RSI',               cat:'jump'     },
-  eur:          { min:0.90, max:1.15, u:'EUR',      lb:false, label:'EUR',               cat:'jump'     },
-  dsi:          { min:0.60, max:1.00, u:'DSI',      lb:false, label:'DSI',               cat:'jump'     },
-  mas:          { min:5.0,  max:6.2,  u:'m/s',      lb:false, label:'MAS',               cat:'aero'     },
-  vo2max:       { min:58,   max:68,   u:'ml/kg/min',lb:false, label:'Est. VO₂ max',      cat:'aero'     },
-  sq_1rm_bw:    { min:1.5,  max:2.0,  u:'×BW',      lb:false, label:'Back squat',        cat:'strength' },
-  tb_1rm_bw:    { min:2.0,  max:2.8,  u:'×BW',      lb:false, label:'Trap bar DL',       cat:'strength' },
-  bp_1rm_bw:    { min:0.9,  max:1.3,  u:'×BW',      lb:false, label:'Bench press',       cat:'strength' },
-  imtp:         { min:2.5,  max:3.5,  u:'N/kg',     lb:false, label:'IMTP',              cat:'strength' },
-  sprint10:     { min:1.65, max:1.80, u:'s',        lb:true,  label:'10m sprint',        cat:'speed'    },
-  sprint20:     { min:2.85, max:3.05, u:'s',        lb:true,  label:'20m sprint',        cat:'speed'    },
-  max_vel:      { min:9.8,  max:11.5, u:'m/s',      lb:false, label:'Max velocity (fly)',cat:'speed'    },
+  // ── Jump / Power ──────────────────────────────────────────────────────────
+  broad_jump:    { min:220,  max:260,  u:'cm',        lb:false, label:'Broad jump',              cat:'jump' },
+  // No validated professional football-specific normative dataset exists for SL broad jump absolute distance.
+  // Tracked for individual longitudinal comparison only — no min/max scoring applied.
+  slbj_L:        { min:null, max:null, u:'cm',        lb:false, label:'SL broad jump — L',       cat:'jump', noNorm:true },
+  slbj_R:        { min:null, max:null, u:'cm',        lb:false, label:'SL broad jump — R',       cat:'jump', noNorm:true },
+  // LSI: healthy footballers show natural variance of 97-106% (scoping review, 27 studies, JOSPT 2024).
+  // <90% is a distinct injury-risk threshold (not a benchmark tier) — flagged separately in the UI.
+  slbj_LSI:      { min:90,   max:100,  u:'%',         lb:false, label:'SL broad jump LSI',       cat:'jump', injuryFloor:90 },
+  // Triple hop (single-leg): collegiate male soccer/basketball average 632±72cm (Myers et al. 2014).
+  // No professional-specific dataset found — moderate confidence, not pro-validated.
+  triple_hop:    { min:560,  max:704,  u:'cm',        lb:false, label:'Triple hop (SL)',         cat:'jump', note:'Collegiate data, not pro-specific' },
+  cmj:           { min:35,   max:55,   u:'cm',        lb:false, label:'CMJ height',              cat:'jump' },
+  sj:            { min:30,   max:50,   u:'cm',        lb:false, label:'Squat jump (SJ)',         cat:'jump' },
+  eur:           { min:0.90, max:1.15, u:'EUR',       lb:false, label:'EUR (CMJ÷SJ)',            cat:'jump',  note:'Auto: CMJ÷SJ' },
+  // mRSI: CMJ jump height (m) ÷ contraction time (s). Pro football ~0.8–1.4 (McMahon/Badby)
+  cmj_mrsi:      { min:0.80, max:1.40, u:'m/s',       lb:false, label:'CMJ mRSI',               cat:'jump',  note:'Auto: JH(m)÷CT(s) — needs contraction time' },
+  // DJ RSI: DJ height (m) ÷ contact time (s). Pro football ~1.0–1.8 (McMahon 2021)
+  dj_rsi:        { min:1.00, max:1.80, u:'m/s',       lb:false, label:'DJ RSI',                 cat:'jump',  note:'Auto: JH(m)÷CT(s) — needs contact time' },
+  dj:            { min:30,   max:50,   u:'cm',        lb:false, label:'Drop jump height (DJ)',   cat:'jump' },
+  // DSI: ballistic PF ÷ isometric PF. Optimal 0.60–0.80 (Thomas et al. 2017)
+  // >0.80 = needs strength work; <0.60 = needs plyometric work
+  dsi:           { min:0.60, max:0.80, u:'DSI',       lb:false, label:'DSI',                    cat:'jump',  note:'Requires force plate' },
+  // ── Aerobic ───────────────────────────────────────────────────────────────
+  mas:           { min:5.0,  max:6.2,  u:'m/s',       lb:false, label:'MAS (5-min TT)',          cat:'aero' },
+  vo2max:        { min:58,   max:68,   u:'ml/kg/min', lb:false, label:'Est. VO₂ max',            cat:'aero' },
+  // ── Strength ──────────────────────────────────────────────────────────────
+  sq_1rm_bw:     { min:1.5,  max:2.0,  u:'×BW',       lb:false, label:'Back squat',             cat:'strength' },
+  tb_1rm_bw:     { min:2.0,  max:2.8,  u:'×BW',       lb:false, label:'Trap bar DL',            cat:'strength' },
+  bp_1rm_bw:     { min:0.9,  max:1.3,  u:'×BW',       lb:false, label:'Bench press',            cat:'strength' },
+  // IMTP: relative peak force N/kg. Pro soccer median ~40 N/kg (Badby et al. 2025)
+  // <30 N/kg = below norm for professional; 30–45 = within range; >45 = exceeds
+  imtp:          { min:30,   max:45,   u:'N/kg',      lb:false, label:'IMTP',                   cat:'strength', note:'Requires force plate' },
+  // ── Speed ─────────────────────────────────────────────────────────────────
+  sprint10:      { min:1.65, max:1.80, u:'s',         lb:true,  label:'10m sprint',             cat:'speed' },
+  sprint20:      { min:2.85, max:3.05, u:'s',         lb:true,  label:'20m sprint',             cat:'speed' },
+  // Match-derived peak speed: pro average ~31-32 km/h (8.6-8.9 m/s); EPL all-time fastest ~37.4 km/h (10.4 m/s, Van de Ven).
+  // 8.3-9.5 m/s covers typical professional range; >9.5 m/s is genuinely elite outlier territory.
+  max_vel:       { min:8.3,  max:9.5,  u:'m/s',       lb:false, label:'Max velocity (20m fly)', cat:'speed' },
 };
 
 const CAT_LABELS = { jump:'Jump / Power', aero:'Aerobic', strength:'Strength', speed:'Speed' };
-const CAT_ORDER  = ['jump','aero','strength','speed'];
-const SL  = ['Priority Area','Below Benchmark','Near Benchmark','Meets Benchmark','Exceeds Benchmark'];
-const SC  = ['p0','p1','p2','p3','p4'];
-const SD  = ['#dc2626','#c2410c','#b45309','#1a56db','#16a34a'];
-const CC  = ['#1a56db','#7c3aed','#0891b2','#16a34a','#dc2626','#c2410c','#6b7280'];
+const SL = ['Priority Area','Below Benchmark','Near Benchmark','Meets Benchmark','Exceeds Benchmark'];
+const SC = ['p0','p1','p2','p3','p4'];
+const SD = ['#dc2626','#c2410c','#b45309','#1a56db','#16a34a'];
+const CC = ['#1a56db','#7c3aed','#0891b2','#16a34a','#dc2626','#c2410c','#6b7280'];
 
 // ─── CALCULATIONS ─────────────────────────────────────────────────────────────
+const pf  = v => { const n = parseFloat(v); return isNaN(n) || n === 0 ? null : n; };
+const epley = (kg, reps) => { const k=pf(kg),r=pf(reps); if(!k||!r)return null; return r===1?k:+(k*(1+r/30)).toFixed(1); };
+const masFromDist = d => { const v=pf(d); return v?+(v/300).toFixed(2):null; }; // m/s
+// Léger & Mercier (1984): VO2max (ml/kg/min) = MAS (km/h) × 3.5. MAS is stored in m/s, so convert to km/h first.
+const vo2FromMas  = mas_ms => { const v=pf(mas_ms); return v?+((v*3.6)*3.5).toFixed(1):null; };
+const calcLSI     = (L,R) => { const l=pf(L),r=pf(R); return(l&&r)?+(Math.min(l,r)/Math.max(l,r)*100).toFixed(1):null; };
+const bwRatio     = (rm,bw) => (rm&&bw)?+(rm/bw).toFixed(2):null;
+const imtpNkg     = (N,bw) => { const n=pf(N),b=pf(bw); return(n&&b)?+(n/b).toFixed(2):null; };
+// mRSI = jump height (m) ÷ contraction time (s)
+const calcMrsi    = (cm,ms) => { const h=pf(cm),t=pf(ms); return(h&&t)?+((h/100)/(t/1000)).toFixed(2):null; };
+// DJ RSI = jump height (m) ÷ contact time (s)
+const calcDjRsi   = (cm,ms) => { const h=pf(cm),t=pf(ms); return(h&&t)?+((h/100)/(t/1000)).toFixed(2):null; };
+// EUR = CMJ ÷ SJ (jump height)
+const calcEur     = (cmj,sj) => { const c=pf(cmj),s=pf(sj); return(c&&s)?+(c/s).toFixed(2):null; };
 
-// Epley formula: estimated 1RM from load × reps
-function epley(load, reps) {
-  load = parseFloat(load); reps = parseFloat(reps);
-  if (isNaN(load) || isNaN(reps) || load <= 0) return null;
-  if (reps === 1) return load;
-  return +(load * (1 + reps / 30)).toFixed(1);
-}
-
-// MAS from 5-min TT distance (metres)
-function masFromDist(dist) {
-  dist = parseFloat(dist);
-  if (isNaN(dist) || dist <= 0) return null;
-  return +(dist / 300).toFixed(2); // distance / 300 seconds
-}
-
-// VO2max estimate from MAS (Léger & Boucher)
-function vo2FromMas(mas) {
-  mas = parseFloat(mas);
-  if (isNaN(mas)) return null;
-  return +(mas * 3.5 - 0.0226).toFixed(1);
-}
-
-// LSI from L and R
-function calcLSI(L, R) {
-  L = parseFloat(L); R = parseFloat(R);
-  if (isNaN(L) || isNaN(R) || L <= 0 || R <= 0) return null;
-  return +(Math.min(L,R) / Math.max(L,R) * 100).toFixed(1);
-}
-
-// BW ratio
-function bwRatio(load1rm, bw) {
-  if (load1rm == null || bw == null || bw <= 0) return null;
-  return +(load1rm / bw).toFixed(2);
-}
-
-// IMTP N/kg
-function imtpRatio(force_N, bw_kg) {
-  force_N = parseFloat(force_N); bw_kg = parseFloat(bw_kg);
-  if (isNaN(force_N) || isNaN(bw_kg) || bw_kg <= 0) return null;
-  return +(force_N / bw_kg).toFixed(2);
-}
-
-// ─── Derive all calculated values for one test session row ───────────────────
 function deriveSession(row, bw_kg) {
-  const bw = parseFloat(bw_kg);
+  const bw = pf(bw_kg);
   const d  = {};
-
-  // Jump — direct cm values
-  d.broad_jump = parseFloat(row.broad_jump_cm) || null;
-  d.slbj_L     = parseFloat(row.slbj_L_cm)    || null;
-  d.slbj_R     = parseFloat(row.slbj_R_cm)    || null;
-  d.slbj_LSI   = calcLSI(row.slbj_L_cm, row.slbj_R_cm);
-  d.triple_hop = parseFloat(row.triple_hop_cm) || null;
-  d.cmj        = parseFloat(row.cmj_cm)        || null;
-  d.sj         = parseFloat(row.sj_cm)         || null;
-  d.dj         = parseFloat(row.dj_cm)         || null;
-  d.rsi        = parseFloat(row.rsi)           || null;
-  d.eur        = parseFloat(row.eur)           || null;
-  d.dsi        = parseFloat(row.dsi)           || null;
-
-  // Aerobic — MAS from distance, VO2 from MAS
-  d.mas_raw_dist = parseFloat(row.tt5min_dist_m) || null;
-  d.mas          = masFromDist(row.tt5min_dist_m);
-  d.vo2max       = (d.mas != null) ? vo2FromMas(d.mas) : (parseFloat(row.vo2max) || null);
-
-  // Strength — estimate 1RM then BW ratio
-  const sq1rm  = epley(row.sq_kg, row.sq_reps);
-  const tb1rm  = epley(row.tb_kg, row.tb_reps);
-  const bp1rm  = epley(row.bp_kg, row.bp_reps);
-  d.sq_1rm     = sq1rm;
-  d.tb_1rm     = tb1rm;
-  d.bp_1rm     = bp1rm;
-  d.sq_kg_raw  = parseFloat(row.sq_kg)  || null;
-  d.sq_reps_raw= parseFloat(row.sq_reps)|| null;
-  d.tb_kg_raw  = parseFloat(row.tb_kg)  || null;
-  d.tb_reps_raw= parseFloat(row.tb_reps)|| null;
-  d.bp_kg_raw  = parseFloat(row.bp_kg)  || null;
-  d.bp_reps_raw= parseFloat(row.bp_reps)|| null;
-  d.sq_1rm_bw  = bwRatio(sq1rm,  bw);
-  d.tb_1rm_bw  = bwRatio(tb1rm,  bw);
-  d.bp_1rm_bw  = bwRatio(bp1rm,  bw);
-  d.imtp_raw_N = parseFloat(row.imtp_N) || null;
-  d.imtp       = imtpRatio(row.imtp_N,  bw_kg);
-
-  // Speed — direct from Vuemotion
-  d.sprint10   = parseFloat(row.sprint10_s)  || null;
-  d.sprint20   = parseFloat(row.sprint20_s)  || null;
-  d.max_vel    = parseFloat(row.max_vel_ms)  || null;
-
-  d.test_date  = row.test_date;
+  // Jump — direct
+  d.broad_jump  = pf(row.broad_jump_cm);
+  d.slbj_L      = pf(row.slbj_L_cm);
+  d.slbj_R      = pf(row.slbj_R_cm);
+  d.slbj_LSI    = calcLSI(row.slbj_L_cm, row.slbj_R_cm);
+  d.triple_hop  = pf(row.triple_hop_cm);
+  d.cmj         = pf(row.cmj_cm);
+  d.sj          = pf(row.sj_cm);
+  d.dj          = pf(row.dj_cm);
+  // EUR — auto from CMJ and SJ
+  d.eur         = calcEur(row.cmj_cm, row.sj_cm);
+  // mRSI — auto if contraction time provided, else null (future-proof)
+  d.cmj_ct_ms   = pf(row.cmj_contraction_time_ms);
+  d.cmj_mrsi    = calcMrsi(row.cmj_cm, row.cmj_contraction_time_ms);
+  // DJ RSI — auto if contact time provided
+  d.dj_ct_ms    = pf(row.dj_contact_time_ms);
+  d.dj_rsi      = calcDjRsi(row.dj_cm, row.dj_contact_time_ms);
+  // DSI — direct (force plate only)
+  d.dsi         = pf(row.dsi);
+  // Aerobic
+  d.tt5min_dist = pf(row.tt5min_dist_m);
+  d.mas         = masFromDist(row.tt5min_dist_m);
+  d.vo2max      = d.mas ? vo2FromMas(d.mas) : pf(row.vo2max);
+  // Strength — Epley → BW ratio
+  const sq1rm   = epley(row.sq_kg, row.sq_reps);
+  const tb1rm   = epley(row.tb_kg, row.tb_reps);
+  const bp1rm   = epley(row.bp_kg, row.bp_reps);
+  d.sq_1rm      = sq1rm; d.sq_kg_raw = pf(row.sq_kg); d.sq_reps_raw = pf(row.sq_reps);
+  d.tb_1rm      = tb1rm; d.tb_kg_raw = pf(row.tb_kg); d.tb_reps_raw = pf(row.tb_reps);
+  d.bp_1rm      = bp1rm; d.bp_kg_raw = pf(row.bp_kg); d.bp_reps_raw = pf(row.bp_reps);
+  d.sq_1rm_bw   = bwRatio(sq1rm, bw);
+  d.tb_1rm_bw   = bwRatio(tb1rm, bw);
+  d.bp_1rm_bw   = bwRatio(bp1rm, bw);
+  d.imtp_raw_N  = pf(row.imtp_N);
+  d.imtp        = imtpNkg(row.imtp_N, bw_kg);
+  // Speed
+  d.sprint10    = pf(row.sprint10_s);
+  d.sprint20    = pf(row.sprint20_s);
+  d.max_vel     = pf(row.max_vel_ms);
+  d.test_date   = row.test_date;
   return d;
 }
 
 // ─── BENCHMARK SCORING ───────────────────────────────────────────────────────
 function bs(v, nk) {
-  const n = NORMS[nk];
-  if (!n || v == null || isNaN(v)) return null;
+  const n = NORMS[nk]; if (!n || v==null || n.noNorm) return null;
   if (n.lb) {
-    if (v <= n.min)         return 4;
-    if (v <= n.max)         return 3;
-    if (v <= n.min * 1.10)  return 2;
-    if (v <= n.min * 1.20)  return 1;
-    return 0;
+    if (v<=n.min) return 4; if (v<=n.max) return 3;
+    if (v<=n.min*1.10) return 2; if (v<=n.min*1.20) return 1; return 0;
   } else {
-    if (v >= n.max)         return 4;
-    if (v >= n.min)         return 3;
-    if (v >= n.min * 0.90)  return 2;
-    if (v >= n.min * 0.80)  return 1;
-    return 0;
+    if (v>=n.max) return 4; if (v>=n.min) return 3;
+    if (v>=n.min*0.90) return 2; if (v>=n.min*0.80) return 1; return 0;
   }
 }
-
+function injuryFlag(v, nk) {
+  const n = NORMS[nk];
+  if (!n || !n.injuryFloor || v==null) return null;
+  return v < n.injuryFloor;
+}
 function pill(s) {
-  if (s === null) return '';
+  if (s===null) return '';
   return `<span class="pill ${SC[s]}"><span class="pill-dot" style="background:${SD[s]}"></span>${SL[s]}</span>`;
 }
-
 function dHtml(val, prev, lb) {
-  if (val == null || prev == null || isNaN(val) || isNaN(prev)) return '<span class="miss">—</span>';
-  const d = ((val - prev) / prev * 100);
-  const imp = lb ? d < 0 : d > 0;
-  const unc = Math.abs(d) < 0.5;
-  const col = unc ? '#7a8290' : imp ? '#16a34a' : '#dc2626';
-  const arr = unc ? '→' : imp ? '↑' : '↓';
-  return `<span class="delta" style="color:${col}">${arr} ${d > 0 ? '+' : ''}${d.toFixed(1)}%</span>`;
+  if (val==null||prev==null) return '<span class="miss">—</span>';
+  const d=((val-prev)/prev*100), imp=lb?d<0:d>0, unc=Math.abs(d)<0.5;
+  const col=unc?'#7a8290':imp?'#16a34a':'#dc2626';
+  return `<span class="delta" style="color:${col}">${unc?'→':imp?'↑':'↓'} ${d>0?'+':''}${d.toFixed(1)}%</span>`;
 }
-
 function catLabel(avg) {
-  if (avg === null) return null;
-  if (avg >= 3.5) return { l:'Strong Area',     c:'#16a34a' };
-  if (avg >= 2.5) return { l:'On Track',        c:'#1a56db' };
-  if (avg >= 1.5) return { l:'Developing Area', c:'#c2410c' };
-  return               { l:'Priority Focus',   c:'#dc2626' };
+  if (avg===null) return null;
+  if (avg>=3.5) return {l:'Strong Area',     c:'#16a34a'};
+  if (avg>=2.5) return {l:'On Track',        c:'#1a56db'};
+  if (avg>=1.5) return {l:'Developing Area', c:'#c2410c'};
+  return              {l:'Priority Focus',  c:'#dc2626'};
 }
-
 function catCard(catKey, keys, d) {
-  const scores = keys.map(k => bs(d[k], k)).filter(s => s !== null);
+  const scores = keys.map(k=>bs(d[k],k)).filter(s=>s!==null);
   if (!scores.length) return `<div class="cat-card"><div class="cat-name">${CAT_LABELS[catKey]}</div><div class="cat-status" style="color:#7a8290">No data</div></div>`;
-  const avg = scores.reduce((a,b)=>a+b,0) / scores.length;
+  const avg = scores.reduce((a,b)=>a+b,0)/scores.length;
   const cl  = catLabel(avg);
-  return `<div class="cat-card" style="border-left:3px solid ${cl.c}">
-    <div class="cat-name">${CAT_LABELS[catKey]}</div>
-    <div class="cat-status" style="color:${cl.c}">${cl.l}</div>
-  </div>`;
+  return `<div class="cat-card" style="border-left:3px solid ${cl.c}"><div class="cat-name">${CAT_LABELS[catKey]}</div><div class="cat-status" style="color:${cl.c}">${cl.l}</div></div>`;
 }
-
 function sidebarCol(d) {
   if (!d) return '#7a8290';
-  const allKeys = Object.keys(NORMS);
-  const scores  = allKeys.map(k => bs(d[k], k)).filter(s => s !== null);
+  const scores = Object.keys(NORMS).map(k=>bs(d[k],k)).filter(s=>s!==null);
   if (!scores.length) return '#7a8290';
-  const avg = scores.reduce((a,b)=>a+b,0) / scores.length;
-  return avg >= 3.5 ? '#16a34a' : avg >= 2.5 ? '#1a56db' : avg >= 1.5 ? '#c2410c' : '#dc2626';
+  const avg = scores.reduce((a,b)=>a+b,0)/scores.length;
+  return avg>=3.5?'#16a34a':avg>=2.5?'#1a56db':avg>=1.5?'#c2410c':'#dc2626';
+}
+// Get most recently tested value for a key across all sessions (sessions sorted newest-first)
+function latestVal(sessions, key) {
+  for (const s of sessions) { if (s[key]!=null) return s[key]; }
+  return null;
+}
+// Build a composite "best available" data object across all sessions for category scoring
+function buildLatestAcrossSessions(sessions) {
+  const out = {};
+  Object.keys(NORMS).forEach(k => { out[k] = latestVal(sessions, k); });
+  return out;
 }
 
-// ─── ROW BUILDER ─────────────────────────────────────────────────────────────
-function mRow(nk, val, prevVal, subtext) {
-  const n = NORMS[nk];
-  if (!n) return '';
-  if (val == null || isNaN(val)) return `<tr><td class="lbl">${n.label}</td><td colspan="3" class="miss">— not tested</td></tr>`;
-  const s = bs(val, n);
+// ─── TABLE ROW BUILDERS ───────────────────────────────────────────────────────
+function mRow(nk, val, prevVal, subtext, isAuto) {
+  const n = NORMS[nk]; if (!n) return '';
+  const normText = n.noNorm ? 'No validated norm' : `${n.min}–${n.max} ${n.u}`;
+  const normStyle = n.noNorm ? 'font-style:italic;color:var(--text-muted)' : 'color:var(--text-muted)';
+  if (val==null) return `<tr><td class="lbl">${n.label}${n.note?` <span style="font-size:10px;color:var(--text-muted)">(${n.note})</span>`:''}</td><td colspan="2" class="miss">— not tested</td><td style="font-size:11px;${normStyle}">${normText}</td><td class="miss">—</td></tr>`;
+  const s = bs(val, nk);
   const sub = subtext ? `<span class="rsub">${subtext}</span>` : '';
+  const badge = isAuto ? '<span class="calc-badge">auto</span>' : '';
+  const flagged = injuryFlag(val, nk);
+  const statusCell = n.noNorm
+    ? `<span style="font-size:11px;color:var(--text-muted);font-style:italic">Track individually</span>`
+    : flagged
+      ? `<span class="pill p0" style="background:#fef2f2"><span class="pill-dot" style="background:#dc2626"></span>Injury risk flag (&lt;${n.injuryFloor}%)</span>`
+      : pill(s);
   return `<tr>
     <td class="lbl">${n.label}</td>
-    <td><span class="rval">${val}</span><span class="runit">${n.u}</span>${sub}</td>
-    <td>${pill(s)}</td>
+    <td><span class="rval">${val}</span><span class="runit">${n.u}</span>${sub}${badge}</td>
+    <td>${statusCell}</td>
+    <td style="font-size:11px;${normStyle}">${normText}</td>
     <td>${dHtml(val, prevVal, n.lb)}</td>
   </tr>`;
 }
-
-// Strength row — shows raw input + estimated 1RM + ratio
 function strengthRow(nk, d, pv, label) {
-  const n    = NORMS[nk];
-  const val  = d[nk];
-  const prev = pv ? pv[nk] : null;
-  const prefix = nk.split('_1rm_bw')[0]; // sq, tb, bp
-  const kg   = d[prefix+'_kg_raw'];
-  const reps = d[prefix+'_reps_raw'];
-  const rm1  = d[prefix+'_1rm'];
-  if (val == null) return `<tr><td class="lbl">${label}</td><td colspan="3" class="miss">— not tested</td></tr>`;
-  const s = bs(val, n);
-  let sub = '';
-  if (reps != null && reps > 1) sub = `<span class="rsub">(${kg} kg × ${reps} → est. 1RM ${rm1} kg)</span>`;
-  else if (rm1 != null) sub = `<span class="rsub">(1RM ${rm1} kg)</span>`;
+  const n = NORMS[nk];
+  const normText = `${n.min}–${n.max} ${n.u}`;
+  const val  = d[nk], prev = pv?pv[nk]:null;
+  const pfx  = nk.replace('_1rm_bw','');
+  const kg   = d[pfx+'_kg_raw'], reps = d[pfx+'_reps_raw'], rm1 = d[pfx+'_1rm'];
+  if (val==null) return `<tr><td class="lbl">${label}</td><td colspan="2" class="miss">— not tested</td><td style="font-size:11px;color:var(--text-muted)">${normText}</td><td class="miss">—</td></tr>`;
+  const s = bs(val, nk);
+  let sub = reps&&reps>1 ? `<span class="rsub">(${kg}kg × ${reps} → est. 1RM ${rm1}kg)</span>` : rm1?`<span class="rsub">(1RM ${rm1}kg)</span>`:'';
   return `<tr>
     <td class="lbl">${label}</td>
     <td><span class="rval">${val}</span><span class="runit">×BW</span>${sub}<span class="calc-badge">auto</span></td>
     <td>${pill(s)}</td>
+    <td style="font-size:11px;color:var(--text-muted)">${normText}</td>
     <td>${dHtml(val, prev, false)}</td>
   </tr>`;
 }
 
 // ─── DATA STATE ───────────────────────────────────────────────────────────────
-let athleteMap = {};
-let selectedId = null;
-let searchQ    = '';
+let athleteMap={}, selectedId=null, searchQ='';
 
 // ─── GOOGLE SHEETS ────────────────────────────────────────────────────────────
-function getConfig() { try { return JSON.parse(localStorage.getItem('dashConfig')||'{}'); } catch(e){ return {}; } }
-function saveConfig(cfg) { localStorage.setItem('dashConfig', JSON.stringify(cfg)); }
+const getConfig = () => { try{return JSON.parse(localStorage.getItem('dashConfig')||'{}')}catch(e){return{}} };
+const saveConfig = c => localStorage.setItem('dashConfig', JSON.stringify(c));
 
 async function fetchSheet(url) {
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`HTTP ${res.status} — check the sheet URL`);
-  return res.text();
+  const r = await fetch(url);
+  if (!r.ok) throw new Error(`HTTP ${r.status} — check the URL`);
+  return r.text();
 }
-
 function parseCSV(text) {
   const lines = text.trim().split('\n').map(l => {
-    const cols = []; let cur = ''; let inQ = false;
-    for (let i = 0; i < l.length; i++) {
-      if (l[i] === '"') { inQ = !inQ; }
-      else if (l[i] === ',' && !inQ) { cols.push(cur.trim()); cur = ''; }
-      else { cur += l[i]; }
+    const cols=[]; let cur='', inQ=false;
+    for (const ch of l) {
+      if (ch==='"'){inQ=!inQ} else if (ch===','&&!inQ){cols.push(cur.trim());cur=''} else {cur+=ch}
     }
-    cols.push(cur.trim());
-    return cols;
+    cols.push(cur.trim()); return cols;
   });
-  const headers = lines[0].map(h => h.trim());
-  return lines.slice(1).filter(r => r.some(c => c)).map(r => {
-    const obj = {};
-    headers.forEach((h,i) => { obj[h] = (r[i]||'').trim(); });
-    return obj;
+  const headers = lines[0].map(h=>h.trim());
+  return lines.slice(1).filter(r=>r.some(c=>c)).map(r=>{
+    const obj={}; headers.forEach((h,i)=>obj[h]=(r[i]||'').trim()); return obj;
   });
 }
-
 async function loadData() {
   const cfg = getConfig();
-  if (!cfg.athletesUrl || !cfg.resultsUrl) { showSetup(); return; }
+  if (!cfg.athletesUrl||!cfg.resultsUrl){showSetup();return;}
   showLoading();
   try {
-    const [aText, rText] = await Promise.all([fetchSheet(cfg.athletesUrl), fetchSheet(cfg.resultsUrl)]);
-    const athletes = parseCSV(aText);
-    const results  = parseCSV(rText);
-
-    athleteMap = {};
-    athletes.forEach(a => { athleteMap[a.id] = { ...a, sessions:[] }; });
-    results.forEach(r => {
-      if (athleteMap[r.athlete_id]) {
-        const derived = deriveSession(r, athleteMap[r.athlete_id].weight_kg);
-        athleteMap[r.athlete_id].sessions.push(derived);
-      }
+    const [aText,rText] = await Promise.all([fetchSheet(cfg.athletesUrl),fetchSheet(cfg.resultsUrl)]);
+    const athletes=parseCSV(aText), results=parseCSV(rText);
+    athleteMap={};
+    athletes.forEach(a=>{athleteMap[a.id]={...a,sessions:[]};});
+    results.forEach(r=>{
+      if(athleteMap[r.athlete_id]) athleteMap[r.athlete_id].sessions.push(deriveSession(r,athleteMap[r.athlete_id].weight_kg));
     });
-    Object.values(athleteMap).forEach(a => {
-      a.sessions.sort((x,y) => new Date(y.test_date) - new Date(x.test_date));
-    });
-
-    document.getElementById('sheetStatus').textContent = `${athletes.length} athletes · ${results.length} sessions`;
+    Object.values(athleteMap).forEach(a=>a.sessions.sort((x,y)=>new Date(y.test_date)-new Date(x.test_date)));
+    document.getElementById('sheetStatus').textContent=`${athletes.length} athletes · ${results.length} sessions`;
     renderList();
-    const ids = Object.keys(athleteMap);
-    if (ids.length) { selectedId = ids[0]; renderMain(); }
-  } catch(e) {
-    showError(e.message);
-  }
+    const ids=Object.keys(athleteMap);
+    if(ids.length){selectedId=ids[0];renderMain();}
+  } catch(e){showError(e.message);}
 }
 
 // ─── STATE SCREENS ────────────────────────────────────────────────────────────
-function showSetup() {
-  document.getElementById('main').innerHTML = `
-    <div class="state-screen">
-      <div class="config-box">
-        <h3>Connect your Google Sheet</h3>
-        <p>Paste the published CSV URLs for your two sheet tabs. See <strong>SETUP.md</strong> for step-by-step instructions.</p>
-        <label>Athletes tab — published CSV URL</label>
-        <input id="urlA" type="text" placeholder="https://docs.google.com/spreadsheets/d/…/pub?gid=0&single=true&output=csv">
-        <label>Test results tab — published CSV URL</label>
-        <input id="urlR" type="text" placeholder="https://docs.google.com/spreadsheets/d/…/pub?gid=1&single=true&output=csv">
-        <button class="btn" onclick="connectSheet()">Connect sheet</button>
-        <p class="hint">URLs are saved in your browser only. Nothing is sent to any server.</p>
-      </div>
-    </div>`;
+function showSetup(){
+  document.getElementById('main').innerHTML=`<div class="state-screen"><div class="config-box">
+    <h3>Connect your Google Sheet</h3>
+    <p>Paste the two published CSV URLs. See <strong>SETUP.md</strong> for instructions.</p>
+    <label>Athletes tab — CSV URL</label><input id="urlA" type="text" placeholder="https://docs.google.com/spreadsheets/d/…/pub?gid=0&single=true&output=csv">
+    <label>Test results tab — CSV URL</label><input id="urlR" type="text" placeholder="https://docs.google.com/spreadsheets/d/…/pub?gid=1&single=true&output=csv">
+    <button class="btn" onclick="connectSheet()">Connect sheet</button>
+    <p class="hint">URLs saved in your browser only.</p>
+  </div></div>`;
 }
-
-function showLoading() {
-  document.getElementById('main').innerHTML = `<div class="state-screen"><h2>Loading…</h2><p>Fetching data from Google Sheets</p></div>`;
+function showLoading(){document.getElementById('main').innerHTML='<div class="state-screen"><h2>Loading…</h2><p>Fetching data from Google Sheets</p></div>';}
+function showError(msg){document.getElementById('main').innerHTML=`<div class="state-screen"><h2>Could not load data</h2><p>${msg}</p><button class="btn" onclick="showSetup()">Update settings</button></div>`;}
+function showConfig(){
+  const cfg=getConfig();
+  document.getElementById('main').innerHTML=`<div class="state-screen"><div class="config-box">
+    <h3>Sheet settings</h3><p>Update published CSV URLs below.</p>
+    <label>Athletes tab URL</label><input id="urlA" type="text" value="${cfg.athletesUrl||''}">
+    <label>Test results tab URL</label><input id="urlR" type="text" value="${cfg.resultsUrl||''}">
+    <button class="btn" onclick="connectSheet()">Save & reload</button>
+    <button class="btn-sm" style="margin-top:12px;margin-left:8px" onclick="loadData()">Cancel</button>
+  </div></div>`;
 }
-
-function showError(msg) {
-  document.getElementById('main').innerHTML = `
-    <div class="state-screen">
-      <h2>Could not load data</h2>
-      <p>${msg}</p>
-      <button class="btn" onclick="showSetup()">Update settings</button>
-    </div>`;
-}
-
-function showConfig() {
-  const cfg = getConfig();
-  document.getElementById('main').innerHTML = `
-    <div class="state-screen">
-      <div class="config-box">
-        <h3>Sheet settings</h3>
-        <p>Update your published CSV URLs below.</p>
-        <label>Athletes tab URL</label>
-        <input id="urlA" type="text" value="${cfg.athletesUrl||''}">
-        <label>Test results tab URL</label>
-        <input id="urlR" type="text" value="${cfg.resultsUrl||''}">
-        <button class="btn" onclick="connectSheet()">Save & reload</button>
-        <button class="btn-sm" style="margin-top:12px;margin-left:8px" onclick="loadData()">Cancel</button>
-      </div>
-    </div>`;
-}
-
-function connectSheet() {
-  const a = document.getElementById('urlA').value.trim();
-  const r = document.getElementById('urlR').value.trim();
-  if (!a || !r) { alert('Please enter both URLs.'); return; }
-  saveConfig({ athletesUrl:a, resultsUrl:r });
-  loadData();
+function connectSheet(){
+  const a=document.getElementById('urlA').value.trim(), r=document.getElementById('urlR').value.trim();
+  if(!a||!r){alert('Please enter both URLs.');return;}
+  saveConfig({athletesUrl:a,resultsUrl:r}); loadData();
 }
 
 // ─── SIDEBAR ──────────────────────────────────────────────────────────────────
-function filterAthletes(v) { searchQ = v.toLowerCase(); renderList(); }
-
-function renderList() {
-  const el   = document.getElementById('alist');
-  const list = Object.values(athleteMap).filter(a =>
-    a.name.toLowerCase().includes(searchQ) || (a.position||'').toLowerCase().includes(searchQ)
-  );
-  if (!list.length) { el.innerHTML = '<div style="padding:16px;font-size:12px;color:#7a8290;text-align:center">No athletes found</div>'; return; }
-  el.innerHTML = list.map(a => {
-    const initials = a.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
-    const latest   = a.sessions[0] || null;
+function filterAthletes(v){searchQ=v.toLowerCase();renderList();}
+function renderList(){
+  const el=document.getElementById('alist');
+  const list=Object.values(athleteMap).filter(a=>a.name.toLowerCase().includes(searchQ)||(a.position||'').toLowerCase().includes(searchQ));
+  if(!list.length){el.innerHTML='<div style="padding:16px;font-size:12px;color:#7a8290;text-align:center">No athletes found</div>';return;}
+  el.innerHTML=list.map(a=>{
+    const ini=a.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
     return `<div class="aitem${a.id===selectedId?' active':''}" onclick="selectAthlete('${a.id}')">
-      <div class="av">${initials}</div>
-      <div class="ameta">
-        <div class="aname">${a.name}</div>
-        <div class="apos">${a.position||'—'} · ${a.age||'—'}y</div>
-      </div>
-      <div class="sdot" style="background:${sidebarCol(latest)}"></div>
+      <div class="av">${ini}</div>
+      <div class="ameta"><div class="aname">${a.name}</div><div class="apos">${a.position||'—'} · ${a.age||'—'}y</div></div>
+      <div class="sdot" style="background:${sidebarCol(a.sessions[0]||null)}"></div>
     </div>`;
   }).join('');
 }
-
-function selectAthlete(id) { selectedId = id; renderList(); renderMain(); }
+function selectAthlete(id){selectedId=id;renderList();renderMain();}
 
 // ─── TAB SWITCH ───────────────────────────────────────────────────────────────
-function switchTab(t) {
-  document.querySelectorAll('.tab').forEach(e => e.classList.toggle('active', e.dataset.t===t));
-  document.querySelectorAll('.tc').forEach(e  => e.classList.toggle('active', e.dataset.t===t));
-  if (t==='trends') setTimeout(drawCharts, 60);
+function switchTab(t){
+  document.querySelectorAll('.tab').forEach(e=>e.classList.toggle('active',e.dataset.t===t));
+  document.querySelectorAll('.tc').forEach(e=>e.classList.toggle('active',e.dataset.t===t));
+  if(t==='trends') setTimeout(drawCharts,60);
 }
 
 // ─── MAIN RENDER ──────────────────────────────────────────────────────────────
-function renderMain() {
-  const a = athleteMap[selectedId];
-  if (!a) return;
-  const d  = a.sessions[0];
-  const pv = a.sessions[1] || null;
-  if (!d) {
-    document.getElementById('main').innerHTML = `<div class="state-screen"><h2>${a.name}</h2><p>No test sessions recorded yet.</p></div>`;
-    return;
-  }
+function renderMain(){
+  const a=athleteMap[selectedId]; if(!a) return;
+  const d=a.sessions[0], pv=a.sessions[1]||null;
+  if(!d){document.getElementById('main').innerHTML=`<div class="state-screen"><h2>${a.name}</h2><p>No test sessions recorded yet.</p></div>`;return;}
+  const ini=a.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+  const inj=a.injury_hx?`<span class="ptag inj">⚠ Injury hx</span><span class="ptag" style="font-size:10px">${a.injury_hx}</span>`:'';
 
-  const initials = a.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
-  const inj = a.injury_hx ? `<span class="ptag inj">⚠ Injury hx</span><span class="ptag" style="font-size:10px">${a.injury_hx}</span>` : '';
-
-  // Category status cards
-  const jumpKeys     = ['broad_jump','slbj_LSI','triple_hop','cmj','sj','dj','rsi','eur','dsi'];
+  const jumpKeys     = ['broad_jump','slbj_LSI','triple_hop','cmj','sj','eur','cmj_mrsi','dj','dj_rsi','dsi'];
   const aeroKeys     = ['mas','vo2max'];
   const strengthKeys = ['sq_1rm_bw','tb_1rm_bw','bp_1rm_bw','imtp'];
   const speedKeys    = ['sprint10','sprint20','max_vel'];
 
-  document.getElementById('main').innerHTML = `
+  document.getElementById('main').innerHTML=`
+    <div class="print-header">
+      <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAfQAAAH0CAYAAADL1t+KAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAEs2lUWHRYTUw6Y29tLmFkb2JlLnhtcAAAAAAAPD94cGFja2V0IGJlZ2luPSfvu78nIGlkPSdXNU0wTXBDZWhpSHpyZVN6TlRjemtjOWQnPz4KPHg6eG1wbWV0YSB4bWxuczp4PSdhZG9iZTpuczptZXRhLyc+CjxyZGY6UkRGIHhtbG5zOnJkZj0naHR0cDovL3d3dy53My5vcmcvMTk5OS8wMi8yMi1yZGYtc3ludGF4LW5zIyc+CgogPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9JycKICB4bWxuczpBdHRyaWI9J2h0dHA6Ly9ucy5hdHRyaWJ1dGlvbi5jb20vYWRzLzEuMC8nPgogIDxBdHRyaWI6QWRzPgogICA8cmRmOlNlcT4KICAgIDxyZGY6bGkgcmRmOnBhcnNlVHlwZT0nUmVzb3VyY2UnPgogICAgIDxBdHRyaWI6Q3JlYXRlZD4yMDI1LTExLTIzPC9BdHRyaWI6Q3JlYXRlZD4KICAgICA8QXR0cmliOkV4dElkPmRhMTFiNjZhLTBlZTgtNDcxMS1hODA2LWRmMWYyNDczY2M2YTwvQXR0cmliOkV4dElkPgogICAgIDxBdHRyaWI6RmJJZD41MjUyNjU5MTQxNzk1ODA8L0F0dHJpYjpGYklkPgogICAgIDxBdHRyaWI6VG91Y2hUeXBlPjI8L0F0dHJpYjpUb3VjaFR5cGU+CiAgICA8L3JkZjpsaT4KICAgPC9yZGY6U2VxPgogIDwvQXR0cmliOkFkcz4KIDwvcmRmOkRlc2NyaXB0aW9uPgoKIDxyZGY6RGVzY3JpcHRpb24gcmRmOmFib3V0PScnCiAgeG1sbnM6ZGM9J2h0dHA6Ly9wdXJsLm9yZy9kYy9lbGVtZW50cy8xLjEvJz4KICA8ZGM6dGl0bGU+CiAgIDxyZGY6QWx0PgogICAgPHJkZjpsaSB4bWw6bGFuZz0neC1kZWZhdWx0Jz5GT09UQkFMTEZJVCAtIDE8L3JkZjpsaT4KICAgPC9yZGY6QWx0PgogIDwvZGM6dGl0bGU+CiA8L3JkZjpEZXNjcmlwdGlvbj4KCiA8cmRmOkRlc2NyaXB0aW9uIHJk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" alt="FOOTBALLFIT" style="width:120px;height:auto">
+      <div class="print-header-meta">
+        <strong>${a.name}</strong> — Performance Report
+        <span>${a.position||'—'} · Generated ${new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'})}</span>
+      </div>
+    </div>
     <div class="profile-card">
-      <div class="pav">${initials}</div>
+      <div class="pav">${ini}</div>
       <div class="pinfo">
         <h2>${a.name}</h2>
         <p class="pmeta">${a.position||'—'} · ${a.age||'—'} yrs · ${a.height_cm||'—'} cm · ${a.weight_kg||'—'} kg · Last tested ${d.test_date||'—'}</p>
-        <div class="ptags">
-          <span class="ptag">Remote coaching</span>
-          <span class="ptag">Professional football / futsal</span>
-          <span class="ptag">${a.sessions.length} test session${a.sessions.length!==1?'s':''}</span>
-          ${inj}
-        </div>
+        <div class="ptags"><span class="ptag">Remote coaching</span><span class="ptag">Professional football / futsal</span><span class="ptag">${a.sessions.length} session${a.sessions.length!==1?'s':''}</span>${inj}</div>
       </div>
+      <button class="btn-sm no-print" style="margin-left:auto;align-self:flex-start" onclick="window.print()">⬇ Save as PDF</button>
     </div>
-
     <div>
       <div class="sec-heading">Performance category status</div>
       <div class="cat-grid">
-        ${catCard('jump',     jumpKeys,     d)}
-        ${catCard('aero',     aeroKeys,     d)}
-        ${catCard('strength', strengthKeys, d)}
-        ${catCard('speed',    speedKeys,    d)}
+        ${(()=>{ const ld=buildLatestAcrossSessions(a.sessions); return catCard('jump',jumpKeys,ld)+catCard('aero',aeroKeys,ld)+catCard('strength',strengthKeys,ld)+catCard('speed',speedKeys,ld); })()}
       </div>
     </div>
-
     <div class="tab-card">
       <div class="tabs">
         <div class="tab active" data-t="results" onclick="switchTab('results')">Latest Results</div>
         <div class="tab" data-t="trends"  onclick="switchTab('trends')">Trend Charts</div>
+        <div class="tab" data-t="feedback" onclick="switchTab('feedback')">Athlete Feedback</div>
       </div>
-
       <div class="tc active" data-t="results">
         <div class="results-body">
 
           <div>
             <div class="sec-heading">Jump / Power</div>
-            <table>
-              <thead><tr><th>Test</th><th>Result</th><th>Test result status</th><th>vs previous</th></tr></thead>
-              <tbody>
-                ${mRow('broad_jump',  d.broad_jump,  pv?.broad_jump)}
-                ${mRow('slbj_L',      d.slbj_L,      pv?.slbj_L)}
-                ${mRow('slbj_R',      d.slbj_R,      pv?.slbj_R)}
-                ${d.slbj_LSI!=null ? mRow('slbj_LSI', d.slbj_LSI, pv?.slbj_LSI, '(auto-calculated)') : ''}
-                ${mRow('triple_hop',  d.triple_hop,  pv?.triple_hop)}
-                ${mRow('cmj',         d.cmj,         pv?.cmj)}
-                ${mRow('sj',          d.sj,          pv?.sj)}
-                ${mRow('dj',          d.dj,          pv?.dj)}
-                ${mRow('rsi',         d.rsi,         pv?.rsi)}
-                ${mRow('eur',         d.eur,         pv?.eur)}
-                ${mRow('dsi',         d.dsi,         pv?.dsi)}
-              </tbody>
-            </table>
+            <table><thead><tr><th>Test</th><th>Result</th><th>Test result status</th><th>Normative range</th><th>vs previous</th></tr></thead><tbody>
+              ${mRow('broad_jump',  d.broad_jump,  pv?.broad_jump)}
+              ${mRow('slbj_L',      d.slbj_L,      pv?.slbj_L)}
+              ${mRow('slbj_R',      d.slbj_R,      pv?.slbj_R)}
+              ${d.slbj_LSI!=null ? mRow('slbj_LSI', d.slbj_LSI, pv?.slbj_LSI, null, true) : ''}
+              ${mRow('triple_hop',  d.triple_hop,  pv?.triple_hop)}
+              ${mRow('cmj',         d.cmj,         pv?.cmj)}
+              ${mRow('sj',          d.sj,          pv?.sj)}
+              ${d.eur!=null ? mRow('eur', d.eur, pv?.eur, '(CMJ÷SJ)', true) : ''}
+              ${d.cmj_mrsi!=null
+                ? mRow('cmj_mrsi', d.cmj_mrsi, pv?.cmj_mrsi, `(${d.cmj}cm ÷ ${d.cmj_ct_ms}ms)`, true)
+                : `<tr><td class="lbl">CMJ mRSI <span style="font-size:10px;color:var(--text-muted)">(needs contraction time)</span></td><td colspan="2" class="miss">— add cmj_contraction_time_ms to unlock</td><td style="font-size:11px;color:var(--text-muted)">${NORMS.cmj_mrsi.min}–${NORMS.cmj_mrsi.max} ${NORMS.cmj_mrsi.u}</td><td class="miss">—</td></tr>`}
+              ${mRow('dj',          d.dj,          pv?.dj)}
+              ${d.dj_rsi!=null
+                ? mRow('dj_rsi', d.dj_rsi, pv?.dj_rsi, `(${d.dj}cm ÷ ${d.dj_ct_ms}ms)`, true)
+                : `<tr><td class="lbl">DJ RSI <span style="font-size:10px;color:var(--text-muted)">(needs contact time)</span></td><td colspan="2" class="miss">— add dj_contact_time_ms to unlock</td><td style="font-size:11px;color:var(--text-muted)">${NORMS.dj_rsi.min}–${NORMS.dj_rsi.max} ${NORMS.dj_rsi.u}</td><td class="miss">—</td></tr>`}
+              ${mRow('dsi',         d.dsi,         pv?.dsi, '(force plate)', false)}
+            </tbody></table>
           </div>
 
           <div>
             <div class="sec-heading">Aerobic fitness</div>
-            <table>
-              <thead><tr><th>Test</th><th>Result</th><th>Test result status</th><th>vs previous</th></tr></thead>
-              <tbody>
-                <tr>
-                  <td class="lbl">MAS (5-min TT)</td>
-                  <td>
-                    <span class="rval">${d.mas??'—'}</span><span class="runit">m/s</span>
-                    ${d.mas_raw_dist!=null?`<span class="rsub">(${d.mas_raw_dist} m covered)</span>`:''}
-                    ${d.mas!=null?'<span class="calc-badge">auto</span>':''}
-                  </td>
-                  <td>${pill(bs(d.mas,'mas'))}</td>
-                  <td>${dHtml(d.mas, pv?.mas, false)}</td>
-                </tr>
-                <tr>
-                  <td class="lbl">Est. VO₂ max</td>
-                  <td>
-                    <span class="rval">${d.vo2max??'—'}</span><span class="runit">ml/kg/min</span>
-                    ${d.mas!=null?'<span class="calc-badge">auto</span>':''}
-                  </td>
-                  <td>${pill(bs(d.vo2max,'vo2max'))}</td>
-                  <td>${dHtml(d.vo2max, pv?.vo2max, false)}</td>
-                </tr>
-              </tbody>
-            </table>
+            <table><thead><tr><th>Test</th><th>Result</th><th>Test result status</th><th>Normative range</th><th>vs previous</th></tr></thead><tbody>
+              <tr>
+                <td class="lbl">MAS (5-min TT)</td>
+                <td><span class="rval">${d.mas??'—'}</span><span class="runit">m/s</span>${d.tt5min_dist?`<span class="rsub">(${d.tt5min_dist}m)</span>`:''}<span class="calc-badge">auto</span></td>
+                <td>${pill(bs(d.mas,'mas'))}</td>
+                <td style="font-size:11px;color:var(--text-muted)">${NORMS.mas.min}–${NORMS.mas.max} ${NORMS.mas.u}</td>
+                <td>${dHtml(d.mas,pv?.mas,false)}</td>
+              </tr>
+              <tr>
+                <td class="lbl">Est. VO₂ max</td>
+                <td><span class="rval">${d.vo2max??'—'}</span><span class="runit">ml/kg/min</span>${d.mas?'<span class="calc-badge">auto</span>':''}</td>
+                <td>${pill(bs(d.vo2max,'vo2max'))}</td>
+                <td style="font-size:11px;color:var(--text-muted)">${NORMS.vo2max.min}–${NORMS.vo2max.max} ${NORMS.vo2max.u}</td>
+                <td>${dHtml(d.vo2max,pv?.vo2max,false)}</td>
+              </tr>
+            </tbody></table>
           </div>
 
           <div>
-            <div class="sec-heading">Strength</div>
-            <table>
-              <thead><tr><th>Test</th><th>Result</th><th>Test result status</th><th>vs previous</th></tr></thead>
-              <tbody>
-                ${strengthRow('sq_1rm_bw', d, pv, 'Back squat')}
-                ${strengthRow('tb_1rm_bw', d, pv, 'Trap bar DL')}
-                ${strengthRow('bp_1rm_bw', d, pv, 'Bench press')}
-                ${d.imtp!=null ? mRow('imtp', d.imtp, pv?.imtp, `(${d.imtp_raw_N} N raw)`) : `<tr><td class="lbl">IMTP</td><td colspan="3" class="miss">— not tested</td></tr>`}
-              </tbody>
-            </table>
+            <div class="sec-heading">Strength — Lifts (×BW)</div>
+            <table><thead><tr><th>Test</th><th>Result</th><th>Test result status</th><th>Normative range</th><th>vs previous</th></tr></thead><tbody>
+              ${strengthRow('sq_1rm_bw',d,pv,'Back squat')}
+              ${strengthRow('tb_1rm_bw',d,pv,'Trap bar DL')}
+              ${strengthRow('bp_1rm_bw',d,pv,'Bench press')}
+            </tbody></table>
+          </div>
+
+          <div>
+            <div class="sec-heading">Strength — Force Plate</div>
+            <table><thead><tr><th>Test</th><th>Result</th><th>Test result status</th><th>Normative range</th><th>vs previous</th></tr></thead><tbody>
+              ${d.imtp!=null
+                ? mRow('imtp', d.imtp, pv?.imtp, `(${d.imtp_raw_N}N)`, true)
+                : `<tr><td class="lbl">IMTP <span style="font-size:10px;color:var(--text-muted)">(force plate)</span></td><td colspan="2" class="miss">— add imtp_N to unlock</td><td style="font-size:11px;color:var(--text-muted)">${NORMS.imtp.min}–${NORMS.imtp.max} ${NORMS.imtp.u}</td><td class="miss">—</td></tr>`}
+            </tbody></table>
           </div>
 
           <div>
             <div class="sec-heading">Speed (Vuemotion)</div>
-            <table>
-              <thead><tr><th>Test</th><th>Result</th><th>Test result status</th><th>vs previous</th></tr></thead>
-              <tbody>
-                ${mRow('sprint10', d.sprint10, pv?.sprint10)}
-                ${mRow('sprint20', d.sprint20, pv?.sprint20)}
-                ${mRow('max_vel',  d.max_vel,  pv?.max_vel)}
-              </tbody>
-            </table>
+            <table><thead><tr><th>Test</th><th>Result</th><th>Test result status</th><th>Normative range</th><th>vs previous</th></tr></thead><tbody>
+              ${mRow('sprint10', d.sprint10, pv?.sprint10)}
+              ${mRow('sprint20', d.sprint20, pv?.sprint20)}
+              ${mRow('max_vel',  d.max_vel,  pv?.max_vel)}
+            </tbody></table>
           </div>
 
         </div>
@@ -657,87 +603,247 @@ function renderMain() {
           <span style="margin-left:8px;font-size:11px;color:#7a8290"><span class="calc-badge">auto</span> = calculated from your raw input</span>
         </div>
       </div>
-
+      <div class="tc" data-t="feedback"><div id="feedbackContent"><div class="feedback-empty"><h3>Athlete Feedback</h3><p>Generate a personalised coach report and athlete message based on the latest test results.</p><button class="btn" onclick="generateFeedback()">Generate Feedback</button></div></div></div>
       <div class="tc" data-t="trends">
         <div class="charts-body">
           <div class="chart-grid" id="chartGrid"></div>
           <div class="chart-note">
-            <span>▪ Shaded region = normative band</span>
-            <span>▪ Dashed line = lower normative boundary</span>
+            <span>▪ Shaded band = normative range</span>
+            <span>▪ Dashed line = lower boundary</span>
             <span>▪ Sprint times: downward trend = improvement</span>
           </div>
         </div>
       </div>
-    </div>
-  `;
+    </div>`;
 }
 
 // ─── CHARTS ───────────────────────────────────────────────────────────────────
-let CI = {};
-
-function mkChart(id, labels, datasets, yLabel, nMin, nMax) {
-  if (CI[id]) { CI[id].destroy(); delete CI[id]; }
-  const el = document.getElementById(id);
-  if (!el) return;
-  const allV = datasets.flatMap(d=>d.data).filter(v=>v!=null&&!isNaN(v));
-  if (!allV.length) { el.parentElement.style.display='none'; return; }
+let CI={};
+function mkChart(id,labels,datasets,yLabel,nMin,nMax){
+  if(CI[id]){CI[id].destroy();delete CI[id];}
+  const el=document.getElementById(id); if(!el)return;
+  const allV=datasets.flatMap(d=>d.data).filter(v=>v!=null&&!isNaN(v));
+  if(!allV.length){el.parentElement.style.display='none';return;}
   el.parentElement.style.display='';
-  const dMin = Math.min(...allV,nMin), dMax = Math.max(...allV,nMax);
-  const pad  = (dMax-dMin)*0.22;
-  CI[id] = new Chart(el.getContext('2d'), {
+  const dMin=Math.min(...allV,nMin),dMax=Math.max(...allV,nMax),pad=(dMax-dMin)*0.22;
+  CI[id]=new Chart(el.getContext('2d'),{
     type:'line',
-    data:{ labels, datasets:[
-      { label:'_nu', data:labels.map(()=>nMax), borderColor:'transparent', backgroundColor:'rgba(26,86,219,0.07)', fill:'+1', pointRadius:0, tension:0, borderWidth:0 },
-      { label:'_nl', data:labels.map(()=>nMin), borderColor:'rgba(26,86,219,0.22)', backgroundColor:'transparent', fill:false, pointRadius:0, tension:0, borderDash:[4,3], borderWidth:1.5 },
+    data:{labels,datasets:[
+      {label:'_nu',data:labels.map(()=>nMax),borderColor:'transparent',backgroundColor:'rgba(26,86,219,0.07)',fill:'+1',pointRadius:0,tension:0,borderWidth:0},
+      {label:'_nl',data:labels.map(()=>nMin),borderColor:'rgba(26,86,219,0.22)',backgroundColor:'transparent',fill:false,pointRadius:0,tension:0,borderDash:[4,3],borderWidth:1.5},
       ...datasets
     ]},
     options:{
-      responsive:true, maintainAspectRatio:true, aspectRatio:1.9,
+      responsive:true,maintainAspectRatio:true,aspectRatio:1.9,
       plugins:{
-        legend:{ display:datasets.length>1, position:'bottom', labels:{ font:{size:10}, boxWidth:10, padding:8, filter:i=>!i.text.startsWith('_') }},
-        tooltip:{ filter:i=>!i.dataset.label.startsWith('_'), callbacks:{ label:c=>`${c.dataset.label}: ${c.parsed.y} ${yLabel}` }}
+        legend:{display:datasets.length>1,position:'bottom',labels:{font:{size:10},boxWidth:10,padding:8,filter:i=>!i.text.startsWith('_')}},
+        tooltip:{filter:i=>!i.dataset.label.startsWith('_'),callbacks:{label:c=>`${c.dataset.label}: ${c.parsed.y} ${yLabel}`}}
       },
       scales:{
-        x:{ ticks:{font:{size:10}}, grid:{display:false} },
-        y:{ min:+(dMin-pad).toFixed(2), max:+(dMax+pad).toFixed(2), ticks:{font:{size:10},maxTicksLimit:4}, grid:{color:'rgba(0,0,0,0.05)'}, title:{display:true,text:yLabel,font:{size:10}} }
+        x:{ticks:{font:{size:10}},grid:{display:false}},
+        y:{min:+(dMin-pad).toFixed(2),max:+(dMax+pad).toFixed(2),ticks:{font:{size:10},maxTicksLimit:4},grid:{color:'rgba(0,0,0,0.05)'},title:{display:true,text:yLabel,font:{size:10}}}
       }
     }
   });
 }
+function ls(col,dash=[]){return{borderColor:col,backgroundColor:col,fill:false,tension:0.3,pointRadius:4,pointHoverRadius:6,borderWidth:2,borderDash:dash,spanGaps:true};}
 
-function ls(col,dash=[]){ return {borderColor:col,backgroundColor:col,fill:false,tension:0.3,pointRadius:4,pointHoverRadius:6,borderWidth:2,borderDash:dash,spanGaps:true}; }
+function drawCharts(){
+  const a=athleteMap[selectedId]; if(!a||!a.sessions.length)return;
+  const sessions=[...a.sessions].reverse();
+  const lb=sessions.map(s=>s.test_date);
+  const ser=(key,col,dash=[])=>({label:NORMS[key]?.label||key,...ls(col,dash),data:sessions.map(s=>s[key])});
 
-function drawCharts() {
-  const a = athleteMap[selectedId];
-  if (!a||!a.sessions.length) return;
-  const sessions = [...a.sessions].reverse();
-  const lb = sessions.map(s=>s.test_date);
-
-  function ser(key,col,dash=[]){
-    return { label:NORMS[key]?.label||key, ...ls(col,dash), data:sessions.map(s=>s[key]) };
-  }
-
-  const charts = [
-    { id:'ch-jump',     title:'Broad jump / Triple hop',   u:'cm',   nk:'broad_jump',  datasets:[ser('broad_jump',CC[0]),ser('triple_hop',CC[2],[5,3])] },
-    { id:'ch-lsi',      title:'SL Broad jump LSI',         u:'%',    nk:'slbj_LSI',    datasets:[ser('slbj_LSI',CC[1])] },
-    { id:'ch-cmj',      title:'CMJ / SJ / DJ',             u:'cm',   nk:'cmj',         datasets:[ser('cmj',CC[0]),ser('sj',CC[1],[5,3]),ser('dj',CC[2],[2,2])] },
-    { id:'ch-rsi',      title:'RSI / EUR / DSI',           u:'ratio',nk:'rsi',         datasets:[ser('rsi',CC[0]),ser('eur',CC[1],[5,3]),ser('dsi',CC[2],[2,2])] },
-    { id:'ch-mas',      title:'MAS — 5-min time trial',    u:'m/s',  nk:'mas',         datasets:[ser('mas',CC[3])] },
-    { id:'ch-strength', title:'Strength ratios (×BW)',     u:'×BW',  nk:'sq_1rm_bw',   datasets:[ser('sq_1rm_bw',CC[4]),ser('tb_1rm_bw',CC[5],[5,3]),ser('bp_1rm_bw',CC[6],[2,2])] },
-    { id:'ch-sprint',   title:'Sprint times',              u:'s',    nk:'sprint10',    datasets:[ser('sprint10',CC[0]),ser('sprint20',CC[1],[5,3])] },
-    { id:'ch-vel',      title:'Max velocity — 20m fly',    u:'m/s',  nk:'max_vel',     datasets:[ser('max_vel',CC[4])] },
+  const charts=[
+    {id:'ch-broadjump',  title:'Broad jump',  u:'cm', nk:'broad_jump',  ds:[ser('broad_jump',CC[0])]},
+    {id:'ch-triplehop',  title:'Triple hop',  u:'cm', nk:'triple_hop',  ds:[ser('triple_hop',CC[2])]},
+    {id:'ch-lsi',    title:'SL Broad jump LSI',       u:'%',    nk:'slbj_LSI',    ds:[ser('slbj_LSI',CC[1])]},
+    {id:'ch-cmj',    title:'CMJ / SJ heights',        u:'cm',   nk:'cmj',         ds:[ser('cmj',CC[0]),ser('sj',CC[1],[5,3])]},
+    {id:'ch-eur',    title:'EUR (CMJ÷SJ)',             u:'ratio',nk:'eur',         ds:[ser('eur',CC[3])]},
+    {id:'ch-mrsi',   title:'CMJ mRSI',                u:'m/s',  nk:'cmj_mrsi',    ds:[ser('cmj_mrsi',CC[0])]},
+    {id:'ch-djrsi',  title:'DJ RSI',                  u:'m/s',  nk:'dj_rsi',      ds:[ser('dj_rsi',CC[4])]},
+    {id:'ch-mas',    title:'MAS — 5-min TT',          u:'m/s',  nk:'mas',         ds:[ser('mas',CC[3])]},
+    {id:'ch-squat', title:'Back squat (×BW)',    u:'×BW', nk:'sq_1rm_bw', ds:[ser('sq_1rm_bw',CC[4])]},
+    {id:'ch-tb',    title:'Trap bar DL (×BW)',   u:'×BW', nk:'tb_1rm_bw', ds:[ser('tb_1rm_bw',CC[5])]},
+    {id:'ch-bp',    title:'Bench press (×BW)',   u:'×BW', nk:'bp_1rm_bw', ds:[ser('bp_1rm_bw',CC[6])]},
+    {id:'ch-sprint10', title:'10m sprint', u:'s', nk:'sprint10', ds:[ser('sprint10',CC[0])]},
+    {id:'ch-sprint20', title:'20m sprint', u:'s', nk:'sprint20', ds:[ser('sprint20',CC[1])]},
+    {id:'ch-vel',    title:'Max velocity (20m fly)',  u:'m/s',  nk:'max_vel',     ds:[ser('max_vel',CC[4])]},
   ];
 
-  const grid = document.getElementById('chartGrid');
-  if (!grid) return;
-  grid.innerHTML = charts.map(ch=>`<div class="chart-wrap" id="wrap-${ch.id}"><div class="chart-title">${ch.title}</div><canvas id="${ch.id}"></canvas></div>`).join('');
-  charts.forEach(ch=>{
-    const n = NORMS[ch.nk];
-    if (n) mkChart(ch.id, lb, ch.datasets, ch.u, n.min, n.max);
+  const grid=document.getElementById('chartGrid'); if(!grid)return;
+  grid.innerHTML=charts.map(ch=>`<div class="chart-wrap" id="wrap-${ch.id}"><div class="chart-title">${ch.title}</div><canvas id="${ch.id}"></canvas></div>`).join('');
+  charts.forEach(ch=>{const n=NORMS[ch.nk];if(n)mkChart(ch.id,lb,ch.ds,ch.u,n.min,n.max);});
+}
+
+// ─── FEEDBACK GENERATION ──────────────────────────────────────────────────────
+function buildResultsForPrompt(a) {
+  const ld = buildLatestAcrossSessions(a.sessions);
+  const pv = a.sessions.length > 1 ? a.sessions[1] : null;
+  const bw = parseFloat(a.weight_kg);
+  const lines = [];
+
+  function dText(val, prev, lb) {
+    if (!val || !prev) return '';
+    const d = ((val-prev)/prev*100);
+    const imp = lb ? d<0 : d>0;
+    return ` (${imp?'improved':'regressed'} ${d>0?'+':''}${d.toFixed(1)}%)`;
+  }
+  function row(label, val, nk, prevVal, lb=false) {
+    if (val==null) return;
+    const s = bs(val, nk);
+    const status = s!==null ? SL[s] : 'no validated norm';
+    lines.push(`${label}: ${val} ${NORMS[nk]?.u||''} — ${status}${dText(val, prevVal, lb)}`);
+  }
+
+  lines.push('=== JUMP / POWER ===');
+  row('Broad jump',    ld.broad_jump, 'broad_jump', pv?.broad_jump);
+  if (ld.slbj_L)  lines.push(`SL broad jump L: ${ld.slbj_L}cm (no validated norm)`);
+  if (ld.slbj_R)  lines.push(`SL broad jump R: ${ld.slbj_R}cm (no validated norm)`);
+  if (ld.slbj_LSI!=null) {
+    const flag = ld.slbj_LSI < 90 ? ' WARNING: INJURY RISK FLAG (<90%)' : '';
+    const stat = bs(ld.slbj_LSI,'slbj_LSI')!==null ? SL[bs(ld.slbj_LSI,'slbj_LSI')] : '';
+    lines.push(`SL broad jump LSI: ${ld.slbj_LSI}% — ${stat}${flag}${dText(ld.slbj_LSI, pv?.slbj_LSI, false)}`);
+  }
+  row('Triple hop',   ld.triple_hop, 'triple_hop', pv?.triple_hop);
+  row('CMJ height',   ld.cmj,        'cmj',        pv?.cmj);
+  row('SJ height',    ld.sj,         'sj',         pv?.sj);
+  row('EUR',          ld.eur,        'eur',        pv?.eur);
+  row('CMJ mRSI',     ld.cmj_mrsi,   'cmj_mrsi',   pv?.cmj_mrsi);
+  row('DJ height',    ld.dj,         'dj',         pv?.dj);
+  row('DJ RSI',       ld.dj_rsi,     'dj_rsi',     pv?.dj_rsi);
+  row('DSI',          ld.dsi,        'dsi',        pv?.dsi);
+
+  lines.push('=== AEROBIC ===');
+  row('MAS',          ld.mas,        'mas',        pv?.mas);
+  row('Est. VO2max',  ld.vo2max,     'vo2max',     pv?.vo2max);
+
+  lines.push('=== STRENGTH ===');
+  if (ld.sq_1rm_bw!=null) lines.push(`Back squat: ${ld.sq_1rm_bw}xBW${ld.sq_1rm?' (est. 1RM '+ld.sq_1rm+'kg)':''} — ${SL[bs(ld.sq_1rm_bw,'sq_1rm_bw')]||''}${dText(ld.sq_1rm_bw, pv&&bw?+(pv.sq_1rm/bw).toFixed(2):null, false)}`);
+  if (ld.tb_1rm_bw!=null) lines.push(`Trap bar DL: ${ld.tb_1rm_bw}xBW${ld.tb_1rm?' (est. 1RM '+ld.tb_1rm+'kg)':''} — ${SL[bs(ld.tb_1rm_bw,'tb_1rm_bw')]||''}${dText(ld.tb_1rm_bw, pv&&bw?+(pv.tb_1rm/bw).toFixed(2):null, false)}`);
+  if (ld.bp_1rm_bw!=null) lines.push(`Bench press: ${ld.bp_1rm_bw}xBW${ld.bp_1rm?' (est. 1RM '+ld.bp_1rm+'kg)':''} — ${SL[bs(ld.bp_1rm_bw,'bp_1rm_bw')]||''}${dText(ld.bp_1rm_bw, pv&&bw?+(pv.bp_1rm/bw).toFixed(2):null, false)}`);
+  row('IMTP',         ld.imtp,       'imtp',       pv?.imtp);
+
+  lines.push('=== SPEED ===');
+  row('10m sprint',   ld.sprint10,   'sprint10',   pv?.sprint10, true);
+  row('20m sprint',   ld.sprint20,   'sprint20',   pv?.sprint20, true);
+  row('Max velocity', ld.max_vel,    'max_vel',    pv?.max_vel);
+
+  return lines.join('\n');
+}
+
+function buildCategoryStatusForPrompt(a) {
+  const ld = buildLatestAcrossSessions(a.sessions);
+  const cats = [
+    {name:'Jump/Power', keys:['broad_jump','slbj_LSI','triple_hop','cmj','sj','eur','cmj_mrsi','dj','dj_rsi','dsi']},
+    {name:'Aerobic',    keys:['mas','vo2max']},
+    {name:'Strength',   keys:['sq_1rm_bw','tb_1rm_bw','bp_1rm_bw','imtp']},
+    {name:'Speed',      keys:['sprint10','sprint20','max_vel']},
+  ];
+  return cats.map(cat => {
+    const scores = cat.keys.map(k=>bs(ld[k],k)).filter(s=>s!==null);
+    if (!scores.length) return `${cat.name}: No data available`;
+    const avg = scores.reduce((a,b)=>a+b,0)/scores.length;
+    return `${cat.name}: ${catLabel(avg).l}`;
+  }).join('\n');
+}
+
+function escHtml(str) {
+  return (str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function copyText(id, btn) {
+  const text = document.getElementById(id)?.innerText || '';
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = '✓ Copied';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = '⎘ Copy'; btn.classList.remove('copied'); }, 2000);
   });
 }
 
-// ─── INIT ─────────────────────────────────────────────────────────────────────
+function renderFeedback(a, coachNotes, athleteMsg) {
+  const tested   = a.sessions[0]?.test_date || '—';
+  const sessions = a.sessions.length;
+  document.getElementById('feedbackContent').innerHTML = `
+    <div class="feedback-wrap">
+      <div class="feedback-meta">Generated for ${a.name} · Last tested ${tested} · ${sessions} session${sessions!==1?'s':''}</div>
+      <div class="feedback-section">
+        <div class="feedback-section-head">
+          <div class="feedback-section-label">Coach Notes <span>Professional S&amp;C assessment — not shared with athlete</span></div>
+          <button class="copy-btn no-print" onclick="copyText('coachText', this)">⎘ Copy</button>
+        </div>
+        <div class="feedback-text" id="coachText">${escHtml(coachNotes)}</div>
+      </div>
+      <div class="feedback-section">
+        <div class="feedback-section-head">
+          <div class="feedback-section-label">Athlete Message <span>Ready to send directly to ${a.name}</span></div>
+          <button class="copy-btn no-print" onclick="copyText('athleteText', this)">⎘ Copy</button>
+        </div>
+        <div class="feedback-text" id="athleteText">${escHtml(athleteMsg)}</div>
+      </div>
+      <div class="regenerate-row no-print">
+        <button class="btn-sm" onclick="generateFeedback()">↺ Regenerate</button>
+      </div>
+    </div>`;
+}
+
+async function generateFeedback() {
+  const a = athleteMap[selectedId]; if (!a) return;
+  const fc = document.getElementById('feedbackContent'); if (!fc) return;
+
+  fc.innerHTML = `<div class="feedback-loading"><div class="spinner"></div><p>Generating feedback for ${a.name}…</p></div>`;
+
+  const resultsText  = buildResultsForPrompt(a);
+  const categoryText = buildCategoryStatusForPrompt(a);
+
+  const prompt = `You are an expert strength and conditioning coach for professional football (soccer) players.
+
+ATHLETE PROFILE:
+Name: ${a.name}
+Position: ${a.position||'Not specified'}
+Age: ${a.age||'?'} years | Height: ${a.height_cm||'?'}cm | Weight: ${a.weight_kg||'?'}kg
+Last tested: ${a.sessions[0]?.test_date||'?'} | Sessions on record: ${a.sessions.length}
+Injury history: ${a.injury_hx||'None reported'}
+
+PERFORMANCE CATEGORY STATUS:
+${categoryText}
+
+DETAILED TEST RESULTS (most recent value per metric, with benchmark status and % change from previous):
+${resultsText}
+
+TASK: Write two separate texts. Return ONLY valid JSON — no markdown, no preamble.
+
+{
+  "coach_notes": "3-4 paragraph professional S&C assessment. Cover: (1) overall physical readiness and standout findings, (2) category-by-category analysis with specific values and benchmark status, (3) notable improvements or regressions, (4) training priorities for the next block, (5) any injury-relevant flags. Use professional terminology. Be specific and actionable.",
+  "athlete_message": "2-3 paragraph message written directly to the athlete using first person (you/your). Start with something positive. Be honest about areas needing work but frame constructively. End with a clear focus for the next block. Plain language only — no test names or numbers, translate results into what they mean for performance on the pitch. Motivating and direct."
+}`;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 1000,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error.message);
+    const raw   = data.content.map(i => i.text||'').join('');
+    const clean = raw.replace(/```json|```/g,'').trim();
+    const parsed = JSON.parse(clean);
+    renderFeedback(a, parsed.coach_notes, parsed.athlete_message);
+  } catch(err) {
+    fc.innerHTML = `
+      <div class="feedback-empty">
+        <h3>Could not generate feedback</h3>
+        <p>${err.message||'Something went wrong. Please try again.'}</p>
+        <button class="btn" onclick="generateFeedback()">Try again</button>
+      </div>`;
+  }
+}
+
 loadData();
 </script>
 </body>
