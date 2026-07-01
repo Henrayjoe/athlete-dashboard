@@ -104,7 +104,18 @@
   .print-header { display:none; }
 
 
-  .feedback-wrap { padding:18px 20px; display:flex; flex-direction:column; gap:16px; }
+  .quadrant-body { padding:18px 20px; display:flex; flex-direction:column; gap:12px; }
+  .quadrant-controls { display:flex; align-items:center; gap:8px; }
+  .control-label { font-size:11px; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:.06em; margin-right:4px; }
+  .axis-btn { padding:5px 12px; font-size:12px; font-weight:500; background:var(--surface-alt); border:1px solid var(--border); border-radius:6px; cursor:pointer; color:var(--text-secondary); }
+  .axis-btn:hover { background:var(--accent-light); color:var(--accent); border-color:var(--accent); }
+  .axis-btn.active { background:var(--accent); color:#fff; border-color:var(--accent); }
+  .quadrant-legend { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+  .ql-dot { display:inline-block; width:10px; height:10px; border-radius:50%; }
+  .ql-you  { background:var(--accent); border:2px solid #fff; box-shadow:0 0 0 1px var(--accent); }
+  .ql-anon { background:#cbd5e1; border:1px solid #94a3b8; }
+
+
   .feedback-empty { display:flex; flex-direction:column; align-items:center; justify-content:center; padding:40px 20px; gap:14px; text-align:center; }
   .feedback-empty p { font-size:13px; color:var(--text-muted); max-width:360px; line-height:1.6; }
   .feedback-empty h3 { font-size:15px; font-weight:600; color:var(--text-secondary); }
@@ -479,7 +490,8 @@ function selectAthlete(id){selectedId=id;renderList();renderMain();}
 function switchTab(t){
   document.querySelectorAll('.tab').forEach(e=>e.classList.toggle('active',e.dataset.t===t));
   document.querySelectorAll('.tc').forEach(e=>e.classList.toggle('active',e.dataset.t===t));
-  if(t==='trends') setTimeout(drawCharts,60);
+  if(t==='trends')   setTimeout(drawCharts,60);
+  if(t==='quadrant') setTimeout(()=>drawQuadrant(currentStrengthAxis),60);
 }
 
 // ─── MAIN RENDER ──────────────────────────────────────────────────────────────
@@ -521,7 +533,8 @@ function renderMain(){
     <div class="tab-card">
       <div class="tabs">
         <div class="tab active" data-t="results" onclick="switchTab('results')">Latest Results</div>
-        <div class="tab" data-t="trends"  onclick="switchTab('trends')">Trend Charts</div>
+        <div class="tab" data-t="trends"   onclick="switchTab('trends')">Trend Charts</div>
+        <div class="tab" data-t="quadrant" onclick="switchTab('quadrant')">Strength-Speed</div>
         <div class="tab" data-t="feedback" onclick="switchTab('feedback')">Athlete Feedback</div>
       </div>
       <div class="tc active" data-t="results">
@@ -604,6 +617,22 @@ function renderMain(){
         </div>
       </div>
       <div class="tc" data-t="feedback"><div id="feedbackContent"><div class="feedback-empty"><h3>Athlete Feedback</h3><p>Generate a personalised coach report and athlete message based on the latest test results.</p><button class="btn" onclick="generateFeedback()">Generate Feedback</button></div></div></div>
+      <div class="tc" data-t="quadrant">
+        <div class="quadrant-body">
+          <div class="quadrant-controls">
+            <span class="control-label">Strength axis</span>
+            <button class="axis-btn active" onclick="setStrengthAxis('tb_1rm_bw',this)">Trap bar DL ×BW</button>
+            <button class="axis-btn" onclick="setStrengthAxis('sq_1rm_bw',this)">Back squat ×BW</button>
+          </div>
+          <div id="quadrantContainer"></div>
+          <div class="quadrant-legend">
+            <span class="ql-dot ql-you"></span><span>You (${a.name})</span>
+            <span class="ql-dot ql-anon"></span><span>Other athletes (anonymous)</span>
+            <span style="color:var(--text-muted);font-size:11px">Faded trail = previous sessions · Dividers at normative midpoint</span>
+          </div>
+        </div>
+      </div>
+
       <div class="tc" data-t="trends">
         <div class="charts-body">
           <div class="chart-grid" id="chartGrid"></div>
@@ -986,6 +1015,145 @@ function generateFeedback() {
 }
 
 loadData();
+
+// ─── STRENGTH-SPEED QUADRANT ─────────────────────────────────────────────────
+let currentStrengthAxis = 'tb_1rm_bw';
+
+function setStrengthAxis(key, btn) {
+  currentStrengthAxis = key;
+  document.querySelectorAll('.axis-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  drawQuadrant(key);
+}
+
+function drawQuadrant(strKey) {
+  const container = document.getElementById('quadrantContainer');
+  if (!container) return;
+
+  const velKey  = 'max_vel';
+  const strNorm = NORMS[strKey];
+  const velNorm = NORMS[velKey];
+  if (!strNorm || !velNorm) return;
+
+  const allAthletes = Object.values(athleteMap);
+  const points = [];
+
+  allAthletes.forEach(a => {
+    const ld  = buildLatestAcrossSessions(a.sessions);
+    const str = ld[strKey];
+    const vel = ld[velKey];
+    if (str == null || vel == null) return;
+
+    const isCurrent = a.id === selectedId;
+    const ini = a.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+
+    const trail = [];
+    if (isCurrent && a.sessions.length > 1) {
+      a.sessions.slice(1).forEach(s => {
+        const sv = s[velKey], ss = s[strKey];
+        if (sv != null && ss != null) trail.push({ vel:sv, str:ss, date:s.test_date });
+      });
+      trail.reverse();
+    }
+
+    points.push({ id:a.id, name:a.name, ini, str, vel, isCurrent, trail });
+  });
+
+  const W=580, H=460, ML=56, MR=24, MT=24, MB=56;
+  const CW=W-ML-MR, CH=H-MT-MB;
+
+  const strPad=(strNorm.max-strNorm.min)*0.7, velPad=(velNorm.max-velNorm.min)*1.0;
+  const xMin=Math.max(0, strNorm.min-strPad), xMax=strNorm.max+strPad;
+  const yMin=Math.max(0, velNorm.min-velPad), yMax=velNorm.max+velPad;
+
+  const sx = v => ML+(v-xMin)/(xMax-xMin)*CW;
+  const sy = v => MT+CH-(v-yMin)/(yMax-yMin)*CH;
+
+  const xDiv=(strNorm.min+strNorm.max)/2, yDiv=(velNorm.min+velNorm.max)/2;
+  const xDivPx=sx(xDiv), yDivPx=sy(yDiv);
+
+  let s = `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-height:440px;font-family:-apple-system,BlinkMacSystemFont,sans-serif">`;
+
+  // Quadrant backgrounds
+  [[ML,MT,xDivPx-ML,yDivPx-MT,'#fff8e1'],[xDivPx,MT,W-MR-xDivPx,yDivPx-MT,'#f0fdf4'],
+   [ML,yDivPx,xDivPx-ML,H-MB-yDivPx,'#fef2f2'],[xDivPx,yDivPx,W-MR-xDivPx,H-MB-yDivPx,'#eff6ff']]
+    .forEach(([x,y,w,h,fill]) => { s += `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${fill}" opacity="0.75"/>`; });
+
+  // Norm band overlays
+  s += `<rect x="${sx(strNorm.min)}" y="${MT}" width="${sx(strNorm.max)-sx(strNorm.min)}" height="${CH}" fill="rgba(26,86,219,0.04)"/>`;
+  s += `<rect x="${ML}" y="${sy(velNorm.max)}" width="${CW}" height="${sy(velNorm.min)-sy(velNorm.max)}" fill="rgba(26,86,219,0.04)"/>`;
+
+  // Norm boundary dashes
+  [sx(strNorm.min),sx(strNorm.max)].forEach(px => { s += `<line x1="${px}" y1="${MT}" x2="${px}" y2="${H-MB}" stroke="rgba(26,86,219,0.2)" stroke-width="1" stroke-dasharray="3,3"/>`; });
+  [sy(velNorm.min),sy(velNorm.max)].forEach(py => { s += `<line x1="${ML}" y1="${py}" x2="${W-MR}" y2="${py}" stroke="rgba(26,86,219,0.2)" stroke-width="1" stroke-dasharray="3,3"/>`; });
+
+  // Main dividers
+  s += `<line x1="${xDivPx}" y1="${MT}" x2="${xDivPx}" y2="${H-MB}" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="6,3"/>`;
+  s += `<line x1="${ML}" y1="${yDivPx}" x2="${W-MR}" y2="${yDivPx}" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="6,3"/>`;
+
+  // Border
+  s += `<rect x="${ML}" y="${MT}" width="${CW}" height="${CH}" fill="none" stroke="#e4e6ea" stroke-width="1"/>`;
+
+  // Quadrant labels
+  [
+    ['Speed Dominant','→ Prioritise strength', ML+8,    MT+16,   'start'],
+    ['Well-rounded',  '→ Maintain & refine',   W-MR-8,  MT+16,   'end'  ],
+    ['Developing',    '→ Foundation needed',   ML+8,    H-MB-8,  'start'],
+    ['Force Dominant','→ Prioritise speed',    W-MR-8,  H-MB-8,  'end'  ],
+  ].forEach(([title,sub,x,y,anchor]) => {
+    s += `<text x="${x}" y="${y}"    font-size="10" font-weight="600" fill="#64748b" text-anchor="${anchor}">${title}</text>`;
+    s += `<text x="${x}" y="${y+13}" font-size="9"  fill="#94a3b8" text-anchor="${anchor}">${sub}</text>`;
+  });
+
+  // Axis ticks
+  for(let i=0;i<=5;i++){
+    const vx=xMin+(xMax-xMin)*i/5, px=sx(vx);
+    s += `<line x1="${px}" y1="${H-MB}" x2="${px}" y2="${H-MB+4}" stroke="#94a3b8" stroke-width="1"/>`;
+    s += `<text x="${px}" y="${H-MB+15}" font-size="9" text-anchor="middle" fill="#7a8290">${vx.toFixed(1)}</text>`;
+    const vy=yMin+(yMax-yMin)*i/5, py=sy(vy);
+    s += `<line x1="${ML-4}" y1="${py}" x2="${ML}" y2="${py}" stroke="#94a3b8" stroke-width="1"/>`;
+    s += `<text x="${ML-7}" y="${py+3}" font-size="9" text-anchor="end" fill="#7a8290">${vy.toFixed(1)}</text>`;
+  }
+
+  // Axis labels
+  s += `<text x="${ML+CW/2}" y="${H-6}" font-size="11" text-anchor="middle" fill="#444c56" font-weight="500">${strNorm.label} (${strNorm.u})</text>`;
+  s += `<text x="11" y="${MT+CH/2}" font-size="11" text-anchor="middle" fill="#444c56" font-weight="500" transform="rotate(-90,11,${MT+CH/2})">${velNorm.label} (${velNorm.u})</text>`;
+
+  // Anonymous other athletes
+  points.filter(p=>!p.isCurrent).forEach(p => {
+    s += `<circle cx="${sx(p.str)}" cy="${sy(p.vel)}" r="6" fill="#cbd5e1" stroke="#94a3b8" stroke-width="1" opacity="0.65"/>`;
+  });
+
+  // Selected athlete
+  const cur = points.find(p=>p.isCurrent);
+  if (cur) {
+    // Trail
+    if (cur.trail.length > 0) {
+      const allT=[...cur.trail,{str:cur.str,vel:cur.vel}];
+      s += `<path d="${allT.map((p,i)=>`${i===0?'M':'L'}${sx(p.str).toFixed(1)},${sy(p.vel).toFixed(1)}`).join(' ')}" fill="none" stroke="#1a56db" stroke-width="1.5" stroke-dasharray="4,3" opacity="0.35"/>`;
+      cur.trail.forEach(p => {
+        s += `<circle cx="${sx(p.str)}" cy="${sy(p.vel)}" r="5" fill="#bfdbfe" stroke="#1a56db" stroke-width="1.5" opacity="0.55"/>`;
+      });
+    }
+    // Main dot
+    const dotCol = sidebarCol(athleteMap[selectedId]?.sessions[0]);
+    const px=sx(cur.str), py=sy(cur.vel);
+    s += `<circle cx="${px}" cy="${py}" r="12" fill="${dotCol}" stroke="#fff" stroke-width="2.5"/>`;
+    s += `<text x="${px}" y="${py+4}" font-size="9" text-anchor="middle" fill="#fff" font-weight="700">${cur.ini}</text>`;
+    // Label — smart positioning to avoid edges
+    const lx = px+16 > W-MR-90 ? px-16 : px+16;
+    const la = px+16 > W-MR-90 ? 'end' : 'start';
+    const ly = py-10 < MT+20 ? py+22 : py-10;
+    s += `<text x="${lx}" y="${ly}"    font-size="11" text-anchor="${la}" fill="#0d1117" font-weight="600">${cur.name}</text>`;
+    s += `<text x="${lx}" y="${ly+13}" font-size="10" text-anchor="${la}" fill="#7a8290">${cur.str}${strNorm.u} · ${cur.vel} m/s</text>`;
+  } else {
+    s += `<text x="${ML+CW/2}" y="${MT+CH/2-8}" font-size="13" text-anchor="middle" fill="#7a8290">No data available for this athlete.</text>`;
+    s += `<text x="${ML+CW/2}" y="${MT+CH/2+12}" font-size="11" text-anchor="middle" fill="#94a3b8">Add ${strNorm.label} and max velocity to your Google Sheet.</text>`;
+  }
+
+  s += '</svg>';
+  container.innerHTML = s;
+}
 </script>
 </body>
 </html>
