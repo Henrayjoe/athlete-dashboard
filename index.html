@@ -787,61 +787,202 @@ function renderFeedback(a, coachNotes, athleteMsg) {
     </div>`;
 }
 
-async function generateFeedback() {
+// ─── TEMPLATE-BASED FEEDBACK GENERATION ─────────────────────────────────────
+const CAT_KEYS = {
+  jump:     ['broad_jump','slbj_LSI','triple_hop','cmj','sj','eur','cmj_mrsi','dj','dj_rsi','dsi'],
+  aero:     ['mas','vo2max'],
+  strength: ['sq_1rm_bw','tb_1rm_bw','bp_1rm_bw','imtp'],
+  speed:    ['sprint10','sprint20','max_vel'],
+};
+const CAT_PLAIN = {
+  jump:     'explosive power and jump ability',
+  aero:     'aerobic fitness and running capacity',
+  strength: 'overall strength levels',
+  speed:    'sprint speed and acceleration',
+};
+const CAT_FOCUS = {
+  jump:     'explosive power — jumping, bounding, and sprint-specific plyometrics',
+  aero:     'aerobic base development — consistent high-intensity running and MAS-based interval sessions',
+  strength: 'maximal strength — prioritising heavy compound lifts with progressive overload',
+  speed:    'speed development — sprint mechanics, acceleration work, and max velocity exposure',
+};
+const CAT_COACH_REC = {
+  jump:     'Plyometric volume and specificity should be reviewed. Consider bilateral and unilateral jump progressions to address the power deficit.',
+  aero:     'Aerobic base development warrants prioritisation. Structured MAS-based interval sessions and repeated high-intensity running should be the central stimulus.',
+  strength: 'Maximal strength development is the primary training priority for this athlete. Progressive overload in squat and trap bar deadlift should anchor the programme.',
+  speed:    'Sprint mechanics and acceleration development require targeted attention. Repeated sprint sessions and max velocity exposure should be built into the weekly structure.',
+};
+
+function analyseFeedbackData(a) {
+  const ld = buildLatestAcrossSessions(a.sessions);
+  const pv = a.sessions.length > 1 ? a.sessions[1] : null;
+  const bw = parseFloat(a.weight_kg);
+
+  // Category scores
+  const catAvg = {};
+  Object.keys(CAT_KEYS).forEach(cat => {
+    const scores = CAT_KEYS[cat].map(k => bs(ld[k], k)).filter(s => s !== null);
+    catAvg[cat] = scores.length ? +(scores.reduce((a,b)=>a+b,0)/scores.length).toFixed(2) : null;
+  });
+
+  // All scored metrics
+  const metrics = [];
+  Object.keys(NORMS).forEach(k => {
+    const val = ld[k]; if (val == null) return;
+    const score = bs(val, k); if (score === null) return;
+    const prevVal = pv ? pv[k] : null;
+    const changePct = (prevVal && prevVal !== 0) ? ((val - prevVal) / Math.abs(prevVal) * 100) : null;
+    const improved = changePct !== null ? (NORMS[k].lb ? changePct < -0.5 : changePct > 0.5) : null;
+    metrics.push({ k, val, score, changePct, improved, label: NORMS[k].label, u: NORMS[k].u, lb: NORMS[k].lb });
+  });
+
+  // Sort categories best → worst
+  const rankedCats = Object.keys(catAvg).filter(c => catAvg[c] !== null).sort((a,b) => catAvg[b] - catAvg[a]);
+  const best  = rankedCats[0] || null;
+  const worst = rankedCats[rankedCats.length - 1] || null;
+
+  const improved   = metrics.filter(m => m.improved === true).sort((a,b) => Math.abs(b.changePct) - Math.abs(a.changePct));
+  const regressed  = metrics.filter(m => m.improved === false).sort((a,b) => Math.abs(b.changePct) - Math.abs(a.changePct));
+  const exceedsCats = rankedCats.filter(c => catAvg[c] >= 3.5);
+  const onTrackCats = rankedCats.filter(c => catAvg[c] >= 2.5 && catAvg[c] < 3.5);
+  const concernCats = rankedCats.filter(c => catAvg[c] < 2.5);
+  const lsiFlag  = ld.slbj_LSI != null && ld.slbj_LSI < 90;
+  const hasPrev  = a.sessions.length > 1;
+
+  return { ld, pv, bw, catAvg, rankedCats, best, worst, metrics, improved, regressed, exceedsCats, onTrackCats, concernCats, lsiFlag, hasPrev };
+}
+
+function buildCoachNotes(a, f) {
+  const { ld, pv, catAvg, best, worst, improved, regressed, exceedsCats, concernCats, lsiFlag, hasPrev } = f;
+  const date     = a.sessions[0]?.test_date || '—';
+  const prevDate = pv?.test_date;
+  const paras    = [];
+
+  // ── Para 1: Profile overview ──
+  const validCats = Object.values(catAvg).filter(s => s !== null);
+  const overall   = validCats.length ? validCats.reduce((a,b)=>a+b,0)/validCats.length : null;
+  const overallLbl = overall !== null ? catLabel(overall).l : 'insufficient data to rate';
+  let p1 = `${a.name} (${a.position||'—'}, ${a.age||'—'} yrs, ${a.weight_kg||'—'} kg) most recently tested ${date} with ${a.sessions.length} session${a.sessions.length!==1?'s':''} on record. Overall physical profile: ${overallLbl}.`;
+  if (a.injury_hx) p1 += ` Injury history: ${a.injury_hx}.`;
+  if (!hasPrev)    p1 += ' Note: first session recorded — inter-session comparison not yet available.';
+  paras.push(p1);
+
+  // ── Para 2: Category breakdown ──
+  const catLines = [];
+  ['jump','aero','strength','speed'].forEach(cat => {
+    if (catAvg[cat] === null) return;
+    const cl = catLabel(catAvg[cat]);
+    // Find best and worst metric in this category that have a score
+    const catMetrics = CAT_KEYS[cat]
+      .map(k => ({ k, val: ld[k], score: bs(ld[k], k) }))
+      .filter(m => m.val != null && m.score !== null)
+      .sort((a,b) => b.score - a.score);
+    let line = `${CAT_LABELS[cat]}: ${cl.l}.`;
+    if (catMetrics.length > 0) {
+      const top = catMetrics[0];
+      if (top.score >= 3) line += ` ${NORMS[top.k].label} is a highlight at ${top.val} ${NORMS[top.k].u} (${SL[top.score]}).`;
+    }
+    if (catMetrics.length > 1) {
+      const bot = catMetrics[catMetrics.length - 1];
+      if (bot.score <= 1) line += ` ${NORMS[bot.k].label} at ${bot.val} ${NORMS[bot.k].u} is a concern (${SL[bot.score]}).`;
+    }
+    catLines.push(line);
+  });
+  if (catLines.length) paras.push(catLines.join(' '));
+
+  // ── Para 3: Progress since last session ──
+  if (hasPrev && (improved.length || regressed.length)) {
+    let p3 = `Progress since ${prevDate}: `;
+    if (improved.length) {
+      const names = improved.slice(0,2).map(m => `${m.label} (${m.changePct > 0 ? '+' : ''}${m.changePct.toFixed(1)}%)`);
+      p3 += `Improvements noted in ${names.join(' and ')}. `;
+    }
+    if (regressed.length) {
+      const names = regressed.slice(0,2).map(m => `${m.label} (${m.changePct.toFixed(1)}%)`);
+      p3 += `Regressions observed in ${names.join(' and ')} — monitor whether this reflects fatigue, detraining, or measurement variance.`;
+    }
+    paras.push(p3.trim());
+  }
+
+  // ── Para 4: Priorities and flags ──
+  let p4 = '';
+  if (worst && catAvg[worst] !== null && catAvg[worst] < 2.5) {
+    p4 += `Priority training focus: ${CAT_LABELS[worst]} (${catLabel(catAvg[worst]).l}). ${CAT_COACH_REC[worst]}`;
+  } else if (worst) {
+    p4 += `No category is in critical deficit. Continue general programme progression with emphasis on maintaining ${CAT_LABELS[best]||'current strengths'} while driving adaptation in ${CAT_LABELS[worst]}.`;
+  }
+  if (lsiFlag) p4 += ` LSI below 90% — limb asymmetry flag raised. Clinical review and targeted unilateral intervention are recommended before return-to-full-training progression.`;
+  if (p4) paras.push(p4.trim());
+
+  return paras.join('\n\n');
+}
+
+function buildAthleteMessage(a, f) {
+  const { catAvg, best, worst, improved, regressed, exceedsCats, concernCats, lsiFlag, hasPrev } = f;
+  const firstName = a.name.split(' ')[0];
+  const paras = [];
+
+  // ── Para 1: Positive opening ──
+  let p1 = '';
+  const goodCats = Object.keys(catAvg).filter(c => catAvg[c] !== null && catAvg[c] >= 3.0).sort((a,b) => catAvg[b] - catAvg[a]);
+  if (goodCats.length > 0 && improved.length > 0) {
+    p1 = `Good work in the testing. Your ${CAT_PLAIN[goodCats[0]]} is a real strength in your profile right now`;
+    if (goodCats.length > 1) p1 += `, and your ${CAT_PLAIN[goodCats[1]]} is also tracking well`;
+    p1 += '. ';
+    p1 += `You\'ve also shown clear improvement since your last session, which shows the training is working — keep that consistency going.`;
+  } else if (goodCats.length > 0) {
+    p1 = `Your testing results show some clear positives. Your ${CAT_PLAIN[goodCats[0]]} is a genuine strength`;
+    if (goodCats.length > 1) p1 += `, and ${CAT_PLAIN[goodCats[1]]} is tracking solidly too`;
+    p1 += `. These are areas you can feel confident about going into the next block.`;
+  } else if (improved.length > 0) {
+    p1 = `The most important thing from this testing block is that you\'ve improved since last time. Progress is progress — the work you\'re putting in is showing up in the numbers. Keep the consistency going.`;
+  } else {
+    p1 = `Your testing results give us a clear baseline to work from. There are no red flags, and you have a solid foundation to build on going into the next block.`;
+  }
+  paras.push(p1.trim());
+
+  // ── Para 2: Honest about areas needing work ──
+  let p2 = '';
+  if (concernCats.length > 0 || lsiFlag || regressed.length > 0) {
+    if (worst && catAvg[worst] !== null && catAvg[worst] < 2.5) {
+      p2 = `The area that needs the most focus right now is your ${CAT_PLAIN[worst]}. It\'s not where we need it to be at this level, and it\'s the priority for the next block. `;
+    }
+    if (regressed.length > 0 && hasPrev) {
+      p2 += `There are a couple of areas that have dipped slightly since your last session. Nothing to be alarmed about, but it\'s a signal that we may need to look at your recovery or training load. `;
+    }
+    if (lsiFlag) {
+      p2 += `There\'s also a noticeable difference in strength and power between your left and right leg right now. This is something we\'ll be targeting directly — leg imbalances can affect both your performance on the pitch and your injury risk, so it\'s important we address it.`;
+    }
+  }
+  if (p2) paras.push(p2.trim());
+
+  // ── Para 3: Clear focus ──
+  let p3 = '';
+  if (worst) {
+    p3 = `For the next training block, the focus is ${CAT_FOCUS[worst]}. `;
+    if (goodCats.length > 0 && goodCats[0] !== worst) {
+      p3 += `Keep maintaining your ${CAT_PLAIN[goodCats[0]]} alongside this — we don\'t want that to drop while we bring the other areas up. `;
+    }
+  } else {
+    p3 = `For the next block, the goal is to keep building across the board. `;
+  }
+  p3 += `Stay consistent with your sessions, look after your recovery, and the improvements will follow.`;
+  paras.push(p3.trim());
+
+  return paras.join('\n\n');
+}
+
+function generateFeedback() {
   const a = athleteMap[selectedId]; if (!a) return;
   const fc = document.getElementById('feedbackContent'); if (!fc) return;
-
-  fc.innerHTML = `<div class="feedback-loading"><div class="spinner"></div><p>Generating feedback for ${a.name}…</p></div>`;
-
-  const resultsText  = buildResultsForPrompt(a);
-  const categoryText = buildCategoryStatusForPrompt(a);
-
-  const prompt = `You are an expert strength and conditioning coach for professional football (soccer) players.
-
-ATHLETE PROFILE:
-Name: ${a.name}
-Position: ${a.position||'Not specified'}
-Age: ${a.age||'?'} years | Height: ${a.height_cm||'?'}cm | Weight: ${a.weight_kg||'?'}kg
-Last tested: ${a.sessions[0]?.test_date||'?'} | Sessions on record: ${a.sessions.length}
-Injury history: ${a.injury_hx||'None reported'}
-
-PERFORMANCE CATEGORY STATUS:
-${categoryText}
-
-DETAILED TEST RESULTS (most recent value per metric, with benchmark status and % change from previous):
-${resultsText}
-
-TASK: Write two separate texts. Return ONLY valid JSON — no markdown, no preamble.
-
-{
-  "coach_notes": "3-4 paragraph professional S&C assessment. Cover: (1) overall physical readiness and standout findings, (2) category-by-category analysis with specific values and benchmark status, (3) notable improvements or regressions, (4) training priorities for the next block, (5) any injury-relevant flags. Use professional terminology. Be specific and actionable.",
-  "athlete_message": "2-3 paragraph message written directly to the athlete using first person (you/your). Start with something positive. Be honest about areas needing work but frame constructively. End with a clear focus for the next block. Plain language only — no test names or numbers, translate results into what they mean for performance on the pitch. Motivating and direct."
-}`;
-
-  try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-6',
-        max_tokens: 1000,
-        messages: [{ role: 'user', content: prompt }]
-      })
-    });
-    const data = await res.json();
-    if (data.error) throw new Error(data.error.message);
-    const raw   = data.content.map(i => i.text||'').join('');
-    const clean = raw.replace(/```json|```/g,'').trim();
-    const parsed = JSON.parse(clean);
-    renderFeedback(a, parsed.coach_notes, parsed.athlete_message);
-  } catch(err) {
-    fc.innerHTML = `
-      <div class="feedback-empty">
-        <h3>Could not generate feedback</h3>
-        <p>${err.message||'Something went wrong. Please try again.'}</p>
-        <button class="btn" onclick="generateFeedback()">Try again</button>
-      </div>`;
+  if (!a.sessions.length) {
+    fc.innerHTML = `<div class="feedback-empty"><h3>No data yet</h3><p>Add test sessions for ${a.name} to generate feedback.</p></div>`;
+    return;
   }
+  const f = analyseFeedbackData(a);
+  const coachNotes  = buildCoachNotes(a, f);
+  const athleteMsg  = buildAthleteMessage(a, f);
+  renderFeedback(a, coachNotes, athleteMsg);
 }
 
 loadData();
