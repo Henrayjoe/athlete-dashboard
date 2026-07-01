@@ -1065,6 +1065,31 @@ function _buildAndOpenPrintReport(a, chartImages, quadrantSVG) {
   const logoSrc = document.querySelector('.sb-brand img')?.src || '';
   const today = new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'});
 
+  // Build a date map: for each metric key, which session date was the source?
+  const dateSrc = {};
+  Object.keys(NORMS).forEach(k => {
+    for (const s of a.sessions) {
+      if (s[k] != null) { dateSrc[k] = s.test_date; break; }
+    }
+  });
+  // Also map derived keys back to the session that provided the raw input
+  ['slbj_L','slbj_R','slbj_LSI'].forEach(k => {
+    for (const s of a.sessions) {
+      if (s.slbj_L != null || s.slbj_R != null) { dateSrc[k] = s.test_date; break; }
+    }
+  });
+  ['sq_1rm_bw','tb_1rm_bw','bp_1rm_bw'].forEach((k,i) => {
+    const rawKey = ['sq_1rm','tb_1rm','bp_1rm'][i];
+    for (const s of a.sessions) {
+      if (s[rawKey] != null) { dateSrc[k] = s.test_date; break; }
+    }
+  });
+  // EUR and MAS/VO2 derive from CMJ+SJ and TT distance
+  for (const s of a.sessions) { if (s.cmj!=null&&s.sj!=null){ dateSrc['eur']=s.test_date; break; } }
+  for (const s of a.sessions) { if (s.mas!=null){ dateSrc['mas']=dateSrc['vo2max']=s.test_date; break; } }
+
+  const latestDate = a.sessions[0]?.test_date;
+
   function getCatStatus(keys) {
     const scores = keys.map(k=>bs(ld[k],k)).filter(s=>s!==null);
     if (!scores.length) return null;
@@ -1099,9 +1124,11 @@ function _buildAndOpenPrintReport(a, chartImages, quadrantSVG) {
         : `<span style="color:#666">${m.nMin}–${m.nMax} ${m.u}</span>`;
       const autoTag = m.auto ? '<span style="font-size:9px;background:#eef2ff;color:#4a6fa5;border-radius:3px;padding:1px 4px;margin-left:5px">auto</span>' : '';
       const subSpan = m.sub ? `<br><span style="font-size:9.5px;color:#999">${m.sub}</span>` : '';
+      const dateSpan = m.date && m.date !== latestDate
+        ? `<br><span style="font-size:9px;color:#bbb">Tested ${m.date}</span>` : '';
       return `<tr style="background:${i%2===0?'#fff':'#fafafa'}">
         <td style="padding:6px 10px;color:#444;font-size:10.5px;border-bottom:1px solid #f0f0f0">${m.label}${autoTag}</td>
-        <td style="padding:6px 10px;font-size:11.5px;font-weight:700;border-bottom:1px solid #f0f0f0">${m.val}<span style="font-size:10px;font-weight:400;color:#999;margin-left:3px">${m.u}</span>${subSpan}</td>
+        <td style="padding:6px 10px;font-size:11.5px;font-weight:700;border-bottom:1px solid #f0f0f0">${m.val}<span style="font-size:10px;font-weight:400;color:#999;margin-left:3px">${m.u}</span>${subSpan}${dateSpan}</td>
         <td style="padding:6px 10px;border-bottom:1px solid #f0f0f0">${badge(m.score, m.noNorm)}</td>
         <td style="padding:6px 10px;font-size:10.5px;border-bottom:1px solid #f0f0f0">${normStr}</td>
         <td style="padding:6px 10px;font-size:10.5px;text-align:right;border-bottom:1px solid #f0f0f0">${pctHtml(m.val,m.prevVal,m.lb)}</td>
@@ -1125,14 +1152,14 @@ function _buildAndOpenPrintReport(a, chartImages, quadrantSVG) {
   function mk(nk, val, prevVal, sub='', auto=false) {
     if (val==null) return {val:null};
     const n=NORMS[nk]||{};
-    return { val, prevVal, label:n.label||nk, u:n.u||'', score:bs(val,nk), lb:n.lb||false, noNorm:n.noNorm||false, nMin:n.min, nMax:n.max, sub, auto };
+    return { val, prevVal, label:n.label||nk, u:n.u||'', score:bs(val,nk), lb:n.lb||false, noNorm:n.noNorm||false, nMin:n.min, nMax:n.max, sub, auto, date:dateSrc[nk]||null };
   }
   function strMk(nk, rawPfx) {
     const val=ld[nk], prev=pv?pv[nk]:null;
     if (val==null) return {val:null};
     const n=NORMS[nk]; const kg=ld[rawPfx+'_kg_raw'], reps=ld[rawPfx+'_reps_raw'], rm1=ld[rawPfx+'_1rm'];
     const sub=reps&&reps>1?`${kg}kg×${reps} → est. 1RM ${rm1}kg`:rm1?`1RM ${rm1}kg`:'';
-    return { val, prevVal:prev, label:n.label, u:n.u, score:bs(val,nk), lb:false, noNorm:false, nMin:n.min, nMax:n.max, sub, auto:true };
+    return { val, prevVal:prev, label:n.label, u:n.u, score:bs(val,nk), lb:false, noNorm:false, nMin:n.min, nMax:n.max, sub, auto:true, date:dateSrc[nk]||null };
   }
 
   const lsi=(ld.slbj_L!=null&&ld.slbj_R!=null)?+(Math.min(ld.slbj_L,ld.slbj_R)/Math.max(ld.slbj_L,ld.slbj_R)*100).toFixed(1):null;
@@ -1141,9 +1168,9 @@ function _buildAndOpenPrintReport(a, chartImages, quadrantSVG) {
 
   const jumpM=[
     mk('broad_jump',ld.broad_jump,pv?.broad_jump),
-    ld.slbj_L!=null?{val:ld.slbj_L,prevVal:pv?.slbj_L,label:'SL broad jump — L',u:'cm',score:null,noNorm:true,lb:false,sub:''}:{val:null},
-    ld.slbj_R!=null?{val:ld.slbj_R,prevVal:pv?.slbj_R,label:'SL broad jump — R',u:'cm',score:null,noNorm:true,lb:false,sub:''}:{val:null},
-    lsi!=null?{val:lsi,prevVal:lsiPv,label:'SL broad jump LSI'+(lsiFlag?' ⚠':''),u:'%',score:lsiFlag?null:bs(lsi,'slbj_LSI'),noNorm:false,lb:false,nMin:90,nMax:100,sub:'',auto:true}:{val:null},
+    ld.slbj_L!=null?{val:ld.slbj_L,prevVal:pv?.slbj_L,label:'SL broad jump — L',u:'cm',score:null,noNorm:true,lb:false,sub:'',date:dateSrc['slbj_L']||null}:{val:null},
+    ld.slbj_R!=null?{val:ld.slbj_R,prevVal:pv?.slbj_R,label:'SL broad jump — R',u:'cm',score:null,noNorm:true,lb:false,sub:'',date:dateSrc['slbj_R']||null}:{val:null},
+    lsi!=null?{val:lsi,prevVal:lsiPv,label:'SL broad jump LSI'+(lsiFlag?' ⚠':''),u:'%',score:lsiFlag?null:bs(lsi,'slbj_LSI'),noNorm:false,lb:false,nMin:90,nMax:100,sub:'',auto:true,date:dateSrc['slbj_LSI']||null}:{val:null},
     mk('triple_hop',ld.triple_hop,pv?.triple_hop),
     mk('cmj',ld.cmj,pv?.cmj),
     mk('sj',ld.sj,pv?.sj),
