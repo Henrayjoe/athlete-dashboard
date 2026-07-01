@@ -522,7 +522,7 @@ function renderMain(){
         <p class="pmeta">${a.position||'—'} · ${a.age||'—'} yrs · ${a.height_cm||'—'} cm · ${a.weight_kg||'—'} kg · Last tested ${d.test_date||'—'}</p>
         <div class="ptags"><span class="ptag">Remote coaching</span><span class="ptag">Professional football / futsal</span><span class="ptag">${a.sessions.length} session${a.sessions.length!==1?'s':''}</span>${inj}</div>
       </div>
-      <button class="btn-sm no-print" style="margin-left:auto;align-self:flex-start" onclick="window.print()">⬇ Save as PDF</button>
+      <button class="btn-sm no-print" style="margin-left:auto;align-self:flex-start" onclick="generatePrintReport()">⬇ Save as PDF</button>
     </div>
     <div>
       <div class="sec-heading">Performance category status</div>
@@ -1012,6 +1012,213 @@ function generateFeedback() {
   const coachNotes  = buildCoachNotes(a, f);
   const athleteMsg  = buildAthleteMessage(a, f);
   renderFeedback(a, coachNotes, athleteMsg);
+}
+
+// ─── PRINT REPORT GENERATOR ──────────────────────────────────────────────────
+function generatePrintReport() {
+  const a = athleteMap[selectedId];
+  if (!a || !a.sessions.length) { alert('No data available to print.'); return; }
+
+  const ld    = buildLatestAcrossSessions(a.sessions);
+  const pv    = a.sessions.length > 1 ? a.sessions[1] : null;
+  const bw    = parseFloat(a.weight_kg);
+  const logoSrc = document.querySelector('.sb-brand img')?.src || '';
+  const today = new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'});
+
+  // Category status helper
+  function getCatStatus(keys) {
+    const scores = keys.map(k=>bs(ld[k],k)).filter(s=>s!==null);
+    if (!scores.length) return null;
+    return catLabel(scores.reduce((a,b)=>a+b,0)/scores.length);
+  }
+  const catDefs = [
+    { name:'Jump / Power',  keys:['broad_jump','slbj_LSI','triple_hop','cmj','sj','eur','cmj_mrsi','dj','dj_rsi','dsi'] },
+    { name:'Aerobic',       keys:['mas','vo2max'] },
+    { name:'Strength',      keys:['sq_1rm_bw','tb_1rm_bw','bp_1rm_bw','imtp'] },
+    { name:'Speed',         keys:['sprint10','sprint20','max_vel'] },
+  ];
+
+  // % change HTML
+  function pctHtml(val, prev, lb) {
+    if (val==null||prev==null||isNaN(prev)||prev===0) return '<span style="color:#ccc">—</span>';
+    const d=((val-prev)/Math.abs(prev)*100);
+    const imp=lb?d<0:d>0; const unc=Math.abs(d)<0.5;
+    const col=unc?'#888':imp?'#16a34a':'#dc2626';
+    return `<span style="color:${col};font-weight:600">${unc?'→':imp?'↑':'↓'} ${d>0?'+':''}${d.toFixed(1)}%</span>`;
+  }
+
+  // Status badge
+  function badge(score, noNorm) {
+    if (noNorm||score===null) return '<span style="color:#aaa;font-size:10px;font-style:italic">No validated norm</span>';
+    const cols=['#dc2626','#c2410c','#b45309','#1a56db','#16a34a'];
+    return `<span style="color:${cols[score]};font-weight:700;font-size:10.5px">● ${SL[score]}</span>`;
+  }
+
+  // Section builder — skips untested rows entirely
+  function section(title, metrics) {
+    const rows = metrics.filter(m => m.val != null);
+    if (!rows.length) return '';
+    const tbody = rows.map(m => {
+      const normStr = m.noNorm ? '<i style="color:#aaa">No validated norm</i>'
+        : `<span style="color:#666">${m.nMin}–${m.nMax} ${m.u}</span>`;
+      const autoTag = m.auto ? '<span style="font-size:9px;background:#eef2ff;color:#4a6fa5;border-radius:3px;padding:1px 4px;margin-left:5px">auto</span>' : '';
+      const subSpan = m.sub ? `<br><span style="font-size:9.5px;color:#999">${m.sub}</span>` : '';
+      return `<tr style="background:${rows.indexOf(m)%2===0?'#fff':'#fafafa'}">
+        <td style="padding:7px 10px;color:#444;font-size:11px;border-bottom:1px solid #f0f0f0">${m.label}${autoTag}</td>
+        <td style="padding:7px 10px;font-size:12px;font-weight:700;border-bottom:1px solid #f0f0f0">${m.val}<span style="font-size:10px;font-weight:400;color:#999;margin-left:3px">${m.u}</span>${subSpan}</td>
+        <td style="padding:7px 10px;border-bottom:1px solid #f0f0f0">${badge(m.score, m.noNorm)}</td>
+        <td style="padding:7px 10px;font-size:11px;border-bottom:1px solid #f0f0f0">${normStr}</td>
+        <td style="padding:7px 10px;font-size:11px;text-align:right;border-bottom:1px solid #f0f0f0">${pctHtml(m.val,m.prevVal,m.lb)}</td>
+      </tr>`;
+    }).join('');
+    return `<div style="margin-bottom:18px;page-break-inside:avoid">
+      <div style="font-size:9.5px;font-weight:700;color:#7a8290;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;padding-left:2px;padding-bottom:4px;border-bottom:1px solid #ebebeb">${title}</div>
+      <table style="width:100%;border-collapse:collapse;border:1px solid #e8e8e8;overflow:hidden">
+        <thead><tr style="background:#f5f5f5">
+          <th style="padding:5px 10px;text-align:left;font-size:9px;font-weight:700;color:#999;text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid #e8e8e8">Test</th>
+          <th style="padding:5px 10px;text-align:left;font-size:9px;font-weight:700;color:#999;text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid #e8e8e8">Result</th>
+          <th style="padding:5px 10px;text-align:left;font-size:9px;font-weight:700;color:#999;text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid #e8e8e8">Status</th>
+          <th style="padding:5px 10px;text-align:left;font-size:9px;font-weight:700;color:#999;text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid #e8e8e8">Normative range</th>
+          <th style="padding:5px 10px;text-align:right;font-size:9px;font-weight:700;color:#999;text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid #e8e8e8">vs previous</th>
+        </tr></thead>
+        <tbody>${tbody}</tbody>
+      </table>
+    </div>`;
+  }
+
+  // Metric helpers
+  function mk(nk, val, prevVal, sub='', auto=false) {
+    if (val==null) return {val:null};
+    const n=NORMS[nk]||{};
+    return { val, prevVal, label:n.label||nk, u:n.u||'', score:bs(val,nk), lb:n.lb||false, noNorm:n.noNorm||false, nMin:n.min, nMax:n.max, sub, auto };
+  }
+  function strMk(nk, rawPfx) {
+    const val=ld[nk], prev=pv?pv[nk]:null;
+    if (val==null) return {val:null};
+    const n=NORMS[nk]; const kg=ld[rawPfx+'_kg_raw'], reps=ld[rawPfx+'_reps_raw'], rm1=ld[rawPfx+'_1rm'];
+    const sub=reps&&reps>1?`${kg}kg×${reps} → est. 1RM ${rm1}kg`:rm1?`1RM ${rm1}kg`:'';
+    return { val, prevVal:prev, label:n.label, u:n.u, score:bs(val,nk), lb:false, noNorm:false, nMin:n.min, nMax:n.max, sub, auto:true };
+  }
+
+  const lsi=(ld.slbj_L!=null&&ld.slbj_R!=null)?+(Math.min(ld.slbj_L,ld.slbj_R)/Math.max(ld.slbj_L,ld.slbj_R)*100).toFixed(1):null;
+  const lsiPv=(pv?.slbj_L!=null&&pv?.slbj_R!=null)?+(Math.min(pv.slbj_L,pv.slbj_R)/Math.max(pv.slbj_L,pv.slbj_R)*100).toFixed(1):null;
+  const lsiFlag=lsi!=null&&lsi<90;
+
+  const jumpM = [
+    mk('broad_jump',ld.broad_jump,pv?.broad_jump),
+    ld.slbj_L!=null?{val:ld.slbj_L,prevVal:pv?.slbj_L,label:'SL broad jump — L',u:'cm',score:null,noNorm:true,lb:false,sub:''}:{val:null},
+    ld.slbj_R!=null?{val:ld.slbj_R,prevVal:pv?.slbj_R,label:'SL broad jump — R',u:'cm',score:null,noNorm:true,lb:false,sub:''}:{val:null},
+    lsi!=null?{val:lsi,prevVal:lsiPv,label:'SL broad jump LSI'+(lsiFlag?' ⚠ Injury flag':''),u:'%',score:lsiFlag?null:bs(lsi,'slbj_LSI'),noNorm:false,lb:false,nMin:90,nMax:100,sub:'',auto:true}:{val:null},
+    mk('triple_hop',ld.triple_hop,pv?.triple_hop),
+    mk('cmj',ld.cmj,pv?.cmj),
+    mk('sj',ld.sj,pv?.sj),
+    ld.cmj!=null&&ld.sj!=null?{...mk('eur',ld.eur,pv?.eur),auto:true,sub:'CMJ÷SJ'}:{val:null},
+    ld.cmj_mrsi!=null?{...mk('cmj_mrsi',ld.cmj_mrsi,pv?.cmj_mrsi),auto:true}:{val:null},
+    mk('dj',ld.dj,pv?.dj),
+    ld.dj_rsi!=null?{...mk('dj_rsi',ld.dj_rsi,pv?.dj_rsi),auto:true}:{val:null},
+    mk('dsi',ld.dsi,pv?.dsi),
+  ];
+  const aeroM=[
+    ld.mas!=null?{...mk('mas',ld.mas,pv?.mas),auto:true,sub:ld.tt5min_dist?`${ld.tt5min_dist}m TT`:''}:{val:null},
+    ld.vo2max!=null?{...mk('vo2max',ld.vo2max,pv?.vo2max),auto:true}:{val:null},
+  ];
+  const strM=[strMk('sq_1rm_bw','sq'),strMk('tb_1rm_bw','tb'),strMk('bp_1rm_bw','bp'),
+    ld.imtp!=null?{...mk('imtp',ld.imtp,pv?.imtp),auto:true,sub:`${ld.imtp_raw_N}N`}:{val:null}];
+  const spdM=[mk('sprint10',ld.sprint10,pv?.sprint10),mk('sprint20',ld.sprint20,pv?.sprint20),mk('max_vel',ld.max_vel,pv?.max_vel)];
+
+  // Category cards
+  const catCardsHtml = catDefs.map(c=>{
+    const cl=getCatStatus(c.keys); const col=cl?cl.c:'#94a3b8'; const lbl=cl?cl.l:'No data';
+    return `<div style="flex:1;border:1px solid #e8e8e8;border-left:3px solid ${col};border-radius:6px;padding:10px 12px;background:#fff">
+      <div style="font-size:9px;font-weight:700;color:#999;text-transform:uppercase;letter-spacing:.07em;margin-bottom:4px">${c.name}</div>
+      <div style="font-size:12px;font-weight:700;color:${col}">${lbl}</div>
+    </div>`;
+  }).join('');
+
+  // Feedback text (if generated)
+  const coachTxt  = document.getElementById('coachText')?.innerText?.trim();
+  const athleteTxt= document.getElementById('athleteText')?.innerText?.trim();
+
+  const esc = str => (str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+  const html = `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">
+  <title>Performance Report — ${a.name}</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    @page{size:A4;margin:14mm 16mm}
+    body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;font-size:11px;color:#111;background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    .page{max-width:182mm;margin:0 auto}
+  </style>
+</head><body><div class="page">
+
+  <!-- Header -->
+  <div style="display:flex;align-items:center;justify-content:space-between;padding-bottom:12px;border-bottom:2px solid #111;margin-bottom:16px">
+    <div style="display:flex;align-items:center;gap:12px">
+      ${logoSrc?`<img src="${logoSrc}" style="height:26px;width:auto" alt="FootballFit">`:''}
+      <div>
+        <div style="font-size:17px;font-weight:700;color:#111;letter-spacing:-.02em">Performance Report</div>
+        <div style="font-size:10px;color:#888;margin-top:1px">Generated ${today}</div>
+      </div>
+    </div>
+    <div style="text-align:right">
+      <div style="font-size:10px;color:#888">Last tested</div>
+      <div style="font-size:14px;font-weight:700;color:#111">${a.sessions[0]?.test_date||'—'}</div>
+      ${pv?`<div style="font-size:10px;color:#aaa">Previous: ${pv.test_date}</div>`:''}
+    </div>
+  </div>
+
+  <!-- Athlete Profile -->
+  <div style="display:flex;align-items:flex-start;gap:14px;padding:14px;background:#f8f8f8;border-radius:8px;margin-bottom:16px;border:1px solid #ebebeb">
+    <div style="width:42px;height:42px;border-radius:50%;background:#1a56db;color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;flex-shrink:0">${a.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase()}</div>
+    <div>
+      <div style="font-size:18px;font-weight:700;color:#111;letter-spacing:-.01em">${a.name}</div>
+      <div style="font-size:10.5px;color:#555;margin-top:3px">${a.position||'—'} · ${a.age||'—'} yrs · ${a.height_cm||'—'} cm · ${a.weight_kg||'—'} kg · ${a.sessions.length} session${a.sessions.length!==1?'s':''}</div>
+      ${a.injury_hx?`<div style="margin-top:6px;font-size:10px;background:#fff8e6;border:1px solid #f59e0b;border-radius:12px;padding:3px 10px;display:inline-block;color:#92400e;font-weight:600">⚠ ${a.injury_hx}</div>`:''}
+    </div>
+  </div>
+
+  <!-- Category Overview -->
+  <div style="font-size:9.5px;font-weight:700;color:#7a8290;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;padding-left:2px;padding-bottom:4px;border-bottom:1px solid #ebebeb">Performance Category Status</div>
+  <div style="display:flex;gap:8px;margin-bottom:20px">${catCardsHtml}</div>
+
+  <!-- Test Results -->
+  <div style="font-size:9.5px;font-weight:700;color:#7a8290;text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px;padding-left:2px;padding-bottom:4px;border-bottom:1px solid #ebebeb">
+    Test Results${pv?` <span style="font-weight:400;color:#bbb;font-size:9px">&nbsp;vs previous session: ${pv.test_date}</span>`:''}
+  </div>
+  ${section('Jump / Power',jumpM)}
+  ${section('Aerobic Fitness',aeroM)}
+  ${section('Strength — Lifts (×BW)',strM)}
+  ${section('Speed (Vuemotion)',spdM)}
+
+  <!-- Feedback if available -->
+  ${coachTxt?`
+  <div style="page-break-before:always"></div>
+  <div style="display:flex;align-items:center;justify-content:space-between;padding-bottom:10px;border-bottom:2px solid #111;margin-bottom:16px">
+    ${logoSrc?`<img src="${logoSrc}" style="height:22px;width:auto" alt="FootballFit">`:''}
+    <div style="font-size:14px;font-weight:700;color:#111">${a.name} — Feedback Report</div>
+    <div style="font-size:10px;color:#aaa">${today}</div>
+  </div>
+  <div style="margin-bottom:16px;font-size:9.5px;font-weight:700;color:#7a8290;text-transform:uppercase;letter-spacing:.08em;padding-bottom:4px;border-bottom:1px solid #ebebeb">Coach Notes <span style="font-weight:400;text-transform:none;letter-spacing:0;color:#bbb">— not shared with athlete</span></div>
+  <div style="background:#f8f8f8;border:1px solid #ebebeb;border-radius:6px;padding:14px 16px;font-size:11px;line-height:1.75;color:#222;white-space:pre-wrap;margin-bottom:20px">${esc(coachTxt)}</div>`:''}
+
+  ${athleteTxt?`
+  <div style="margin-bottom:16px;font-size:9.5px;font-weight:700;color:#7a8290;text-transform:uppercase;letter-spacing:.08em;padding-bottom:4px;border-bottom:1px solid #ebebeb">Athlete Message <span style="font-weight:400;text-transform:none;letter-spacing:0;color:#bbb">— for ${a.name}</span></div>
+  <div style="background:#f8f8f8;border:1px solid #ebebeb;border-radius:6px;padding:14px 16px;font-size:11px;line-height:1.75;color:#222;white-space:pre-wrap">${esc(athleteTxt)}</div>`:''}
+
+  <!-- Footer -->
+  <div style="margin-top:24px;padding-top:10px;border-top:1px solid #ebebeb;font-size:9px;color:#bbb;display:flex;justify-content:space-between">
+    <span>FootballFit · Individual Coaching · ${a.name}</span>
+    <span>Normative ranges: professional football literature</span>
+  </div>
+
+</div>
+<script>window.onload=()=>setTimeout(()=>window.print(),500);</script>
+</body></html>`;
+
+  const win = window.open('','_blank','width=900,height=700');
+  if (!win) { alert('Please allow popups for this page to generate the print report.'); return; }
+  win.document.write(html);
+  win.document.close();
 }
 
 loadData();
