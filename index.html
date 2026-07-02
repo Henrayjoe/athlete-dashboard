@@ -187,44 +187,49 @@
 
 const NORMS = {
   // ── Jump / Power ──────────────────────────────────────────────────────────
-  broad_jump:    { min:220,  max:260,  u:'cm',        lb:false, label:'Broad jump',              cat:'jump' },
+  broad_jump:    { min:220,  max:260,  u:'cm',        lb:false, label:'Broad jump',              cat:'jump', source:'Loturco et al.; professional football literature' },
   // No validated professional football-specific normative dataset exists for SL broad jump absolute distance.
   // Tracked for individual longitudinal comparison only — no min/max scoring applied.
-  slbj_L:        { min:null, max:null, u:'cm',        lb:false, label:'SL broad jump — L',       cat:'jump', noNorm:true },
-  slbj_R:        { min:null, max:null, u:'cm',        lb:false, label:'SL broad jump — R',       cat:'jump', noNorm:true },
+  slbj_L:        { min:null, max:null, u:'cm',        lb:false, label:'SL broad jump — L',       cat:'jump', noNorm:true, source:'No validated professional norm' },
+  slbj_R:        { min:null, max:null, u:'cm',        lb:false, label:'SL broad jump — R',       cat:'jump', noNorm:true, source:'No validated professional norm' },
   // LSI: healthy footballers show natural variance of 97-106% (scoping review, 27 studies, JOSPT 2024).
   // <90% is a distinct injury-risk threshold (not a benchmark tier) — flagged separately in the UI.
-  slbj_LSI:      { min:90,   max:100,  u:'%',         lb:false, label:'SL broad jump LSI',       cat:'jump', injuryFloor:90 },
+  slbj_LSI:      { min:90,   max:100,  u:'%',         lb:false, label:'SL broad jump LSI',       cat:'jump', injuryFloor:90, source:'JOSPT scoping review 2024 (27 studies, soccer)' },
   // Triple hop (single-leg): collegiate male soccer/basketball average 632±72cm (Myers et al. 2014).
   // No professional-specific dataset found — moderate confidence, not pro-validated.
-  triple_hop:    { min:560,  max:704,  u:'cm',        lb:false, label:'Triple hop (SL)',         cat:'jump', note:'Collegiate data, not pro-specific' },
-  cmj:           { min:35,   max:55,   u:'cm',        lb:false, label:'CMJ height',              cat:'jump' },
-  sj:            { min:30,   max:50,   u:'cm',        lb:false, label:'Squat jump (SJ)',         cat:'jump' },
-  eur:           { min:0.90, max:1.15, u:'EUR',       lb:false, label:'EUR (CMJ÷SJ)',            cat:'jump',  note:'Auto: CMJ÷SJ' },
+  triple_hop:    { min:560,  max:704,  u:'cm',        lb:false, label:'Triple hop (SL)',         cat:'jump', note:'Collegiate data, not pro-specific', source:'Myers et al. 2014 (collegiate soccer/basketball)' },
+  cmj:           { min:35,   max:55,   u:'cm',        lb:false, label:'CMJ height',              cat:'jump', source:'Badby et al. 2025; VALD ForceDecks normative data' },
+  sj:            { min:30,   max:50,   u:'cm',        lb:false, label:'Squat jump (SJ)',         cat:'jump', source:'Professional football literature' },
+  eur:           { min:0.90, max:1.15, u:'EUR',       lb:false, label:'EUR (CMJ÷SJ)',            cat:'jump',  note:'Auto: CMJ÷SJ', source:'McGuigan et al. 2006' },
   // mRSI: CMJ jump height (m) ÷ contraction time (s). Pro football ~0.8–1.4 (McMahon/Badby)
-  cmj_mrsi:      { min:0.80, max:1.40, u:'m/s',       lb:false, label:'CMJ mRSI',               cat:'jump',  note:'Auto: JH(m)÷CT(s) — needs contraction time' },
+  cmj_mrsi:      { min:0.80, max:1.40, u:'m/s',       lb:false, label:'CMJ mRSI',               cat:'jump',  note:'Auto: JH(m)÷CT(s) — needs contraction time', source:'McMahon et al. 2022; Badby et al. 2025' },
   // DJ RSI: DJ height (m) ÷ contact time (s). Pro football ~1.0–1.8 (McMahon 2021)
-  dj_rsi:        { min:1.00, max:1.80, u:'m/s',       lb:false, label:'DJ RSI',                 cat:'jump',  note:'Auto: JH(m)÷CT(s) — needs contact time' },
-  dj:            { min:30,   max:50,   u:'cm',        lb:false, label:'Drop jump height (DJ)',   cat:'jump' },
+  dj_rsi:        { min:1.00, max:1.80, u:'m/s',       lb:false, label:'DJ RSI',                 cat:'jump',  note:'Auto: JH(m)÷CT(s) — needs contact time', source:'McMahon et al. 2021' },
+  dj:            { min:30,   max:50,   u:'cm',        lb:false, label:'Drop jump height (DJ)',   cat:'jump', source:'Professional football literature' },
   // DSI: ballistic PF ÷ isometric PF. Optimal 0.60–0.80 (Thomas et al. 2017)
   // >0.80 = needs strength work; <0.60 = needs plyometric work
-  dsi:           { min:0.60, max:0.80, u:'DSI',       lb:false, label:'DSI',                    cat:'jump',  note:'Requires force plate' },
+  dsi:           { min:0.60, max:0.80, u:'DSI',       lb:false, label:'DSI',                    cat:'jump',  note:'Requires force plate', source:'Thomas, Dos\'Santos & Jones 2017' },
   // ── Aerobic ───────────────────────────────────────────────────────────────
-  mas:           { min:5.0,  max:6.2,  u:'m/s',       lb:false, label:'MAS (5-min TT)',          cat:'aero' },
-  vo2max:        { min:58,   max:68,   u:'ml/kg/min', lb:false, label:'Est. VO₂ max',            cat:'aero' },
+  mas:           { min:5.0,  max:6.2,  u:'m/s',       lb:false, label:'MAS (5-min TT)',          cat:'aero', source:'Buchheit & Laursen 2013' },
+  vo2max:        { min:58,   max:68,   u:'ml/kg/min', lb:false, label:'Est. VO₂ max',            cat:'aero', source:'Cardamone et al. 2025 (Serie A ~61.5 ml/kg/min); Buchheit' },
   // ── Strength ──────────────────────────────────────────────────────────────
-  sq_1rm_bw:     { min:1.5,  max:2.0,  u:'×BW',       lb:false, label:'Back squat',             cat:'strength' },
-  tb_1rm_bw:     { min:2.0,  max:2.8,  u:'×BW',       lb:false, label:'Trap bar DL',            cat:'strength' },
-  bp_1rm_bw:     { min:0.9,  max:1.3,  u:'×BW',       lb:false, label:'Bench press',            cat:'strength' },
+  sq_1rm_bw:     { min:1.5,  max:2.0,  u:'×BW',       lb:false, label:'Back squat',             cat:'strength', source:'Comfort et al. 2019 (professional football)' },
+  tb_1rm_bw:     { min:2.0,  max:2.8,  u:'×BW',       lb:false, label:'Trap bar DL',            cat:'strength', source:'Professional football literature' },
+  bp_1rm_bw:     { min:0.9,  max:1.3,  u:'×BW',       lb:false, label:'Bench press',            cat:'strength', source:'Professional football literature' },
   // IMTP: relative peak force N/kg. Pro soccer median ~40 N/kg (Badby et al. 2025)
   // <30 N/kg = below norm for professional; 30–45 = within range; >45 = exceeds
-  imtp:          { min:30,   max:45,   u:'N/kg',      lb:false, label:'IMTP',                   cat:'strength', note:'Requires force plate' },
+  imtp:          { min:30,   max:45,   u:'N/kg',      lb:false, label:'IMTP',                   cat:'strength', note:'Requires force plate', source:'Badby et al. 2025 (professional soccer; median ~40 N/kg)' },
+  // ── Additional aerobic tests ──────────────────────────────────────────────
+  // Bronco: time in seconds, lower is better. Limited football data; rugby league reference.
+  bronco:       { min:240,  max:280,  u:'s',   lb:true,  label:'Bronco',     cat:'aero', note:'Lower is better · Limited football data', source:'Rugby league reference; limited football-specific data' },
+  // Yo-Yo IR2: total distance in metres (Castagna et al. 2006 professional football data)
+  yoyo_ir2:     { min:640,  max:1200, u:'m',   lb:false, label:'Yo-Yo IR2',  cat:'aero', note:'Castagna et al. 2006', source:'Castagna et al. 2006; professional football' },
   // ── Speed ─────────────────────────────────────────────────────────────────
-  sprint10:      { min:1.65, max:1.80, u:'s',         lb:true,  label:'10m sprint',             cat:'speed' },
-  sprint20:      { min:2.85, max:3.05, u:'s',         lb:true,  label:'20m sprint',             cat:'speed' },
+  sprint10:      { min:1.65, max:1.80, u:'s',         lb:true,  label:'10m sprint',             cat:'speed', source:'Haugen et al. 2019' },
+  sprint20:      { min:2.85, max:3.05, u:'s',         lb:true,  label:'20m sprint',             cat:'speed', source:'Haugen et al. 2019' },
   // Match-derived peak speed: pro average ~31-32 km/h (8.6-8.9 m/s); EPL all-time fastest ~37.4 km/h (10.4 m/s, Van de Ven).
   // 8.3-9.5 m/s covers typical professional range; >9.5 m/s is genuinely elite outlier territory.
-  max_vel:       { min:8.3,  max:9.5,  u:'m/s',       lb:false, label:'Max velocity (20m fly)', cat:'speed' },
+  max_vel:       { min:8.3,  max:9.5,  u:'m/s',       lb:false, label:'Max velocity (20m fly)', cat:'speed', source:'LaLiga match-speed data; EPL fastest-ever ~10.4 m/s' },
 };
 
 const CAT_LABELS = { jump:'Jump / Power', aero:'Aerobic', strength:'Strength', speed:'Speed' };
@@ -240,6 +245,29 @@ const masFromDist = d => { const v=pf(d); return v?+(v/300).toFixed(2):null; }; 
 // Léger & Mercier (1984): VO2max (ml/kg/min) = MAS (km/h) × 3.5. MAS is stored in m/s, so convert to km/h first.
 const vo2FromMas  = mas_ms => { const v=pf(mas_ms); return v?+((v*3.6)*3.5).toFixed(1):null; };
 const calcLSI     = (L,R) => { const l=pf(L),r=pf(R); return(l&&r)?+(Math.min(l,r)/Math.max(l,r)*100).toFixed(1):null; };
+// Format seconds → MM:SS
+const fmtTime = s => { if(!s)return'—'; const m=Math.floor(s/60),sec=Math.round(s%60); return `${m}:${String(sec).padStart(2,'0')}`; };
+// VO2max from any distance TT — Daniels & Gilbert 1979
+function vo2FromDistTT(dist_m, time_s) {
+  if(!dist_m||!time_s||time_s<60)return null;
+  const v=(dist_m/time_s)*60; // m/min
+  const t=time_s/60;          // min
+  const frac=0.8+0.1894393*Math.exp(-0.012778*t)+0.2989558*Math.exp(-0.1932605*t);
+  const vo2v=-4.60+0.182258*v+0.000104*v*v;
+  const est=+(vo2v/frac).toFixed(1);
+  return est>20&&est<100?est:null; // sanity bounds
+}
+// VO2max from Yo-Yo IR2 distance — Castagna et al. 2006
+const vo2FromYoyo = d => { const v=pf(d); return v?+(v*0.0136+45.3).toFixed(1):null; };
+// Beep test speed (km/h) from level
+const beepSpeed = lvl => { const v=pf(lvl); return v?+(8.5+(v-1)*0.5):null; };
+// VO2max from beep test level + age — Léger et al. 1988
+function vo2FromBeep(level, age_yr) {
+  const v=beepSpeed(level); if(!v)return null;
+  const a=parseFloat(age_yr)||25;
+  const est=+(31.025+3.238*v-3.248*a+0.1536*v*a).toFixed(1);
+  return est>20&&est<100?est:null;
+}
 const bwRatio     = (rm,bw) => (rm&&bw)?+(rm/bw).toFixed(2):null;
 const imtpNkg     = (N,bw) => { const n=pf(N),b=pf(bw); return(n&&b)?+(n/b).toFixed(2):null; };
 // mRSI = jump height (m) ÷ contraction time (s)
@@ -249,9 +277,12 @@ const calcDjRsi   = (cm,ms) => { const h=pf(cm),t=pf(ms); return(h&&t)?+((h/100)
 // EUR = CMJ ÷ SJ (jump height)
 const calcEur     = (cmj,sj) => { const c=pf(cmj),s=pf(sj); return(c&&s)?+(c/s).toFixed(2):null; };
 
-function deriveSession(row, bw_kg) {
-  const bw = pf(bw_kg);
+function deriveSession(row, bw_kg, age_yr) {
+  // Per-session bodyweight takes priority; falls back to athlete's profile weight
+  const bw = pf(row.weight_kg) || pf(bw_kg);
   const d  = {};
+  d.weight_kg   = bw; // store whichever was used, for display
+  d.notes       = (row.notes || '').trim();
   // Jump — direct
   d.broad_jump  = pf(row.broad_jump_cm);
   d.slbj_L      = pf(row.slbj_L_cm);
@@ -274,8 +305,25 @@ function deriveSession(row, bw_kg) {
   // Aerobic
   d.tt5min_dist = pf(row.tt5min_dist_m);
   d.mas         = masFromDist(row.tt5min_dist_m);
-  d.vo2max      = d.mas ? vo2FromMas(d.mas) : pf(row.vo2max);
-  // Strength — Epley → BW ratio
+  d.mas_vo2max  = d.mas ? vo2FromMas(d.mas) : null;
+  // General distance TT (any distance)
+  d.tt_dist     = pf(row.tt_dist_m);
+  d.tt_time     = pf(row.tt_time_s);
+  d.tt_speed    = (d.tt_dist&&d.tt_time)?+(d.tt_dist/d.tt_time).toFixed(3):null; // m/s
+  d.tt_vo2max   = vo2FromDistTT(d.tt_dist, d.tt_time);
+  // Yo-Yo IR2
+  d.yoyo_ir2     = pf(row.yoyo_ir2_dist_m);
+  d.yoyo_vo2max  = vo2FromYoyo(row.yoyo_ir2_dist_m);
+  // Beep test (MSFT)
+  d.beep_level   = pf(row.beep_level);
+  d.beep_shuttle = pf(row.beep_shuttle);
+  d.beep_speed   = beepSpeed(row.beep_level); // km/h
+  d.beep_vo2max  = vo2FromBeep(row.beep_level, age_yr);
+  // Bronco
+  d.bronco       = pf(row.bronco_time_s);
+  // Best available VO2max — 5-min TT first priority, then others
+  d.vo2max = d.mas_vo2max || d.tt_vo2max || d.yoyo_vo2max || d.beep_vo2max || pf(row.vo2max);
+  // Strength — Epley → BW ratio (uses session bodyweight)
   const sq1rm   = epley(row.sq_kg, row.sq_reps);
   const tb1rm   = epley(row.tb_kg, row.tb_reps);
   const bp1rm   = epley(row.bp_kg, row.bp_reps);
@@ -286,7 +334,7 @@ function deriveSession(row, bw_kg) {
   d.tb_1rm_bw   = bwRatio(tb1rm, bw);
   d.bp_1rm_bw   = bwRatio(bp1rm, bw);
   d.imtp_raw_N  = pf(row.imtp_N);
-  d.imtp        = imtpNkg(row.imtp_N, bw_kg);
+  d.imtp        = imtpNkg(row.imtp_N, bw);
   // Speed
   d.sprint10    = pf(row.sprint10_s);
   d.sprint20    = pf(row.sprint20_s);
@@ -379,7 +427,9 @@ function mRow(nk, val, prevVal, subtext, isAuto) {
 }
 function strengthRow(nk, d, pv, label) {
   const n = NORMS[nk];
-  const normText = `${n.min}–${n.max} ${n.u}`;
+  const normText  = `${n.min}–${n.max} ${n.u}`;
+  const srcAttr   = n.source ? ` title="Source: ${n.source}"` : '';
+  const srcIcon   = n.source ? ` <span style="color:#bbb;font-size:9px;cursor:help">ⓘ</span>` : '';
   const val  = d[nk], prev = pv?pv[nk]:null;
   const pfx  = nk.replace('_1rm_bw','');
   const kg   = d[pfx+'_kg_raw'], reps = d[pfx+'_reps_raw'], rm1 = d[pfx+'_1rm'];
@@ -390,7 +440,7 @@ function strengthRow(nk, d, pv, label) {
     <td class="lbl">${label}</td>
     <td><span class="rval">${val}</span><span class="runit">×BW</span>${sub}<span class="calc-badge">auto</span></td>
     <td>${pill(s)}</td>
-    <td style="font-size:11px;color:var(--text-muted)">${normText}</td>
+    <td style="font-size:11px;color:var(--text-muted)"${srcAttr}>${normText}${srcIcon}</td>
     <td>${dHtml(val, prev, false)}</td>
   </tr>`;
 }
@@ -428,9 +478,19 @@ async function loadData() {
     const [aText,rText] = await Promise.all([fetchSheet(cfg.athletesUrl),fetchSheet(cfg.resultsUrl)]);
     const athletes=parseCSV(aText), results=parseCSV(rText);
     athleteMap={};
-    athletes.forEach(a=>{athleteMap[a.id]={...a,sessions:[]};});
+    athletes.forEach(a=>{
+      // Calculate age from birthdate (YYYY-MM-DD) if present; fall back to static age field
+      let computedAge = null;
+      if (a.birthdate && /\d{4}-\d{2}-\d{2}/.test(a.birthdate)) {
+        const diff = Date.now() - new Date(a.birthdate).getTime();
+        computedAge = Math.floor(diff / (365.25*24*60*60*1000));
+      } else {
+        computedAge = parseFloat(a.age) || null;
+      }
+      athleteMap[a.id]={...a, age:computedAge, sessions:[]};
+    });
     results.forEach(r=>{
-      if(athleteMap[r.athlete_id]) athleteMap[r.athlete_id].sessions.push(deriveSession(r,athleteMap[r.athlete_id].weight_kg));
+      if(athleteMap[r.athlete_id]) athleteMap[r.athlete_id].sessions.push(deriveSession(r,athleteMap[r.athlete_id].weight_kg,athleteMap[r.athlete_id].age));
     });
     Object.values(athleteMap).forEach(a=>a.sessions.sort((x,y)=>new Date(y.test_date)-new Date(x.test_date)));
     document.getElementById('sheetStatus').textContent=`${athletes.length} athletes · ${results.length} sessions`;
@@ -503,7 +563,7 @@ function renderMain(){
   const inj=a.injury_hx?`<span class="ptag inj">⚠ Injury hx</span><span class="ptag" style="font-size:10px">${a.injury_hx}</span>`:'';
 
   const jumpKeys     = ['broad_jump','slbj_LSI','triple_hop','cmj','sj','eur','cmj_mrsi','dj','dj_rsi','dsi'];
-  const aeroKeys     = ['mas','vo2max'];
+  const aeroKeys     = ['mas','vo2max','yoyo_ir2','bronco'];
   const strengthKeys = ['sq_1rm_bw','tb_1rm_bw','bp_1rm_bw','imtp'];
   const speedKeys    = ['sprint10','sprint20','max_vel'];
 
@@ -520,7 +580,8 @@ function renderMain(){
       <div class="pinfo">
         <h2>${a.name}</h2>
         <p class="pmeta">${a.position||'—'} · ${a.age||'—'} yrs · ${a.height_cm||'—'} cm · ${a.weight_kg||'—'} kg · Last tested ${d.test_date||'—'}</p>
-        <div class="ptags"><span class="ptag">Remote coaching</span><span class="ptag">Professional football / futsal</span><span class="ptag">${a.sessions.length} session${a.sessions.length!==1?'s':''}</span>${inj}</div>
+        <div class="ptags"><span class="ptag">Remote coaching</span><span class="ptag">Professional football / futsal</span><span class="ptag">${a.sessions.length} session${a.sessions.length!==1?'s':''}</span>${d.weight_kg && d.weight_kg !== parseFloat(a.weight_kg) ? `<span class="ptag" style="background:#eff6ff;border-color:#bfdbfe;color:#1e40af">⚖ ${d.weight_kg} kg (session)</span>` : ''}${inj}</div>
+      ${d.notes ? `<div style="margin-top:10px;padding:8px 12px;background:var(--surface-alt);border-left:3px solid var(--accent);border-radius:0 6px 6px 0;font-size:12px;color:var(--text-secondary);line-height:1.5"><span style="font-size:10px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:2px">Session note</span>${d.notes}</div>` : ''}
       </div>
       <button class="btn-sm no-print" style="margin-left:auto;align-self:flex-start" onclick="generatePrintReport()">⬇ Save as PDF</button>
     </div>
@@ -579,6 +640,42 @@ function renderMain(){
                 <td style="font-size:11px;color:var(--text-muted)">${NORMS.vo2max.min}–${NORMS.vo2max.max} ${NORMS.vo2max.u}</td>
                 <td>${dHtml(d.vo2max,pv?.vo2max,false)}</td>
               </tr>
+              ${d.tt_dist&&d.tt_time?`<tr>
+                <td class="lbl">Distance TT (${(d.tt_dist/1000).toFixed(d.tt_dist%1000===0?0:1)}km)</td>
+                <td><span class="rval">${fmtTime(d.tt_time)}</span><span class="runit">&nbsp;(${d.tt_time}s)</span>
+                  <span class="rsub">${d.tt_speed} m/s avg</span>
+                  ${d.tt_vo2max?`<span class="rsub">· est. VO₂max ${d.tt_vo2max} ml/kg/min <span class="calc-badge">auto</span></span>`:''}
+                </td>
+                <td>${pill(bs(d.tt_vo2max,'vo2max'))}</td>
+                <td style="font-size:11px;color:var(--text-muted)">${NORMS.vo2max.min}–${NORMS.vo2max.max} ${NORMS.vo2max.u}</td>
+                <td>${dHtml(d.tt_vo2max,pv?.tt_vo2max,false)}</td>
+              </tr>`:''}
+              ${d.yoyo_ir2?`<tr>
+                <td class="lbl">Yo-Yo IR2</td>
+                <td><span class="rval">${d.yoyo_ir2}</span><span class="runit">m</span>
+                  ${d.yoyo_vo2max?`<span class="rsub">· est. VO₂max ${d.yoyo_vo2max} ml/kg/min <span class="calc-badge">auto</span></span>`:''}
+                </td>
+                <td>${pill(bs(d.yoyo_ir2,'yoyo_ir2'))}</td>
+                <td style="font-size:11px;color:var(--text-muted)">${NORMS.yoyo_ir2.min}–${NORMS.yoyo_ir2.max} ${NORMS.yoyo_ir2.u}</td>
+                <td>${dHtml(d.yoyo_ir2,pv?.yoyo_ir2,false)}</td>
+              </tr>`:''}
+              ${d.beep_level?`<tr>
+                <td class="lbl">Beep test (MSFT)</td>
+                <td><span class="rval">Level ${d.beep_level}${d.beep_shuttle?`, shuttle ${d.beep_shuttle}`:''}</span>
+                  ${d.beep_speed?`<span class="rsub">(${d.beep_speed} km/h)</span>`:''}
+                  ${d.beep_vo2max?`<span class="rsub">· est. VO₂max ${d.beep_vo2max} ml/kg/min <span class="calc-badge">auto</span></span>`:''}
+                </td>
+                <td>${pill(bs(d.beep_vo2max,'vo2max'))}</td>
+                <td style="font-size:11px;color:var(--text-muted)">${NORMS.vo2max.min}–${NORMS.vo2max.max} ${NORMS.vo2max.u}</td>
+                <td>${dHtml(d.beep_vo2max,pv?.beep_vo2max,false)}</td>
+              </tr>`:''}
+              ${d.bronco?`<tr>
+                <td class="lbl">Bronco test</td>
+                <td><span class="rval">${fmtTime(d.bronco)}</span><span class="runit">&nbsp;(${d.bronco}s)</span></td>
+                <td>${pill(bs(d.bronco,'bronco'))}</td>
+                <td style="font-size:11px;color:var(--text-muted)">${NORMS.bronco.min}–${NORMS.bronco.max}s <span style="font-size:9px;font-style:italic;color:#aaa">(lower=better · rugby ref)</span></td>
+                <td>${dHtml(d.bronco,pv?.bronco,true)}</td>
+              </tr>`:''}
             </tbody></table>
           </div>
 
@@ -621,9 +718,28 @@ function renderMain(){
         <div class="quadrant-body">
           <div class="quadrant-controls">
             <span class="control-label">Strength axis</span>
-            <button class="axis-btn active" onclick="setStrengthAxis('tb_1rm_bw',this)">Trap bar DL ×BW</button>
-            <button class="axis-btn" onclick="setStrengthAxis('sq_1rm_bw',this)">Back squat ×BW</button>
+            <div id="axisButtons"></div>
           </div>
+          <script>
+            // Extensible axis options — add new entries here as tests are added
+            // To add future options (e.g. CMJ peak power when force plate available):
+            // { key: 'cmj_peak_power_bw', label: 'CMJ peak power ×BW' }
+            const QUAD_STR_AXES = [
+              { key: 'tb_1rm_bw', label: 'Trap bar DL ×BW' },
+              { key: 'sq_1rm_bw', label: 'Back squat ×BW'  },
+              { key: 'imtp',      label: 'IMTP (N/kg)'      },
+            ];
+            const axBtns = document.getElementById('axisButtons');
+            if (axBtns) {
+              QUAD_STR_AXES.forEach((ax, i) => {
+                const b = document.createElement('button');
+                b.className = 'axis-btn' + (i===0?' active':'');
+                b.textContent = ax.label;
+                b.onclick = () => setStrengthAxis(ax.key, b);
+                axBtns.appendChild(b);
+              });
+            }
+          </script>
           <div id="quadrantContainer"></div>
           <div class="quadrant-legend">
             <span class="ql-dot ql-you"></span><span>You (${a.name})</span>
@@ -1269,6 +1385,8 @@ function _buildAndOpenPrintReport(a, chartImages, quadrantSVG) {
       <div style="font-size:17px;font-weight:700;color:#111;letter-spacing:-.01em">${a.name}</div>
       <div style="font-size:10.5px;color:#555;margin-top:3px">${a.position||'—'} · ${a.age||'—'} yrs · ${a.height_cm||'—'} cm · ${a.weight_kg||'—'} kg · ${a.sessions.length} session${a.sessions.length!==1?'s':''}</div>
       ${a.injury_hx?`<div style="margin-top:6px;font-size:10px;background:#fff8e6;border:1px solid #f59e0b;border-radius:12px;padding:3px 10px;display:inline-block;color:#92400e;font-weight:600">⚠ ${a.injury_hx}</div>`:''}
+      ${ld.weight_kg && ld.weight_kg !== parseFloat(a.weight_kg)?`<div style="margin-top:4px;font-size:10px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:12px;padding:3px 10px;display:inline-block;color:#1e40af;font-weight:600;margin-left:4px">⚖ Body weight at testing: ${ld.weight_kg} kg</div>`:''}
+      ${a.sessions[0]?.notes?`<div style="margin-top:10px;padding:8px 12px;background:#f8f8f8;border-left:3px solid #1a56db;border-radius:0 4px 4px 0;font-size:10.5px;color:#444;line-height:1.6"><span style="font-size:9px;font-weight:700;color:#999;text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:2px">Session note</span>${a.sessions[0].notes}</div>`:''}
     </div>
   </div>
 
