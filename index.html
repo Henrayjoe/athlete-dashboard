@@ -104,7 +104,9 @@
   .print-header { display:none; }
 
 
-  .quadrant-body { padding:18px 20px; display:flex; flex-direction:column; gap:12px; }
+  .norm-source { display:block; font-size:9.5px; color:#bbb; margin-top:2px; font-style:italic; }
+  @media print { .norm-source { display:none !important; } }
+
   .quadrant-controls { display:flex; align-items:center; gap:8px; }
   .control-label { font-size:11px; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:.06em; margin-right:4px; }
   .axis-btn { padding:5px 12px; font-size:12px; font-weight:500; background:var(--surface-alt); border:1px solid var(--border); border-radius:6px; cursor:pointer; color:var(--text-secondary); }
@@ -407,7 +409,7 @@ function mRow(nk, val, prevVal, subtext, isAuto) {
   const n = NORMS[nk]; if (!n) return '';
   const normText = n.noNorm ? 'No validated norm' : `${n.min}–${n.max} ${n.u}`;
   const normStyle = n.noNorm ? 'font-style:italic;color:var(--text-muted)' : 'color:var(--text-muted)';
-  if (val==null) return `<tr><td class="lbl">${n.label}${n.note?` <span style="font-size:10px;color:var(--text-muted)">(${n.note})</span>`:''}</td><td colspan="2" class="miss">— not tested</td><td style="font-size:11px;${normStyle}">${normText}</td><td class="miss">—</td></tr>`;
+  if (val==null) return `<tr><td class="lbl">${n.label}${n.note?` <span style="font-size:10px;color:var(--text-muted)">(${n.note})</span>`:''}</td><td colspan="2" class="miss">— not tested</td><td style="font-size:11px;${normStyle}">${normText}${n.source?`<span class="norm-source">${n.source}</span>`:''}</td><td class="miss">—</td></tr>`;
   const s = bs(val, nk);
   const sub = subtext ? `<span class="rsub">${subtext}</span>` : '';
   const badge = isAuto ? '<span class="calc-badge">auto</span>' : '';
@@ -421,26 +423,27 @@ function mRow(nk, val, prevVal, subtext, isAuto) {
     <td class="lbl">${n.label}</td>
     <td><span class="rval">${val}</span><span class="runit">${n.u}</span>${sub}${badge}</td>
     <td>${statusCell}</td>
-    <td style="font-size:11px;${normStyle}">${normText}</td>
+    <td style="font-size:11px;${normStyle}">${normText}${n.source?`<span class="norm-source">${n.source}</span>`:''}</td>
     <td>${dHtml(val, prevVal, n.lb)}</td>
   </tr>`;
 }
 function strengthRow(nk, d, pv, label) {
   const n = NORMS[nk];
   const normText  = `${n.min}–${n.max} ${n.u}`;
-  const srcAttr   = n.source ? ` title="Source: ${n.source}"` : '';
-  const srcIcon   = n.source ? ` <span style="color:#bbb;font-size:9px;cursor:help">ⓘ</span>` : '';
+  const srcAttr   = '';
+  const srcIcon   = '';
+  const srcText   = n.source ? `<span class="norm-source">${n.source}</span>` : '';
   const val  = d[nk], prev = pv?pv[nk]:null;
   const pfx  = nk.replace('_1rm_bw','');
   const kg   = d[pfx+'_kg_raw'], reps = d[pfx+'_reps_raw'], rm1 = d[pfx+'_1rm'];
-  if (val==null) return `<tr><td class="lbl">${label}</td><td colspan="2" class="miss">— not tested</td><td style="font-size:11px;color:var(--text-muted)">${normText}</td><td class="miss">—</td></tr>`;
+  if (val==null) return `<tr><td class="lbl">${label}</td><td colspan="2" class="miss">— not tested</td><td style="font-size:11px;color:var(--text-muted)">${normText}${n.source?`<span class="norm-source">${n.source}</span>`:''}</td><td class="miss">—</td></tr>`;
   const s = bs(val, nk);
   let sub = reps&&reps>1 ? `<span class="rsub">(${kg}kg × ${reps} → est. 1RM ${rm1}kg)</span>` : rm1?`<span class="rsub">(1RM ${rm1}kg)</span>`:'';
   return `<tr>
     <td class="lbl">${label}</td>
     <td><span class="rval">${val}</span><span class="runit">×BW</span>${sub}<span class="calc-badge">auto</span></td>
     <td>${pill(s)}</td>
-    <td style="font-size:11px;color:var(--text-muted)"${srcAttr}>${normText}${srcIcon}</td>
+    <td style="font-size:11px;color:var(--text-muted)">${normText}${srcText}</td>
     <td>${dHtml(val, prev, false)}</td>
   </tr>`;
 }
