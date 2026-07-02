@@ -1565,8 +1565,20 @@ function drawQuadrant(strKey) {
   const CW=W-ML-MR, CH=H-MT-MB;
 
   const strPad=(strNorm.max-strNorm.min)*0.7, velPad=(velNorm.max-velNorm.min)*1.0;
-  const xMin=Math.max(0, strNorm.min-strPad), xMax=strNorm.max+strPad;
-  const yMin=Math.max(0, velNorm.min-velPad), yMax=velNorm.max+velPad;
+  let xMin=Math.max(0, strNorm.min-strPad), xMax=strNorm.max+strPad;
+  let yMin=Math.max(0, velNorm.min-velPad), yMax=velNorm.max+velPad;
+
+  // Extend axes to fit all actual data points — never clip a dot
+  if (points.length) {
+    const allStr = points.map(p=>p.str), allVel = points.map(p=>p.vel);
+    const datXMin=Math.min(...allStr), datXMax=Math.max(...allStr);
+    const datYMin=Math.min(...allVel), datYMax=Math.max(...allVel);
+    const xPad=(xMax-xMin)*0.12, yPad=(yMax-yMin)*0.12;
+    xMin=Math.min(xMin, datXMin-xPad);
+    xMax=Math.max(xMax, datXMax+xPad);
+    yMin=Math.min(yMin, datYMin-yPad);
+    yMax=Math.max(yMax, datYMax+yPad);
+  }
 
   const sx = v => ML+(v-xMin)/(xMax-xMin)*CW;
   const sy = v => MT+CH-(v-yMin)/(yMax-yMin)*CH;
