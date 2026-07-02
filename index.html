@@ -718,28 +718,10 @@ function renderMain(){
         <div class="quadrant-body">
           <div class="quadrant-controls">
             <span class="control-label">Strength axis</span>
-            <div id="axisButtons"></div>
+            <div id="axisButtons">
+              ${QUAD_STR_AXES.map((ax,i)=>`<button class="axis-btn${i===0?' active':''}" onclick="setStrengthAxis('${ax.key}',this)">${ax.label}</button>`).join('')}
+            </div>
           </div>
-          <script>
-            // Extensible axis options — add new entries here as tests are added
-            // To add future options (e.g. CMJ peak power when force plate available):
-            // { key: 'cmj_peak_power_bw', label: 'CMJ peak power ×BW' }
-            const QUAD_STR_AXES = [
-              { key: 'tb_1rm_bw', label: 'Trap bar DL ×BW' },
-              { key: 'sq_1rm_bw', label: 'Back squat ×BW'  },
-              { key: 'imtp',      label: 'IMTP (N/kg)'      },
-            ];
-            const axBtns = document.getElementById('axisButtons');
-            if (axBtns) {
-              QUAD_STR_AXES.forEach((ax, i) => {
-                const b = document.createElement('button');
-                b.className = 'axis-btn' + (i===0?' active':'');
-                b.textContent = ax.label;
-                b.onclick = () => setStrengthAxis(ax.key, b);
-                axBtns.appendChild(b);
-              });
-            }
-          </script>
           <div id="quadrantContainer"></div>
           <div class="quadrant-legend">
             <span class="ql-dot ql-you"></span><span>You (${a.name})</span>
@@ -1426,7 +1408,15 @@ function _buildAndOpenPrintReport(a, chartImages, quadrantSVG) {
 loadData();
 
 // ─── STRENGTH-SPEED QUADRANT ─────────────────────────────────────────────────
-let currentStrengthAxis = 'tb_1rm_bw';
+// Extensible axis options — add new entries here as tests are added.
+// Future option example (when force plate available):
+//   { key: 'cmj_peak_power_bw', label: 'CMJ peak power ×BW' }
+const QUAD_STR_AXES = [
+  { key: 'tb_1rm_bw', label: 'Trap bar DL ×BW' },
+  { key: 'sq_1rm_bw', label: 'Back squat ×BW'  },
+  { key: 'imtp',      label: 'IMTP (N/kg)'      },
+];
+let currentStrengthAxis = QUAD_STR_AXES[0].key;
 
 function setStrengthAxis(key, btn) {
   currentStrengthAxis = key;
