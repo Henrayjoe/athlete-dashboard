@@ -525,7 +525,7 @@ function showConfig(){
     <h3>Sheet settings</h3><p>Update published CSV URLs below.</p>
     <label>Athletes tab URL</label><input id="urlA" type="text" value="${cfg.athletesUrl||''}">
     <label>Test results tab URL</label><input id="urlR" type="text" value="${cfg.resultsUrl||''}">
-    <label>Your name (shown on printouts)</label><input id="urlCN" type="text" value="${cfg.coachName||''}" placeholder="e.g. Performance Coach Henri Joensuu">
+    <label>Your name (shown on printouts)</label><input id="urlCN" type="text" value="${cfg.coachName||'Physical Performance Coach - Henri Joensuu'}" placeholder="e.g. Performance Coach Henri Joensuu">
     <button class="btn" onclick="connectSheet()">Save & reload</button>
     <button class="btn-sm" style="margin-top:12px;margin-left:8px" onclick="loadData()">Cancel</button>
   </div></div>`;
@@ -1176,7 +1176,7 @@ function _buildAndOpenPrintReport(a, chartImages, quadrantSVG) {
   const pv    = a.sessions.length > 1 ? a.sessions[1] : null; // kept for backward compat
   const bw    = parseFloat(a.weight_kg);
   const logoSrc   = document.querySelector('.sb-brand img')?.src || '';
-  const coachName = getConfig().coachName || '';
+  const coachName = getConfig().coachName || 'Physical Performance Coach - Henri Joensuu';
   const today = new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'});
 
   // Build a date map: for each metric key, which session date was the source?
