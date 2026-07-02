@@ -560,6 +560,7 @@ function switchTab(t){
   document.querySelectorAll('.tc').forEach(e=>e.classList.toggle('active',e.dataset.t===t));
   if(t==='trends')   setTimeout(drawCharts,60);
   if(t==='quadrant') setTimeout(()=>drawQuadrant(currentStrengthAxis),60);
+  if(t==='history')  setTimeout(renderHistory,60);
 }
 
 // ─── MAIN RENDER ──────────────────────────────────────────────────────────────
@@ -607,6 +608,7 @@ function renderMain(){
         <div class="tab active" data-t="results" onclick="switchTab('results')">Latest Results</div>
         <div class="tab" data-t="trends"   onclick="switchTab('trends')">Trend Charts</div>
         <div class="tab" data-t="quadrant" onclick="switchTab('quadrant')">Strength-Speed</div>
+        <div class="tab" data-t="history"  onclick="switchTab('history')">Test History</div>
         <div class="tab" data-t="feedback" onclick="switchTab('feedback')">Athlete Feedback</div>
       </div>
       <div class="tc active" data-t="results">
@@ -615,18 +617,18 @@ function renderMain(){
           <div>
             <div class="sec-heading">Jump / Power</div>
             <table><thead><tr><th>Test</th><th>Result</th><th>Test result status</th><th>Normative range</th><th>vs previous</th></tr></thead><tbody>
-              ${mRow('broad_jump',  d.broad_jump,  pv?.broad_jump)}
+              ${mRow('broad_jump',  d.broad_jump,  prevVal('broad_jump'))}
               ${mRow('slbj_L',      d.slbj_L,      pv?.slbj_L)}
               ${mRow('slbj_R',      d.slbj_R,      pv?.slbj_R)}
               ${d.slbj_LSI!=null ? mRow('slbj_LSI', d.slbj_LSI, pv?.slbj_LSI, null, true) : ''}
-              ${mRow('triple_hop',  d.triple_hop,  pv?.triple_hop)}
-              ${mRow('cmj',         d.cmj,         pv?.cmj)}
-              ${mRow('sj',          d.sj,          pv?.sj)}
+              ${mRow('triple_hop',  d.triple_hop,  prevVal('triple_hop'))}
+              ${mRow('cmj',         d.cmj,         prevVal('cmj'))}
+              ${mRow('sj',          d.sj,          prevVal('sj'))}
               ${d.eur!=null ? mRow('eur', d.eur, pv?.eur, '(CMJ÷SJ)', true) : ''}
               ${d.cmj_mrsi!=null
                 ? mRow('cmj_mrsi', d.cmj_mrsi, pv?.cmj_mrsi, `(${d.cmj}cm ÷ ${d.cmj_ct_ms}ms)`, true)
                 : `<tr><td class="lbl">CMJ mRSI <span style="font-size:10px;color:var(--text-muted)">(needs contraction time)</span></td><td colspan="2" class="miss">— add cmj_contraction_time_ms to unlock</td><td style="font-size:11px;color:var(--text-muted)">${NORMS.cmj_mrsi.min}–${NORMS.cmj_mrsi.max} ${NORMS.cmj_mrsi.u}</td><td class="miss">—</td></tr>`}
-              ${mRow('dj',          d.dj,          pv?.dj)}
+              ${mRow('dj',          d.dj,          prevVal('dj'))}
               ${d.dj_rsi!=null
                 ? mRow('dj_rsi', d.dj_rsi, pv?.dj_rsi, `(${d.dj}cm ÷ ${d.dj_ct_ms}ms)`, true)
                 : `<tr><td class="lbl">DJ RSI <span style="font-size:10px;color:var(--text-muted)">(needs contact time)</span></td><td colspan="2" class="miss">— add dj_contact_time_ms to unlock</td><td style="font-size:11px;color:var(--text-muted)">${NORMS.dj_rsi.min}–${NORMS.dj_rsi.max} ${NORMS.dj_rsi.u}</td><td class="miss">—</td></tr>`}
@@ -723,6 +725,7 @@ function renderMain(){
           <span style="margin-left:8px;font-size:11px;color:#7a8290"><span class="calc-badge">auto</span> = calculated from your raw input</span>
         </div>
       </div>
+      <div class="tc" data-t="history"><div id="historyContent" style="overflow-x:auto;padding:18px 20px"></div></div>
       <div class="tc" data-t="feedback"><div id="feedbackContent"><div class="feedback-empty"><h3>Athlete Feedback</h3><p>Generate a personalised coach report and athlete message based on the latest test results.</p><button class="btn" onclick="generateFeedback()">Generate Feedback</button></div></div></div>
       <div class="tc" data-t="quadrant">
         <div class="quadrant-body">
@@ -834,7 +837,7 @@ function buildResultsForPrompt(a) {
   }
 
   lines.push('=== JUMP / POWER ===');
-  row('Broad jump',    ld.broad_jump, 'broad_jump', pv?.broad_jump);
+  row('Broad jump',    ld.broad_jump, 'broad_jump', prevVal('broad_jump'));
   if (ld.slbj_L)  lines.push(`SL broad jump L: ${ld.slbj_L}cm (no validated norm)`);
   if (ld.slbj_R)  lines.push(`SL broad jump R: ${ld.slbj_R}cm (no validated norm)`);
   if (ld.slbj_LSI!=null) {
@@ -842,14 +845,14 @@ function buildResultsForPrompt(a) {
     const stat = bs(ld.slbj_LSI,'slbj_LSI')!==null ? SL[bs(ld.slbj_LSI,'slbj_LSI')] : '';
     lines.push(`SL broad jump LSI: ${ld.slbj_LSI}% — ${stat}${flag}${dText(ld.slbj_LSI, pv?.slbj_LSI, false)}`);
   }
-  row('Triple hop',   ld.triple_hop, 'triple_hop', pv?.triple_hop);
-  row('CMJ height',   ld.cmj,        'cmj',        pv?.cmj);
-  row('SJ height',    ld.sj,         'sj',         pv?.sj);
-  row('EUR',          ld.eur,        'eur',        pv?.eur);
-  row('CMJ mRSI',     ld.cmj_mrsi,   'cmj_mrsi',   pv?.cmj_mrsi);
-  row('DJ height',    ld.dj,         'dj',         pv?.dj);
-  row('DJ RSI',       ld.dj_rsi,     'dj_rsi',     pv?.dj_rsi);
-  row('DSI',          ld.dsi,        'dsi',        pv?.dsi);
+  row('Triple hop',   ld.triple_hop, 'triple_hop', prevVal('triple_hop'));
+  row('CMJ height',   ld.cmj,        'cmj',        prevVal('cmj'));
+  row('SJ height',    ld.sj,         'sj',         prevVal('sj'));
+  row('EUR',          ld.eur,        'eur',        prevVal('eur'));
+  row('CMJ mRSI',     ld.cmj_mrsi,   'cmj_mrsi',   prevVal('cmj_mrsi'));
+  row('DJ height',    ld.dj,         'dj',         prevVal('dj'));
+  row('DJ RSI',       ld.dj_rsi,     'dj_rsi',     prevVal('dj_rsi'));
+  row('DSI',          ld.dsi,        'dsi',        prevVal('dsi'));
 
   lines.push('=== AEROBIC ===');
   row('MAS',          ld.mas,        'mas',        pv?.mas);
@@ -859,12 +862,12 @@ function buildResultsForPrompt(a) {
   if (ld.sq_1rm_bw!=null) lines.push(`Back squat: ${ld.sq_1rm_bw}xBW${ld.sq_1rm?' (est. 1RM '+ld.sq_1rm+'kg)':''} — ${SL[bs(ld.sq_1rm_bw,'sq_1rm_bw')]||''}${dText(ld.sq_1rm_bw, pv&&bw?+(pv.sq_1rm/bw).toFixed(2):null, false)}`);
   if (ld.tb_1rm_bw!=null) lines.push(`Trap bar DL: ${ld.tb_1rm_bw}xBW${ld.tb_1rm?' (est. 1RM '+ld.tb_1rm+'kg)':''} — ${SL[bs(ld.tb_1rm_bw,'tb_1rm_bw')]||''}${dText(ld.tb_1rm_bw, pv&&bw?+(pv.tb_1rm/bw).toFixed(2):null, false)}`);
   if (ld.bp_1rm_bw!=null) lines.push(`Bench press: ${ld.bp_1rm_bw}xBW${ld.bp_1rm?' (est. 1RM '+ld.bp_1rm+'kg)':''} — ${SL[bs(ld.bp_1rm_bw,'bp_1rm_bw')]||''}${dText(ld.bp_1rm_bw, pv&&bw?+(pv.bp_1rm/bw).toFixed(2):null, false)}`);
-  row('IMTP',         ld.imtp,       'imtp',       pv?.imtp);
+  row('IMTP',         ld.imtp,       'imtp',       prevVal('imtp'));
 
   lines.push('=== SPEED ===');
   row('10m sprint',   ld.sprint10,   'sprint10',   pv?.sprint10, true);
   row('20m sprint',   ld.sprint20,   'sprint20',   pv?.sprint20, true);
-  row('Max velocity', ld.max_vel,    'max_vel',    pv?.max_vel);
+  row('Max velocity', ld.max_vel,    'max_vel',    prevVal('max_vel'));
 
   return lines.join('\n');
 }
@@ -1168,7 +1171,9 @@ function generatePrintReport() {
 
 function _buildAndOpenPrintReport(a, chartImages, quadrantSVG) {
   const ld    = buildLatestAcrossSessions(a.sessions);
-  const pv    = a.sessions.length > 1 ? a.sessions[1] : null;
+  // prevVal(key): find most recent previous session with a value for this key
+  const prevVal = k => { for(let i=1;i<a.sessions.length;i++){ if(a.sessions[i][k]!=null) return a.sessions[i][k]; } return null; };
+  const pv    = a.sessions.length > 1 ? a.sessions[1] : null; // kept for backward compat
   const bw    = parseFloat(a.weight_kg);
   const logoSrc   = document.querySelector('.sb-brand img')?.src || '';
   const coachName = getConfig().coachName || '';
@@ -1276,26 +1281,31 @@ function _buildAndOpenPrintReport(a, chartImages, quadrantSVG) {
   const lsiFlag=lsi!=null&&lsi<90;
 
   const jumpM=[
-    mk('broad_jump',ld.broad_jump,pv?.broad_jump),
-    ld.slbj_L!=null?{val:ld.slbj_L,prevVal:pv?.slbj_L,label:'SL broad jump — L',u:'cm',score:null,noNorm:true,lb:false,sub:'',date:dateSrc['slbj_L']||null}:{val:null},
-    ld.slbj_R!=null?{val:ld.slbj_R,prevVal:pv?.slbj_R,label:'SL broad jump — R',u:'cm',score:null,noNorm:true,lb:false,sub:'',date:dateSrc['slbj_R']||null}:{val:null},
-    lsi!=null?{val:lsi,prevVal:lsiPv,label:'SL broad jump LSI'+(lsiFlag?' ⚠':''),u:'%',score:lsiFlag?null:bs(lsi,'slbj_LSI'),noNorm:false,lb:false,nMin:90,nMax:100,sub:'',auto:true,date:dateSrc['slbj_LSI']||null}:{val:null},
-    mk('triple_hop',ld.triple_hop,pv?.triple_hop),
-    mk('cmj',ld.cmj,pv?.cmj),
-    mk('sj',ld.sj,pv?.sj),
-    ld.cmj!=null&&ld.sj!=null?{...mk('eur',ld.eur,pv?.eur),auto:true,sub:'CMJ÷SJ'}:{val:null},
-    ld.cmj_mrsi!=null?{...mk('cmj_mrsi',ld.cmj_mrsi,pv?.cmj_mrsi),auto:true}:{val:null},
-    mk('dj',ld.dj,pv?.dj),
-    ld.dj_rsi!=null?{...mk('dj_rsi',ld.dj_rsi,pv?.dj_rsi),auto:true}:{val:null},
-    mk('dsi',ld.dsi,pv?.dsi),
+    mk('broad_jump',ld.broad_jump,prevVal('broad_jump')),
+    ld.slbj_L!=null?{val:ld.slbj_L,prevVal:prevVal('slbj_L'),label:'SL broad jump — L',u:'cm',score:null,noNorm:true,lb:false,sub:'',date:dateSrc['slbj_L']||null}:{val:null},
+    ld.slbj_R!=null?{val:ld.slbj_R,prevVal:prevVal('slbj_R'),label:'SL broad jump — R',u:'cm',score:null,noNorm:true,lb:false,sub:'',date:dateSrc['slbj_R']||null}:{val:null},
+    lsi!=null?{val:lsi,prevVal:(()=>{const pS=prevVal('slbj_L'),pR=prevVal('slbj_R');return(pS!=null&&pR!=null)?+(Math.min(pS,pR)/Math.max(pS,pR)*100).toFixed(1):null;})(),label:'SL broad jump LSI'+(lsiFlag?' ⚠':''),u:'%',score:lsiFlag?null:bs(lsi,'slbj_LSI'),noNorm:false,lb:false,nMin:90,nMax:100,sub:'',auto:true,date:dateSrc['slbj_LSI']||null}:{val:null},
+    mk('triple_hop',ld.triple_hop,prevVal('triple_hop')),
+    mk('cmj',ld.cmj,prevVal('cmj')),
+    mk('sj',ld.sj,prevVal('sj')),
+    ld.cmj!=null&&ld.sj!=null?{...mk('eur',ld.eur,prevVal('eur')),auto:true,sub:'CMJ÷SJ'}:{val:null},
+    ld.cmj_mrsi!=null?{...mk('cmj_mrsi',ld.cmj_mrsi,prevVal('cmj_mrsi')),auto:true}:{val:null},
+    mk('dj',ld.dj,prevVal('dj')),
+    ld.dj_rsi!=null?{...mk('dj_rsi',ld.dj_rsi,prevVal('dj_rsi')),auto:true}:{val:null},
+    mk('dsi',ld.dsi,prevVal('dsi')),
   ];
   const aeroM=[
-    ld.mas!=null?{...mk('mas',ld.mas,pv?.mas),auto:true,sub:ld.tt5min_dist?`${ld.tt5min_dist}m TT`:''}:{val:null},
-    ld.vo2max!=null?{...mk('vo2max',ld.vo2max,pv?.vo2max),auto:true}:{val:null},
+    ld.mas!=null?{...mk('mas',ld.mas,prevVal('mas')),auto:true,sub:ld.tt5min_dist?`${ld.tt5min_dist}m TT`:''}:{val:null},
+    ld.vo2max!=null?{...mk('vo2max',ld.vo2max,prevVal('vo2max')),auto:true}:{val:null},
+    // Distance TT — benchmark average speed vs MAS norm
+    (ld.tt_dist&&ld.tt_speed)?{val:fmtTime(ld.tt_time),prevVal:null,label:`Distance TT (${(ld.tt_dist/1000).toFixed(ld.tt_dist%1000===0?0:1)}km)`,u:'',score:bs(ld.tt_speed,'mas'),lb:false,noNorm:false,nMin:NORMS.mas.min,nMax:NORMS.mas.max,sub:`${ld.tt_speed} m/s avg${ld.tt_vo2max?' · est. VO₂max '+ld.tt_vo2max+' ml/kg/min':''}`,auto:true,date:dateSrc['mas']||null}:{val:null},
+    ld.yoyo_ir2!=null?{val:ld.yoyo_ir2,prevVal:prevVal('yoyo_ir2'),label:'Yo-Yo IR2',u:'m',score:bs(ld.yoyo_ir2,'yoyo_ir2'),lb:false,noNorm:false,nMin:NORMS.yoyo_ir2.min,nMax:NORMS.yoyo_ir2.max,sub:ld.yoyo_vo2max?`est. VO₂max ${ld.yoyo_vo2max} ml/kg/min`:'',auto:true,date:dateSrc['yoyo_ir2']||null}:{val:null},
+    ld.beep_level!=null?{val:`Level ${ld.beep_level}${ld.beep_shuttle?', shuttle '+ld.beep_shuttle:''}`,prevVal:null,label:'Beep test (MSFT)',u:'',score:bs(ld.beep_level,'beep_level'),lb:false,noNorm:false,nMin:NORMS.beep_level.min,nMax:NORMS.beep_level.max,sub:ld.beep_speed?`${ld.beep_speed} km/h${ld.beep_vo2max?' · est. VO₂max '+ld.beep_vo2max+' ml/kg/min':''}`:'' ,auto:true,date:null}:{val:null},
+    ld.bronco!=null?{val:fmtTime(ld.bronco),prevVal:null,label:'Bronco test',u:'',score:bs(ld.bronco,'bronco'),lb:true,noNorm:false,nMin:NORMS.bronco.min,nMax:NORMS.bronco.max,sub:`${ld.bronco}s (lower is better)`,auto:false,date:dateSrc['bronco']||null}:{val:null},
   ];
   const strM=[strMk('sq_1rm_bw','sq'),strMk('tb_1rm_bw','tb'),strMk('bp_1rm_bw','bp'),
-    ld.imtp!=null?{...mk('imtp',ld.imtp,pv?.imtp),auto:true,sub:`${ld.imtp_raw_N}N`}:{val:null}];
-  const spdM=[mk('sprint10',ld.sprint10,pv?.sprint10),mk('sprint20',ld.sprint20,pv?.sprint20),mk('max_vel',ld.max_vel,pv?.max_vel)];
+    ld.imtp!=null?{...mk('imtp',ld.imtp,prevVal('imtp')),auto:true,sub:`${ld.imtp_raw_N}N`}:{val:null}];
+  const spdM=[mk('sprint10',ld.sprint10,prevVal('sprint10')),mk('sprint20',ld.sprint20,prevVal('sprint20')),mk('max_vel',ld.max_vel,prevVal('max_vel'))];
 
   const catCardsHtml = catDefs.map(c=>{
     const cl=getCatStatus(c.keys); const col=cl?cl.c:'#94a3b8'; const lbl=cl?cl.l:'No data';
@@ -1415,6 +1425,87 @@ function _buildAndOpenPrintReport(a, chartImages, quadrantSVG) {
   if (!win) { alert('Please allow popups for this page to generate the print report.'); return; }
   win.document.write(reportHTML);
   win.document.close();
+}
+
+// ─── TEST HISTORY LOG ────────────────────────────────────────────────────────
+function renderHistory() {
+  const a = athleteMap[selectedId];
+  const el = document.getElementById('historyContent');
+  if (!a || !el) return;
+  if (!a.sessions.length) { el.innerHTML='<p style="color:var(--text-muted);padding:8px">No sessions recorded.</p>'; return; }
+
+  const COLS = [
+    { key:'broad_jump', label:'Broad jump',   u:'cm',  cat:'Jump' },
+    { key:'slbj_L',     label:'SL jump L',    u:'cm',  cat:'Jump' },
+    { key:'slbj_R',     label:'SL jump R',    u:'cm',  cat:'Jump' },
+    { key:'slbj_LSI',   label:'LSI',          u:'%',   cat:'Jump' },
+    { key:'triple_hop', label:'Triple hop',   u:'cm',  cat:'Jump' },
+    { key:'cmj',        label:'CMJ',          u:'cm',  cat:'Jump' },
+    { key:'sj',         label:'SJ',           u:'cm',  cat:'Jump' },
+    { key:'eur',        label:'EUR',          u:'',    cat:'Jump' },
+    { key:'cmj_mrsi',   label:'CMJ mRSI',     u:'m/s', cat:'Jump' },
+    { key:'dj',         label:'DJ',           u:'cm',  cat:'Jump' },
+    { key:'dj_rsi',     label:'DJ RSI',       u:'m/s', cat:'Jump' },
+    { key:'dsi',        label:'DSI',          u:'',    cat:'Jump' },
+    { key:'mas',        label:'MAS',          u:'m/s', cat:'Aerobic' },
+    { key:'vo2max',     label:'VO₂max',       u:'ml/kg/min', cat:'Aerobic' },
+    { key:'tt_speed',   label:'TT speed',     u:'m/s', cat:'Aerobic' },
+    { key:'yoyo_ir2',   label:'Yo-Yo IR2',    u:'m',   cat:'Aerobic' },
+    { key:'beep_level', label:'Beep',         u:'lvl', cat:'Aerobic' },
+    { key:'bronco',     label:'Bronco',       u:'s',   cat:'Aerobic', lb:true },
+    { key:'sq_1rm_bw',  label:'Squat ×BW',   u:'',    cat:'Strength' },
+    { key:'tb_1rm_bw',  label:'Trap DL ×BW', u:'',    cat:'Strength' },
+    { key:'bp_1rm_bw',  label:'Bench ×BW',   u:'',    cat:'Strength' },
+    { key:'imtp',       label:'IMTP',         u:'N/kg',cat:'Strength' },
+    { key:'sprint10',   label:'10m',          u:'s',   cat:'Speed', lb:true },
+    { key:'sprint20',   label:'20m',          u:'s',   cat:'Speed', lb:true },
+    { key:'max_vel',    label:'Max vel',      u:'m/s', cat:'Speed' },
+  ];
+
+  const sessions = [...a.sessions].reverse(); // oldest → newest
+  const activeCols = COLS.filter(c => sessions.some(s => s[c.key] != null));
+  const cats = ['Jump','Aerobic','Strength','Speed'];
+  const catSpans = cats.map(cat => ({ cat, count: activeCols.filter(c=>c.cat===cat).length })).filter(c=>c.count>0);
+
+  const scoreColor = (key, val) => {
+    if (val==null) return '';
+    const s = bs(val, key); if (s===null) return '';
+    return ['#dc2626','#c2410c','#b45309','#1a56db','#16a34a'][s];
+  };
+
+  const fmtCell = (key, val) => {
+    if (val==null) return `<span style="color:var(--border)">—</span>`;
+    let display = val;
+    if (key==='bronco') display = fmtTime(val);
+    else if (key==='tt_speed') display = val.toFixed(2);
+    else if (typeof val==='number' && !Number.isInteger(val)) display = val < 5 ? val.toFixed(2) : val.toFixed(1);
+    const col = scoreColor(key, val);
+    return `<span style="${col?`color:${col};font-weight:700`:'color:var(--text-secondary)'}">${display}</span>`;
+  };
+
+  const th = (txt, extra='') => `<th style="padding:6px 9px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);background:var(--surface-alt);border:1px solid var(--border);white-space:nowrap;text-align:center${extra}">${txt}</th>`;
+
+  let t = `<table style="border-collapse:collapse;font-size:11px">
+  <thead>
+    <tr>
+      <th style="padding:6px 10px;font-size:9px;font-weight:700;color:var(--text-muted);background:var(--surface-alt);border:1px solid var(--border);text-align:left;position:sticky;left:0;z-index:2" rowspan="2">Date</th>
+      ${catSpans.map(c=>`<th colspan="${c.count}" style="padding:6px 9px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--accent);background:var(--surface-alt);border:1px solid var(--border);border-bottom:2px solid var(--accent);text-align:center">${c.cat}</th>`).join('')}
+    </tr>
+    <tr>${activeCols.map(c=>th(`${c.label}${c.u?`<br><span style="font-weight:400;font-size:8px;opacity:.7">${c.u}</span>`:''}`)).join('')}</tr>
+  </thead>
+  <tbody>`;
+
+  sessions.forEach((s,i) => {
+    const bg = i%2===0 ? 'var(--surface)' : 'var(--surface-alt)';
+    const noteHtml = s.notes ? `<br><span style="font-size:9px;color:var(--text-muted);font-style:italic;font-weight:400">${s.notes}</span>` : '';
+    t += `<tr>
+      <td style="padding:6px 10px;font-size:11px;font-weight:600;color:var(--text-secondary);background:${bg};border:1px solid var(--border);position:sticky;left:0;z-index:1;min-width:88px">${s.test_date||'—'}${noteHtml}</td>
+      ${activeCols.map(c=>`<td style="padding:5px 9px;text-align:center;background:${bg};border:1px solid var(--border)">${fmtCell(c.key,s[c.key])}</td>`).join('')}
+    </tr>`;
+  });
+
+  el.innerHTML = t + `</tbody></table>
+  <p style="font-size:10px;color:var(--text-muted);margin-top:8px">Oldest → newest · Values colour-coded: <span style="color:#16a34a">●</span> Exceeds <span style="color:#1a56db">●</span> Meets <span style="color:#b45309">●</span> Near <span style="color:#c2410c">●</span> Below <span style="color:#dc2626">●</span> Priority</p>`;
 }
 
 loadData();
