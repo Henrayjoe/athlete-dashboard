@@ -781,18 +781,19 @@ function mkChart(id,labels,datasets,yLabel,nMin,nMax){
   const allV=datasets.flatMap(d=>d.data).filter(v=>v!=null&&!isNaN(v));
   if(!allV.length){el.parentElement.style.display='none';return;}
   el.parentElement.style.display='';
-  const dMin=nMin!=null?Math.min(...allV,nMin):Math.min(...allV);
-  const dMax=nMax!=null?Math.max(...allV,nMax):Math.max(...allV);
+  const hasNorm = nMin!=null && nMax!=null;
+  const dMin = hasNorm ? Math.min(...allV,nMin) : Math.min(...allV);
+  const dMax = hasNorm ? Math.max(...allV,nMax) : Math.max(...allV);
   const pad=(dMax-dMin)*0.22;
+  // Build datasets array separately — avoids inline spread issues in Chart.js config
+  const allDS = hasNorm
+    ? [{label:'_nu',data:labels.map(()=>nMax),borderColor:'transparent',backgroundColor:'rgba(26,86,219,0.07)',fill:'+1',pointRadius:0,tension:0,borderWidth:0},
+       {label:'_nl',data:labels.map(()=>nMin),borderColor:'rgba(26,86,219,0.22)',backgroundColor:'transparent',fill:false,pointRadius:0,tension:0,borderDash:[4,3],borderWidth:1.5},
+       ...datasets]
+    : [...datasets];
   CI[id]=new Chart(el.getContext('2d'),{
     type:'line',
-    data:{labels,datasets:[
-      ...(nMin!=null&&nMax!=null?[
-        {label:'_nu',data:labels.map(()=>nMax),borderColor:'transparent',backgroundColor:'rgba(26,86,219,0.07)',fill:'+1',pointRadius:0,tension:0,borderWidth:0},
-        {label:'_nl',data:labels.map(()=>nMin),borderColor:'rgba(26,86,219,0.22)',backgroundColor:'transparent',fill:false,pointRadius:0,tension:0,borderDash:[4,3],borderWidth:1.5}
-      ]:[]),
-      ...datasets
-    ]},
+    data:{labels,datasets:allDS},
     options:{
       responsive:true,maintainAspectRatio:true,aspectRatio:1.9,
       plugins:{
