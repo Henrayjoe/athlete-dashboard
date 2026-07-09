@@ -781,41 +781,19 @@ function mkChart(id,labels,datasets,yLabel,nMin,nMax){
   const allV=datasets.flatMap(d=>d.data).filter(v=>v!=null&&!isNaN(v));
   if(!allV.length){el.parentElement.style.display='none';return;}
   el.parentElement.style.display='';
-  const hasNorm = nMin!=null && nMax!=null;
-  const dMin = hasNorm ? Math.min(...allV,nMin) : Math.min(...allV);
-  const dMax = hasNorm ? Math.max(...allV,nMax) : Math.max(...allV);
+  const hasNorm=nMin!=null&&nMax!=null;
+  const dMin=hasNorm?Math.min(...allV,nMin):Math.min(...allV);
+  const dMax=hasNorm?Math.max(...allV,nMax):Math.max(...allV);
   const pad=(dMax-dMin)*0.22;
-  // Build datasets array separately — avoids inline spread issues in Chart.js config
-  const allDS = hasNorm
-    ? [{label:'_nu',data:labels.map(()=>nMax),borderColor:'transparent',backgroundColor:'rgba(26,86,219,0.07)',fill:'+1',pointRadius:0,tension:0,borderWidth:0},
-       {label:'_nl',data:labels.map(()=>nMin),borderColor:'rgba(26,86,219,0.22)',backgroundColor:'transparent',fill:false,pointRadius:0,tension:0,borderDash:[4,3],borderWidth:1.5},
-       ...datasets]
-    : [...datasets];
+  const bandDS=hasNorm?[
+    {label:'_nu',data:labels.map(()=>nMax),borderColor:'transparent',backgroundColor:'rgba(26,86,219,0.07)',fill:'+1',pointRadius:0,tension:0,borderWidth:0},
+    {label:'_nl',data:labels.map(()=>nMin),borderColor:'rgba(26,86,219,0.22)',backgroundColor:'transparent',fill:false,pointRadius:0,tension:0,borderDash:[4,3],borderWidth:1.5}
+  ]:[];
   CI[id]=new Chart(el.getContext('2d'),{
     type:'line',
-    data:{labels,datasets:allDS},
+    data:{labels,datasets:bandDS.concat(datasets)},
     options:{
       responsive:true,maintainAspectRatio:true,aspectRatio:1.9,
-      animation:{
-        onComplete:function(){
-          const chart=this, ctx=chart.ctx;
-          chart.data.datasets.forEach((ds,i)=>{
-            if(!ds.label||ds.label.startsWith('_'))return;
-            const meta=chart.getDatasetMeta(i);
-            if(meta.hidden)return;
-            meta.data.forEach((pt,j)=>{
-              const v=ds.data[j]; if(v==null||isNaN(v))return;
-              const disp=typeof v==='number'?(v<5&&!Number.isInteger(v)?v.toFixed(2):v%1!==0?v.toFixed(1):String(v)):String(v);
-              ctx.save();
-              ctx.font='600 9px -apple-system,BlinkMacSystemFont,sans-serif';
-              ctx.fillStyle=typeof ds.borderColor==='string'?ds.borderColor:'#555';
-              ctx.textAlign='center';ctx.textBaseline='bottom';
-              ctx.fillText(disp,pt.x,pt.y-5);
-              ctx.restore();
-            });
-          });
-        }
-      },
       plugins:{
         legend:{display:datasets.length>1,position:'bottom',labels:{font:{size:10},boxWidth:10,padding:8,filter:i=>!i.text.startsWith('_')}},
         tooltip:{filter:i=>!i.dataset.label.startsWith('_'),callbacks:{label:c=>`${c.dataset.label}: ${c.parsed.y} ${yLabel}`}}
@@ -875,7 +853,7 @@ function drawCharts(){
   const charts=[
     {id:'ch-broadjump',  title:'Broad jump',  u:'cm', nk:'broad_jump',  ds:[ser('broad_jump',CC[0])]},
     {id:'ch-triplehop',  title:'Triple hop',  u:'cm', nk:'triple_hop',  ds:[ser('triple_hop',CC[2])]},
-    {id:'ch-lsi', title:`SL Broad Jump — L vs R${ld.slbj_LSI!=null?' (LSI: '+ld.slbj_LSI+'%)':''}`, u:'cm', nk:null, nMin:null, nMax:null, ds:[ser('slbj_L',CC[0],''),ser('slbj_R',CC[1],[5,3])]},
+    {id:'ch-lsi', title:`SL Broad Jump — L vs R${ld.slbj_LSI!=null?' (LSI: '+ld.slbj_LSI+'%)':''}`, u:'cm', nk:null, nMin:null, nMax:null, ds:[ser('slbj_L',CC[0]),ser('slbj_R',CC[1],[5,3])]},
     {id:'ch-cmj',    title:'CMJ / SJ heights',        u:'cm',   nk:'cmj',         ds:[ser('cmj',CC[0]),ser('sj',CC[1],[5,3])]},
     {id:'ch-eur',    title:'EUR (CMJ÷SJ)',             u:'ratio',nk:'eur',         ds:[ser('eur',CC[3])]},
     {id:'ch-mrsi',   title:'CMJ mRSI',                u:'m/s',  nk:'cmj_mrsi',    ds:[ser('cmj_mrsi',CC[0])]},
@@ -892,8 +870,10 @@ function drawCharts(){
   const grid=document.getElementById('chartGrid'); if(!grid)return;
   grid.innerHTML=charts.map(ch=>`<div class="chart-wrap" id="wrap-${ch.id}"><div class="chart-title">${ch.title}</div><canvas id="${ch.id}"></canvas></div>`).join('');
   charts.forEach(ch=>{
-    if(ch.nk===null){mkChart(ch.id,lb,ch.ds,ch.u,ch.nMin,ch.nMax);return;}
-    const n=NORMS[ch.nk];if(n)mkChart(ch.id,lb,ch.ds,ch.u,n.min,n.max);
+    try {
+      if(ch.nk===null){mkChart(ch.id,lb,ch.ds,ch.u,ch.nMin,ch.nMax);return;}
+      const n=NORMS[ch.nk];if(n)mkChart(ch.id,lb,ch.ds,ch.u,n.min,n.max);
+    } catch(e){ console.warn('Chart error:',ch.id,e); }
   });
 }
 
