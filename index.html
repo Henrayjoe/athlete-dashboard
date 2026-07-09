@@ -793,6 +793,7 @@ function mkChart(id,labels,datasets,yLabel,nMin,nMax){
     : [...datasets];
   CI[id]=new Chart(el.getContext('2d'),{
     type:'line',
+    plugins:[ValueLabelPlugin],
     data:{labels,datasets:allDS},
     options:{
       responsive:true,maintainAspectRatio:true,aspectRatio:1.9,
@@ -807,8 +808,8 @@ function mkChart(id,labels,datasets,yLabel,nMin,nMax){
     }
   });
 }
-// Chart.js plugin: draw value labels above each data point
-Chart.register({
+// Value label plugin — passed directly into each chart instance (more reliable than Chart.register in CJ4)
+const ValueLabelPlugin = {
   id:'valueLabels',
   afterDatasetsDraw(chart){
     const ctx=chart.ctx;
@@ -832,7 +833,7 @@ Chart.register({
       });
     });
   }
-});
+};
 
 function ls(col,dash=[]){return{borderColor:col,backgroundColor:col,fill:false,tension:0.3,pointRadius:4,pointHoverRadius:6,borderWidth:2,borderDash:dash,spanGaps:true};}
 
