@@ -791,14 +791,15 @@ function ls(col,dash=[]){return{borderColor:col,backgroundColor:col,fill:false,t
 function drawCharts(){
   const a=athleteMap[selectedId]; if(!a||!a.sessions.length)return;
   const sessions=[...a.sessions].reverse();
-  // Chart.js fill:'+1' needs ≥2 x-points to render a shaded area.
-  // If only 1 session, duplicate the label so the band always shows.
-  const lb = sessions.length === 1
-    ? [sessions[0].test_date, sessions[0].test_date]
+  const singleSession = sessions.length === 1;
+  // For single-session athletes, pad x-axis with empty labels so the
+  // normative band fills the chart and the dot sits centred — no connecting line.
+  const lb = singleSession
+    ? ['', sessions[0].test_date, '']
     : sessions.map(s=>s.test_date);
   const ser=(key,col,dash=[])=>({label:NORMS[key]?.label||key,...ls(col,dash),
-    data:sessions.length===1
-      ? [sessions[0][key], sessions[0][key]]   // duplicate so band fills
+    data: singleSession
+      ? [null, sessions[0][key], null]   // null edges = no connecting line
       : sessions.map(s=>s[key])
   });
 
