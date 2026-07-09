@@ -791,8 +791,16 @@ function ls(col,dash=[]){return{borderColor:col,backgroundColor:col,fill:false,t
 function drawCharts(){
   const a=athleteMap[selectedId]; if(!a||!a.sessions.length)return;
   const sessions=[...a.sessions].reverse();
-  const lb=sessions.map(s=>s.test_date);
-  const ser=(key,col,dash=[])=>({label:NORMS[key]?.label||key,...ls(col,dash),data:sessions.map(s=>s[key])});
+  // Chart.js fill:'+1' needs ≥2 x-points to render a shaded area.
+  // If only 1 session, duplicate the label so the band always shows.
+  const lb = sessions.length === 1
+    ? [sessions[0].test_date, sessions[0].test_date]
+    : sessions.map(s=>s.test_date);
+  const ser=(key,col,dash=[])=>({label:NORMS[key]?.label||key,...ls(col,dash),
+    data:sessions.length===1
+      ? [sessions[0][key], sessions[0][key]]   // duplicate so band fills
+      : sessions.map(s=>s[key])
+  });
 
   const charts=[
     {id:'ch-broadjump',  title:'Broad jump',  u:'cm', nk:'broad_jump',  ds:[ser('broad_jump',CC[0])]},
