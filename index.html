@@ -793,10 +793,29 @@ function mkChart(id,labels,datasets,yLabel,nMin,nMax){
     : [...datasets];
   CI[id]=new Chart(el.getContext('2d'),{
     type:'line',
-    plugins:[ValueLabelPlugin],
     data:{labels,datasets:allDS},
     options:{
       responsive:true,maintainAspectRatio:true,aspectRatio:1.9,
+      animation:{
+        onComplete:function(){
+          const chart=this, ctx=chart.ctx;
+          chart.data.datasets.forEach((ds,i)=>{
+            if(!ds.label||ds.label.startsWith('_'))return;
+            const meta=chart.getDatasetMeta(i);
+            if(meta.hidden)return;
+            meta.data.forEach((pt,j)=>{
+              const v=ds.data[j]; if(v==null||isNaN(v))return;
+              const disp=typeof v==='number'?(v<5&&!Number.isInteger(v)?v.toFixed(2):v%1!==0?v.toFixed(1):String(v)):String(v);
+              ctx.save();
+              ctx.font='600 9px -apple-system,BlinkMacSystemFont,sans-serif';
+              ctx.fillStyle=typeof ds.borderColor==='string'?ds.borderColor:'#555';
+              ctx.textAlign='center';ctx.textBaseline='bottom';
+              ctx.fillText(disp,pt.x,pt.y-5);
+              ctx.restore();
+            });
+          });
+        }
+      },
       plugins:{
         legend:{display:datasets.length>1,position:'bottom',labels:{font:{size:10},boxWidth:10,padding:8,filter:i=>!i.text.startsWith('_')}},
         tooltip:{filter:i=>!i.dataset.label.startsWith('_'),callbacks:{label:c=>`${c.dataset.label}: ${c.parsed.y} ${yLabel}`}}
