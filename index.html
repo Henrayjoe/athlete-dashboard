@@ -175,7 +175,7 @@
     </div>
     <div class="sb-search"><input id="sq" type="text" placeholder="Search athlete…" oninput="filterAthletes(this.value)"></div>
     <div class="alist" id="alist"><div style="padding:16px;font-size:12px;color:#7a8290;text-align:center">Connect Google Sheet to load athletes</div></div>
-    <div class="settings-bar"><span id="sheetStatus">No sheet connected</span><span style="font-size:9px;color:#c8ccd2;margin:0 6px" title="Build version">BUILD 16</span><button class="btn-sm" onclick="showConfig()">⚙ Settings</button></div>
+    <div class="settings-bar"><span id="sheetStatus">No sheet connected</span><span style="font-size:9px;color:#c8ccd2;margin:0 6px" title="Build version">BUILD 17</span><button class="btn-sm" onclick="showConfig()">⚙ Settings</button></div>
   </aside>
   <main class="main" id="main"></main>
 </div>
@@ -252,15 +252,17 @@ const QUAD_X_AXES = [
   { key:'imtp',         label:'IMTP (N/kg)'               },
   { key:'cmj_con_force',label:'CMJ concentric force (N/kg)' },
   { key:'cmj',          label:'CMJ height (cm)'           },
-  { key:'cmj_flight',   label:'CMJ flight height (cm)'    },
+  { key:'sj',           label:'Squat jump height (cm)'    },
+  { key:'cmj_flight',   label:'CMJ flight height (cm)', fb:'cmj' },
 ];
 const QUAD_Y_AXES = [
   { key:'max_vel',    label:'Max velocity (m/s)',      lb:false },
   { key:'sprint10',   label:'10m sprint (s)',           lb:true  },
   { key:'sprint20',   label:'20m sprint (s)',           lb:true  },
   { key:'cmj',        label:'CMJ height (cm)',          lb:false },
-  { key:'cmj_flight', label:'CMJ flight height (cm)',   lb:false },
-  { key:'sj_flight',  label:'SJ flight height (cm)',    lb:false },
+  { key:'sj',         label:'Squat jump height (cm)',   lb:false },
+  { key:'cmj_flight', label:'CMJ flight height (cm)',   lb:false, fb:'cmj' },
+  { key:'sj_flight',  label:'SJ flight height (cm)',    lb:false, fb:'sj'  },
   { key:'cmj_con_force', label:'CMJ concentric force (N/kg)', lb:false },
   { key:'mas',        label:'MAS (m/s)',                lb:false },
 ];
@@ -1793,6 +1795,13 @@ function drawQuadrant(xKey, yKey) {
   const container = document.getElementById('quadrantContainer');
   if (!container) return;
 
+  // If a flight-height axis has no data, fall back to the standard height measure
+  // (same benchmark band). Track whether a fallback was actually used, for labelling.
+  const xDef = QUAD_X_AXES.find(o=>o.key===xKey);
+  const yDef = QUAD_Y_AXES.find(o=>o.key===yKey);
+  const xFb = xDef?.fb || null;
+  const yFb = yDef?.fb || null;
+  let xUsedFb = false, yUsedFb = false;
   const xNorm = NORMS[xKey];
   const yNorm = NORMS[yKey];
   if (!xNorm || !yNorm) {
@@ -1816,14 +1825,17 @@ function drawQuadrant(xKey, yKey) {
 
   allAthletes.forEach(a => {
     const ld = buildLatestAcrossSessions(a.sessions);
-    const xv = ld[xKey], yv = ld[yKey];
+    let xv = ld[xKey], yv = ld[yKey];
+    if (xv == null && xFb && ld[xFb] != null) { xv = ld[xFb]; xUsedFb = true; }
+    if (yv == null && yFb && ld[yFb] != null) { yv = ld[yFb]; yUsedFb = true; }
     if (xv == null || yv == null) return;
     const isCurrent = a.id === selectedId;
     const ini = a.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
     const trail = [];
     if (isCurrent && a.sessions.length > 1) {
       a.sessions.slice(1).forEach(s => {
-        const sx2=s[xKey], sy2=s[yKey];
+        const sx2 = s[xKey] ?? (xFb ? s[xFb] : null);
+        const sy2 = s[yKey] ?? (yFb ? s[yFb] : null);
         if(sx2!=null&&sy2!=null) trail.push({xv:sx2,yv:sy2,date:s.test_date});
       });
       trail.reverse();
@@ -1901,8 +1913,10 @@ function drawQuadrant(xKey, yKey) {
   }
 
   // Axis labels (Y label notes inversion for lb metrics)
-  const yAxisLabel = yLb ? `${yNorm.label} (${yNorm.u}) ← lower=better` : `${yNorm.label} (${yNorm.u})`;
-  s+=`<text x="${ML+CW/2}" y="${H-6}" font-size="11" text-anchor="middle" fill="#444c56" font-weight="500">${xNorm.label} (${xNorm.u})</text>`;
+  const yAxisLabel = (yLb ? `${yNorm.label} (${yNorm.u}) ← lower=better` : `${yNorm.label} (${yNorm.u})`)
+    + (yUsedFb ? ` — using ${NORMS[yFb].label}` : '');
+  const xAxisLabel = `${xNorm.label} (${xNorm.u})` + (xUsedFb ? ` — using ${NORMS[xFb].label}` : '');
+  s+=`<text x="${ML+CW/2}" y="${H-6}" font-size="11" text-anchor="middle" fill="#444c56" font-weight="500">${xAxisLabel}</text>`;
   s+=`<text x="11" y="${MT+CH/2}" font-size="11" text-anchor="middle" fill="#444c56" font-weight="500" transform="rotate(-90,11,${MT+CH/2})">${yAxisLabel}</text>`;
 
   // Anonymous other athletes
@@ -1931,8 +1945,8 @@ function drawQuadrant(xKey, yKey) {
     const selA = athleteMap[selectedId];
     const selLd = selA ? buildLatestAcrossSessions(selA.sessions) : {};
     const missing = [];
-    if (selLd[xKey] == null) missing.push(xNorm.label);
-    if (selLd[yKey] == null) missing.push(yNorm.label);
+    if (selLd[xKey] == null && !(xFb && selLd[xFb] != null)) missing.push(xNorm.label);
+    if (selLd[yKey] == null && !(yFb && selLd[yFb] != null)) missing.push(yNorm.label);
     const msg = missing.length
       ? `Missing: ${missing.join(' and ')}`
       : 'No data for this athlete on selected axes.';
