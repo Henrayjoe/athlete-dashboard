@@ -175,7 +175,7 @@
     </div>
     <div class="sb-search"><input id="sq" type="text" placeholder="Search athlete…" oninput="filterAthletes(this.value)"></div>
     <div class="alist" id="alist"><div style="padding:16px;font-size:12px;color:#7a8290;text-align:center">Connect Google Sheet to load athletes</div></div>
-    <div class="settings-bar"><span id="sheetStatus">No sheet connected</span><span style="font-size:9px;color:#c8ccd2;margin:0 6px" title="Build version">BUILD 15</span><button class="btn-sm" onclick="showConfig()">⚙ Settings</button></div>
+    <div class="settings-bar"><span id="sheetStatus">No sheet connected</span><span style="font-size:9px;color:#c8ccd2;margin:0 6px" title="Build version">BUILD 16</span><button class="btn-sm" onclick="showConfig()">⚙ Settings</button></div>
   </aside>
   <main class="main" id="main"></main>
 </div>
@@ -261,6 +261,7 @@ const QUAD_Y_AXES = [
   { key:'cmj',        label:'CMJ height (cm)',          lb:false },
   { key:'cmj_flight', label:'CMJ flight height (cm)',   lb:false },
   { key:'sj_flight',  label:'SJ flight height (cm)',    lb:false },
+  { key:'cmj_con_force', label:'CMJ concentric force (N/kg)', lb:false },
   { key:'mas',        label:'MAS (m/s)',                lb:false },
 ];
 const QUAD_PRESETS = [
