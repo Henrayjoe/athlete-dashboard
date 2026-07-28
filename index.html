@@ -115,6 +115,9 @@
   .axis-btn.active { background:var(--accent); color:#fff; border-color:var(--accent); }
   .quadrant-legend { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
   .ql-dot { display:inline-block; width:10px; height:10px; border-radius:50%; }
+  .quad-ctrl-row { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+  .axis-select { font-size:12px; padding:5px 9px; border:1px solid var(--border); border-radius:6px; background:var(--surface); color:var(--text-secondary); cursor:pointer; font-family:inherit; }
+  .axis-select:focus { outline:none; border-color:var(--accent); }
   .ql-you  { background:var(--accent); border:2px solid #fff; box-shadow:0 0 0 1px var(--accent); }
   .ql-anon { background:#cbd5e1; border:1px solid #94a3b8; }
 
@@ -172,7 +175,7 @@
     </div>
     <div class="sb-search"><input id="sq" type="text" placeholder="Search athlete…" oninput="filterAthletes(this.value)"></div>
     <div class="alist" id="alist"><div style="padding:16px;font-size:12px;color:#7a8290;text-align:center">Connect Google Sheet to load athletes</div></div>
-    <div class="settings-bar"><span id="sheetStatus">No sheet connected</span><button class="btn-sm" onclick="showConfig()">⚙ Settings</button></div>
+    <div class="settings-bar"><span id="sheetStatus">No sheet connected</span><span style="font-size:9px;color:#c8ccd2;margin:0 6px" title="Build version">BUILD 15</span><button class="btn-sm" onclick="showConfig()">⚙ Settings</button></div>
   </aside>
   <main class="main" id="main"></main>
 </div>
@@ -203,6 +206,11 @@ const NORMS = {
   triple_hop:    { min:560,  max:704,  u:'cm',        lb:false, label:'Triple hop (SL)',         cat:'jump', note:'Collegiate data, not pro-specific', source:'Myers et al. 2014 (collegiate soccer/basketball)' },
   cmj:           { min:35,   max:55,   u:'cm',        lb:false, label:'CMJ height',              cat:'jump', source:'Badby et al. 2025; VALD ForceDecks normative data' },
   sj:            { min:30,   max:50,   u:'cm',        lb:false, label:'Squat jump (SJ)',         cat:'jump', source:'Professional football literature' },
+  // Flight-time derived jump heights (force plate / jump mat). Same benchmark band as impulse-derived height.
+  cmj_flight:    { min:35,   max:55,   u:'cm',        lb:false, label:'CMJ flight height',       cat:'jump', note:'Flight-time derived', source:'Systematic review: 33.6–57.2 cm across 54 studies, senior professional soccer' },
+  sj_flight:     { min:30,   max:50,   u:'cm',        lb:false, label:'SJ flight height',        cat:'jump', note:'Flight-time derived', source:'Professional football literature' },
+  // CMJ concentric (propulsive) force — benchmarked relative to body mass, not absolute N
+  cmj_con_force: { min:25.7, max:31.4, u:'N/kg',      lb:false, label:'CMJ concentric force',    cat:'jump', note:'Requires force plate · relative to BW', source:'EFL professional soccer benchmarks 2025 (relative peak propulsive force)' },
   eur:           { min:0.90, max:1.15, u:'EUR',       lb:false, label:'EUR (CMJ÷SJ)',            cat:'jump',  note:'Auto: CMJ÷SJ', source:'McGuigan et al. 2006' },
   // mRSI: CMJ jump height (m) ÷ contraction time (s). Pro football ~0.8–1.4 (McMahon/Badby)
   cmj_mrsi:      { min:0.80, max:1.40, u:'m/s',       lb:false, label:'CMJ mRSI',               cat:'jump',  note:'Auto: JH(m)÷CT(s) — needs contraction time', source:'McMahon et al. 2022; Badby et al. 2025' },
@@ -236,6 +244,41 @@ const NORMS = {
   // 8.3-9.5 m/s covers typical professional range; >9.5 m/s is genuinely elite outlier territory.
   max_vel:       { min:8.3,  max:9.5,  u:'m/s',       lb:false, label:'Max velocity (20m fly)', cat:'speed', source:'LaLiga match-speed data; EPL fastest-ever ~10.4 m/s' },
 };
+
+// ─── STRENGTH-SPEED QUADRANT ────────────────────────────────────────────────
+const QUAD_X_AXES = [
+  { key:'tb_1rm_bw',    label:'Trap bar DL (×BW)'        },
+  { key:'sq_1rm_bw',    label:'Back squat (×BW)'         },
+  { key:'imtp',         label:'IMTP (N/kg)'               },
+  { key:'cmj_con_force',label:'CMJ concentric force (N/kg)' },
+  { key:'cmj',          label:'CMJ height (cm)'           },
+  { key:'cmj_flight',   label:'CMJ flight height (cm)'    },
+];
+const QUAD_Y_AXES = [
+  { key:'max_vel',    label:'Max velocity (m/s)',      lb:false },
+  { key:'sprint10',   label:'10m sprint (s)',           lb:true  },
+  { key:'sprint20',   label:'20m sprint (s)',           lb:true  },
+  { key:'cmj',        label:'CMJ height (cm)',          lb:false },
+  { key:'cmj_flight', label:'CMJ flight height (cm)',   lb:false },
+  { key:'sj_flight',  label:'SJ flight height (cm)',    lb:false },
+  { key:'mas',        label:'MAS (m/s)',                lb:false },
+];
+const QUAD_PRESETS = [
+  { name:'Strength-Speed',     x:'tb_1rm_bw', y:'max_vel',
+    ql:{tl:['Speed Dominant','→ Build strength'],tr:['Well-rounded','→ Maintain & refine'],bl:['Developing','→ Foundation needed'],br:['Force Dominant','→ Build speed']} },
+  { name:'Strength-Power',     x:'sq_1rm_bw', y:'cmj',
+    ql:{tl:['Power Without Strength','→ Build maximal strength'],tr:['Complete Profile','→ Maintain'],bl:['Developing','→ Build both'],br:['Strength Without Power','→ Plyometric expression']} },
+  { name:'Acceleration-Force', x:'imtp',      y:'sprint10',
+    ql:{tl:['Fast, Low Force','→ Build max force'],tr:['Complete','→ Maintain'],bl:['Developing','→ Foundation needed'],br:['Strong, Slow','→ Reactive speed work']} },
+  { name:'Force-Power',        x:'cmj_con_force', y:'cmj_flight',
+    ql:{tl:['High Jump, Low Force','→ Build force production'],tr:['Complete Jumper','→ Maintain'],bl:['Developing','→ Build both'],br:['High Force, Low Jump','→ Rate of force development']} },
+  { name:'Speed-Endurance',    x:'mas',       y:'max_vel',
+    ql:{tl:['Speed Dominant','→ Build aerobic base'],tr:['Well-rounded','→ Maintain'],bl:['Developing','→ Build both'],br:['Endurance Dominant','→ Speed & power work']} },
+];
+
+let currentXAxis = QUAD_PRESETS[0].x;
+let currentYAxis = QUAD_PRESETS[0].y;
+
 
 const CAT_LABELS = { jump:'Jump / Power', aero:'Aerobic', strength:'Strength', speed:'Speed' };
 const SL = ['Priority Area','Below Benchmark','Near Benchmark','Meets Benchmark','Exceeds Benchmark'];
@@ -338,6 +381,12 @@ function deriveSession(row, bw_kg, age_yr) {
   d.sq_1rm_bw   = bwRatio(sq1rm, bw);
   d.tb_1rm_bw   = bwRatio(tb1rm, bw);
   d.bp_1rm_bw   = bwRatio(bp1rm, bw);
+  // Flight-time derived jump heights (optional — separate from impulse-derived cmj/sj)
+  d.cmj_flight  = pf(row.cmj_flight_cm);
+  d.sj_flight   = pf(row.sj_flight_cm);
+  // CMJ concentric force — raw Newtons in, N/kg out (same pattern as IMTP)
+  d.cmj_con_force_N = pf(row.cmj_con_force_N);
+  d.cmj_con_force   = (d.cmj_con_force_N && bw) ? +(d.cmj_con_force_N / bw).toFixed(1) : null;
   d.imtp_raw_N  = pf(row.imtp_N);
   d.imtp        = imtpNkg(row.imtp_N, bw);
   // Speed
@@ -409,6 +458,8 @@ function buildLatestAcrossSessions(sessions) {
 
 // ─── TABLE ROW BUILDERS ───────────────────────────────────────────────────────
 let _rSessions=[]; // set in renderMain for PB detection
+let _rDateSrc={};   // metric -> session date it came from
+let _rLatestDate=null;
 
 function mRow(nk, val, prevVal, subtext, isAuto) {
   const n = NORMS[nk]; if (!n) return '';
@@ -435,7 +486,7 @@ function mRow(nk, val, prevVal, subtext, isAuto) {
       : pill(s);
   return `<tr>
     <td class="lbl">${n.label}</td>
-    <td><span class="rval">${val}</span><span class="runit">${n.u}</span>${sub}${badge}${pbHtml}</td>
+    <td><span class="rval">${val}</span><span class="runit">${n.u}</span>${sub}${badge}${pbHtml}${(_rDateSrc[nk]&&_rLatestDate&&_rDateSrc[nk]!==_rLatestDate)?`<span class="rsub" style="color:#b0b6bd">tested ${_rDateSrc[nk]}</span>`:''}</td>
     <td>${statusCell}</td>
     <td style="font-size:11px;${normStyle}">${normText}${n.source?`<span class="norm-source">${n.source}</span>`:''}</td>
     <td>${dHtml(val, prevVal, n.lb)}</td>
@@ -571,7 +622,7 @@ function switchTab(t){
   document.querySelectorAll('.tab').forEach(e=>e.classList.toggle('active',e.dataset.t===t));
   document.querySelectorAll('.tc').forEach(e=>e.classList.toggle('active',e.dataset.t===t));
   if(t==='trends')   setTimeout(drawCharts,60);
-  if(t==='quadrant') setTimeout(()=>drawQuadrant(currentStrengthAxis),60);
+  if(t==='quadrant') setTimeout(()=>drawQuadrant(currentXAxis,currentYAxis),60);
   if(t==='history')  setTimeout(renderHistory,60);
   if(t==='radar')    setTimeout(renderRadar,60);
 }
@@ -580,7 +631,25 @@ function switchTab(t){
 function renderMain(){
   const a=athleteMap[selectedId]; if(!a) return;
   _rSessions=a.sessions; // set for PB detection in mRow
-  const d=a.sessions[0], pv=a.sessions[1]||null;
+  const latestSession = a.sessions[0];
+  // Results tables show the most recent recorded value for EACH metric across all
+  // sessions — matches Category Status and the print report. A sparse latest session
+  // no longer blanks out tests that were recorded earlier.
+  const d = { ...buildLatestAcrossSessions(a.sessions), ...{
+    test_date: latestSession?.test_date,
+    notes: latestSession?.notes,
+    weight_kg: latestSession?.weight_kg,
+  }};
+  // Carry through raw/derived fields that aren't in NORMS but are needed for display
+  ['sq_1rm','tb_1rm','bp_1rm','sq_kg_raw','tb_kg_raw','bp_kg_raw','sq_reps_raw','tb_reps_raw','bp_reps_raw',
+   'imtp_raw_N','cmj_con_force_N','tt5min_dist','tt_dist','tt_time','tt_speed','tt_vo2max',
+   'yoyo_vo2max','beep_shuttle','beep_speed','beep_vo2max','cmj_ct_ms','dj_ct_ms']
+    .forEach(k => { for(const s of a.sessions){ if(s[k]!=null){ d[k]=s[k]; break; } } });
+  // Which session did each metric come from? Used to flag older values.
+  const dateSrcMain = {};
+  Object.keys(NORMS).forEach(k => { for(const s of a.sessions){ if(s[k]!=null){ dateSrcMain[k]=s.test_date; break; } } });
+  _rDateSrc = dateSrcMain; _rLatestDate = latestSession?.test_date;
+  const pv=a.sessions[1]||null;
   // prevVal(key): find the most recent previous session that has a value for this key.
   // Fixes "vs Previous" showing — when the 2nd session didn't test a metric, look further back.
   const prevVal = k => { for(let i=1;i<a.sessions.length;i++){ if(a.sessions[i][k]!=null) return a.sessions[i][k]; } return null; };
@@ -588,7 +657,7 @@ function renderMain(){
   const ini=a.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
   const inj=a.injury_hx?`<span class="ptag inj">⚠ Injury hx</span><span class="ptag" style="font-size:10px">${a.injury_hx}</span>`:'';
 
-  const jumpKeys     = ['broad_jump','slbj_LSI','triple_hop','cmj','sj','eur','cmj_mrsi','dj','dj_rsi','dsi'];
+  const jumpKeys     = ['broad_jump','slbj_LSI','triple_hop','cmj','cmj_flight','sj','sj_flight','eur','cmj_mrsi','cmj_con_force','dj','dj_rsi','dsi'];
   const aeroKeys     = ['mas','vo2max','yoyo_ir2','bronco'];
   const strengthKeys = ['sq_1rm_bw','tb_1rm_bw','bp_1rm_bw','imtp'];
   const speedKeys    = ['sprint10','sprint20','max_vel'];
@@ -621,7 +690,7 @@ function renderMain(){
       <div class="tabs">
         <div class="tab active" data-t="results" onclick="switchTab('results')">Latest Results</div>
         <div class="tab" data-t="trends"   onclick="switchTab('trends')">Trend Charts</div>
-        <div class="tab" data-t="quadrant" onclick="switchTab('quadrant')">Strength-Speed</div>
+        <div class="tab" data-t="quadrant" onclick="switchTab('quadrant')">Quadrants</div>
         <div class="tab" data-t="radar"    onclick="switchTab('radar')">Athletic Profile</div>
         <div class="tab" data-t="history"  onclick="switchTab('history')">Test History</div>
         <div class="tab" data-t="feedback" onclick="switchTab('feedback')">Athlete Feedback</div>
@@ -639,6 +708,9 @@ function renderMain(){
               ${mRow('triple_hop',  d.triple_hop,  prevVal('triple_hop'))}
               ${mRow('cmj',         d.cmj,         prevVal('cmj'))}
               ${mRow('sj',          d.sj,          prevVal('sj'))}
+              ${d.cmj_flight!=null ? mRow('cmj_flight', d.cmj_flight, prevVal('cmj_flight')) : ''}
+              ${d.sj_flight!=null  ? mRow('sj_flight',  d.sj_flight,  prevVal('sj_flight'))  : ''}
+              ${d.cmj_con_force!=null ? mRow('cmj_con_force', d.cmj_con_force, prevVal('cmj_con_force'), `(${d.cmj_con_force_N}N raw)`, true) : ''}
               ${d.eur!=null ? mRow('eur', d.eur, pv?.eur, '(CMJ÷SJ)', true) : ''}
               ${d.cmj_mrsi!=null
                 ? mRow('cmj_mrsi', d.cmj_mrsi, pv?.cmj_mrsi, `(${d.cmj}cm ÷ ${d.cmj_ct_ms}ms)`, true)
@@ -745,10 +817,20 @@ function renderMain(){
       <div class="tc" data-t="feedback"><div id="feedbackContent"><div class="feedback-empty"><h3>Athlete Feedback</h3><p>Generate a personalised coach report and athlete message based on the latest test results.</p><button class="btn" onclick="generateFeedback()">Generate Feedback</button></div></div></div>
       <div class="tc" data-t="quadrant">
         <div class="quadrant-body">
-          <div class="quadrant-controls">
-            <span class="control-label">Strength axis</span>
-            <div id="axisButtons">
-              ${QUAD_STR_AXES.map((ax,i)=>`<button class="axis-btn${i===0?' active':''}" onclick="setStrengthAxis('${ax.key}',this)">${ax.label}</button>`).join('')}
+          <div class="quadrant-controls" style="flex-direction:column;align-items:flex-start;gap:8px">
+            <div class="quad-ctrl-row">
+              <span class="control-label">Preset</span>
+              ${QUAD_PRESETS.map(p=>`<button class="axis-btn${p.x===currentXAxis&&p.y===currentYAxis?' active':''}" onclick="applyPreset('${p.x}','${p.y}')">${p.name}</button>`).join('')}
+            </div>
+            <div class="quad-ctrl-row">
+              <span class="control-label">X axis</span>
+              <select class="axis-select" id="xAxisSel" onchange="setQuadAxes(this.value,document.getElementById('yAxisSel').value)">
+                ${QUAD_X_AXES.map(a=>`<option value="${a.key}"${a.key===currentXAxis?' selected':''}>${a.label}</option>`).join('')}
+              </select>
+              <span class="control-label">Y axis</span>
+              <select class="axis-select" id="yAxisSel" onchange="setQuadAxes(document.getElementById('xAxisSel').value,this.value)">
+                ${QUAD_Y_AXES.map(a=>`<option value="${a.key}"${a.key===currentYAxis?' selected':''}>${a.label}</option>`).join('')}
+              </select>
             </div>
           </div>
           <div id="quadrantContainer"></div>
@@ -855,6 +937,7 @@ function drawCharts(){
     {id:'ch-triplehop',  title:'Triple hop',  u:'cm', nk:'triple_hop',  ds:[ser('triple_hop',CC[2])]},
     {id:'ch-lsi', title:`SL Broad Jump — L vs R${ld.slbj_LSI!=null?' (LSI: '+ld.slbj_LSI+'%)':''}`, u:'cm', nk:null, nMin:null, nMax:null, ds:[ser('slbj_L',CC[0]),ser('slbj_R',CC[1],[5,3])]},
     {id:'ch-cmj',    title:'CMJ / SJ heights',        u:'cm',   nk:'cmj',         ds:[ser('cmj',CC[0]),ser('sj',CC[1],[5,3])]},
+    {id:'ch-conforce', title:'CMJ concentric force',   u:'N/kg', nk:'cmj_con_force', ds:[ser('cmj_con_force',CC[5])]},
     {id:'ch-eur',    title:'EUR (CMJ÷SJ)',             u:'ratio',nk:'eur',         ds:[ser('eur',CC[3])]},
     {id:'ch-mrsi',   title:'CMJ mRSI',                u:'m/s',  nk:'cmj_mrsi',    ds:[ser('cmj_mrsi',CC[0])]},
     {id:'ch-djrsi',  title:'DJ RSI',                  u:'m/s',  nk:'dj_rsi',      ds:[ser('dj_rsi',CC[4])]},
@@ -1230,7 +1313,7 @@ function generatePrintReport() {
   if (trendsEl)   trendsEl.style.display   = 'block';
   if (quadrantEl) quadrantEl.style.display = 'block';
   drawCharts();
-  drawQuadrant(currentStrengthAxis);
+  drawQuadrant(currentXAxis, currentYAxis);
 
   // Wait for Chart.js to finish rendering before capturing canvas data
   setTimeout(() => {
@@ -1380,6 +1463,9 @@ function _buildAndOpenPrintReport(a, chartImages, quadrantSVG) {
     mk('triple_hop',ld.triple_hop,prevVal('triple_hop')),
     mk('cmj',ld.cmj,prevVal('cmj')),
     mk('sj',ld.sj,prevVal('sj')),
+    mk('cmj_flight',ld.cmj_flight,prevVal('cmj_flight')),
+    mk('sj_flight',ld.sj_flight,prevVal('sj_flight')),
+    ld.cmj_con_force!=null?{...mk('cmj_con_force',ld.cmj_con_force,prevVal('cmj_con_force')),auto:true,sub:`${ld.cmj_con_force_N}N raw`}:{val:null},
     ld.cmj!=null&&ld.sj!=null?{...mk('eur',ld.eur,prevVal('eur')),auto:true,sub:'CMJ÷SJ'}:{val:null},
     ld.cmj_mrsi!=null?{...mk('cmj_mrsi',ld.cmj_mrsi,prevVal('cmj_mrsi')),auto:true}:{val:null},
     mk('dj',ld.dj,prevVal('dj')),
@@ -1533,7 +1619,10 @@ function renderHistory() {
     { key:'slbj_LSI',   label:'LSI',          u:'%',   cat:'Jump' },
     { key:'triple_hop', label:'Triple hop',   u:'cm',  cat:'Jump' },
     { key:'cmj',        label:'CMJ',          u:'cm',  cat:'Jump' },
-    { key:'sj',         label:'SJ',           u:'cm',  cat:'Jump' },
+    { key:'sj',            label:'SJ',            u:'cm',   cat:'Jump' },
+    { key:'cmj_flight',    label:'CMJ flight',    u:'cm',   cat:'Jump' },
+    { key:'sj_flight',     label:'SJ flight',     u:'cm',   cat:'Jump' },
+    { key:'cmj_con_force', label:'CMJ con force', u:'N/kg', cat:'Jump' },
     { key:'eur',        label:'EUR',          u:'',    cat:'Jump' },
     { key:'cmj_mrsi',   label:'CMJ mRSI',     u:'m/s', cat:'Jump' },
     { key:'dj',         label:'DJ',           u:'cm',  cat:'Jump' },
@@ -1607,7 +1696,7 @@ function renderRadar() {
   if (!a || !el) return;
   const ld = buildLatestAcrossSessions(a.sessions);
   const AXES = [
-    { label:'Jump / Power', keys:['broad_jump','triple_hop','cmj','sj','eur','cmj_mrsi','dj','dj_rsi','dsi'] },
+    { label:'Jump / Power', keys:['broad_jump','triple_hop','cmj','cmj_flight','sj','sj_flight','eur','cmj_mrsi','cmj_con_force','dj','dj_rsi','dsi'] },
     { label:'Speed',        keys:['sprint10','sprint20','max_vel'] },
     { label:'Strength',     keys:['sq_1rm_bw','tb_1rm_bw','bp_1rm_bw','imtp'] },
     { label:'Aerobic',      keys:['mas','vo2max','yoyo_ir2','beep_level'] },
@@ -1672,159 +1761,193 @@ loadData();
 // Extensible axis options — add new entries here as tests are added.
 // Future option example (when force plate available):
 //   { key: 'cmj_peak_power_bw', label: 'CMJ peak power ×BW' }
-const QUAD_STR_AXES = [
-  { key: 'tb_1rm_bw', label: 'Trap bar DL ×BW' },
-  { key: 'sq_1rm_bw', label: 'Back squat ×BW'  },
-  { key: 'imtp',      label: 'IMTP (N/kg)'      },
-];
-let currentStrengthAxis = QUAD_STR_AXES[0].key;
 
-function setStrengthAxis(key, btn) {
-  currentStrengthAxis = key;
+
+function applyPreset(x, y) {
+  currentXAxis = x; currentYAxis = y;
+  const xs = document.getElementById('xAxisSel');
+  const ys = document.getElementById('yAxisSel');
+  if(xs) xs.value = x;
+  if(ys) ys.value = y;
   document.querySelectorAll('.axis-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  drawQuadrant(key);
+  const match = [...document.querySelectorAll('.axis-btn')].find(b => b.textContent === QUAD_PRESETS.find(p=>p.x===x&&p.y===y)?.name);
+  if(match) match.classList.add('active');
+  drawQuadrant(x, y);
 }
 
-function drawQuadrant(strKey) {
+function setQuadAxes(x, y) {
+  currentXAxis = x; currentYAxis = y;
+  // Clear preset button active states; re-highlight if combination matches a preset
+  document.querySelectorAll('.axis-btn').forEach(b => {
+    const p = QUAD_PRESETS.find(p=>p.name===b.textContent);
+    if(p) b.classList.toggle('active', p.x===x && p.y===y);
+  });
+  drawQuadrant(x, y);
+}
+
+// Keep backward-compat alias
+function setStrengthAxis(key) { setQuadAxes(key, currentYAxis); }
+
+function drawQuadrant(xKey, yKey) {
   const container = document.getElementById('quadrantContainer');
   if (!container) return;
 
-  const velKey  = 'max_vel';
-  const strNorm = NORMS[strKey];
-  const velNorm = NORMS[velKey];
-  if (!strNorm || !velNorm) return;
+  const xNorm = NORMS[xKey];
+  const yNorm = NORMS[yKey];
+  if (!xNorm || !yNorm) {
+    container.innerHTML=`<p style="padding:20px;color:var(--text-muted)">No normative data for selected axes.</p>`;
+    return;
+  }
+
+  const yLb = !!yNorm.lb; // true = lower is better (sprint times)
+
+  // Quad labels: use preset if combination matches, else generic
+  const preset = QUAD_PRESETS.find(p => p.x===xKey && p.y===yKey);
+  const ql = preset ? preset.ql : {
+    tl:[`High ${yNorm.label}`, `Low ${xNorm.label}`],
+    tr:['Well-rounded','→ Maintain'],
+    bl:['Developing','→ Foundation needed'],
+    br:[`High ${xNorm.label}`, `Low ${yNorm.label}`]
+  };
 
   const allAthletes = Object.values(athleteMap);
   const points = [];
 
   allAthletes.forEach(a => {
-    const ld  = buildLatestAcrossSessions(a.sessions);
-    const str = ld[strKey];
-    const vel = ld[velKey];
-    if (str == null || vel == null) return;
-
+    const ld = buildLatestAcrossSessions(a.sessions);
+    const xv = ld[xKey], yv = ld[yKey];
+    if (xv == null || yv == null) return;
     const isCurrent = a.id === selectedId;
     const ini = a.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
-
     const trail = [];
     if (isCurrent && a.sessions.length > 1) {
       a.sessions.slice(1).forEach(s => {
-        const sv = s[velKey], ss = s[strKey];
-        if (sv != null && ss != null) trail.push({ vel:sv, str:ss, date:s.test_date });
+        const sx2=s[xKey], sy2=s[yKey];
+        if(sx2!=null&&sy2!=null) trail.push({xv:sx2,yv:sy2,date:s.test_date});
       });
       trail.reverse();
     }
-
-    points.push({ id:a.id, name:a.name, ini, str, vel, isCurrent, trail });
+    points.push({id:a.id,name:a.name,ini,xv,yv,isCurrent,trail});
   });
 
-  const W=580, H=460, ML=56, MR=24, MT=24, MB=56;
+  const W=580,H=460,ML=56,MR=24,MT=24,MB=56;
   const CW=W-ML-MR, CH=H-MT-MB;
 
-  const strPad=(strNorm.max-strNorm.min)*0.7, velPad=(velNorm.max-velNorm.min)*1.0;
-  let xMin=Math.max(0, strNorm.min-strPad), xMax=strNorm.max+strPad;
-  let yMin=Math.max(0, velNorm.min-velPad), yMax=velNorm.max+velPad;
+  const xPad=(xNorm.max-xNorm.min)*0.7, yPad=(yNorm.max-yNorm.min)*1.0;
+  let xMin=Math.max(0,xNorm.min-xPad), xMax=xNorm.max+xPad;
+  let yMin=Math.max(0,yNorm.min-yPad), yMax=yNorm.max+yPad;
 
-  // Extend axes to fit all actual data points — never clip a dot
-  if (points.length) {
-    const allStr = points.map(p=>p.str), allVel = points.map(p=>p.vel);
-    const datXMin=Math.min(...allStr), datXMax=Math.max(...allStr);
-    const datYMin=Math.min(...allVel), datYMax=Math.max(...allVel);
-    const xPad=(xMax-xMin)*0.12, yPad=(yMax-yMin)*0.12;
-    xMin=Math.min(xMin, datXMin-xPad);
-    xMax=Math.max(xMax, datXMax+xPad);
-    yMin=Math.min(yMin, datYMin-yPad);
-    yMax=Math.max(yMax, datYMax+yPad);
+  if(points.length){
+    const aX=points.map(p=>p.xv), aY=points.map(p=>p.yv);
+    const xP=(xMax-xMin)*0.12, yP=(yMax-yMin)*0.12;
+    xMin=Math.min(xMin,Math.min(...aX)-xP); xMax=Math.max(xMax,Math.max(...aX)+xP);
+    yMin=Math.min(yMin,Math.min(...aY)-yP); yMax=Math.max(yMax,Math.max(...aY)+yP);
   }
 
+  if (xMax===xMin) { xMax = xMin + 1; }
+  if (yMax===yMin) { yMax = yMin + 1; }
   const sx = v => ML+(v-xMin)/(xMax-xMin)*CW;
-  const sy = v => MT+CH-(v-yMin)/(yMax-yMin)*CH;
+  // Invert Y for lb=true metrics (lower val = higher on chart = better)
+  const sy = yLb
+    ? v => MT+(v-yMin)/(yMax-yMin)*CH
+    : v => MT+CH-(v-yMin)/(yMax-yMin)*CH;
 
-  const xDiv=(strNorm.min+strNorm.max)/2, yDiv=(velNorm.min+velNorm.max)/2;
+  const xDiv=(xNorm.min+xNorm.max)/2, yDiv=(yNorm.min+yNorm.max)/2;
   const xDivPx=sx(xDiv), yDivPx=sy(yDiv);
 
-  let s = `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-height:440px;font-family:-apple-system,BlinkMacSystemFont,sans-serif">`;
+  let s=`<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-height:440px;font-family:-apple-system,BlinkMacSystemFont,sans-serif">`;
 
-  // Quadrant backgrounds
+  // Quadrant backgrounds (TL=amber, TR=green, BL=red, BR=blue)
   [[ML,MT,xDivPx-ML,yDivPx-MT,'#fff8e1'],[xDivPx,MT,W-MR-xDivPx,yDivPx-MT,'#f0fdf4'],
    [ML,yDivPx,xDivPx-ML,H-MB-yDivPx,'#fef2f2'],[xDivPx,yDivPx,W-MR-xDivPx,H-MB-yDivPx,'#eff6ff']]
-    .forEach(([x,y,w,h,fill]) => { s += `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${fill}" opacity="0.75"/>`; });
+    .forEach(([x,y,w,h,fill])=>{s+=`<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${fill}" opacity="0.75"/>`;});
 
   // Norm band overlays
-  s += `<rect x="${sx(strNorm.min)}" y="${MT}" width="${sx(strNorm.max)-sx(strNorm.min)}" height="${CH}" fill="rgba(26,86,219,0.04)"/>`;
-  s += `<rect x="${ML}" y="${sy(velNorm.max)}" width="${CW}" height="${sy(velNorm.min)-sy(velNorm.max)}" fill="rgba(26,86,219,0.04)"/>`;
+  s+=`<rect x="${sx(xNorm.min)}" y="${MT}" width="${sx(xNorm.max)-sx(xNorm.min)}" height="${CH}" fill="rgba(26,86,219,0.04)"/>`;
+  const yNormTop=sy(yLb?yNorm.min:yNorm.max), yNormBot=sy(yLb?yNorm.max:yNorm.min);
+  s+=`<rect x="${ML}" y="${yNormTop}" width="${CW}" height="${yNormBot-yNormTop}" fill="rgba(26,86,219,0.04)"/>`;
 
   // Norm boundary dashes
-  [sx(strNorm.min),sx(strNorm.max)].forEach(px => { s += `<line x1="${px}" y1="${MT}" x2="${px}" y2="${H-MB}" stroke="rgba(26,86,219,0.2)" stroke-width="1" stroke-dasharray="3,3"/>`; });
-  [sy(velNorm.min),sy(velNorm.max)].forEach(py => { s += `<line x1="${ML}" y1="${py}" x2="${W-MR}" y2="${py}" stroke="rgba(26,86,219,0.2)" stroke-width="1" stroke-dasharray="3,3"/>`; });
+  [sx(xNorm.min),sx(xNorm.max)].forEach(px=>{s+=`<line x1="${px}" y1="${MT}" x2="${px}" y2="${H-MB}" stroke="rgba(26,86,219,0.2)" stroke-width="1" stroke-dasharray="3,3"/>`;});
+  [sy(yLb?yNorm.min:yNorm.max),sy(yLb?yNorm.max:yNorm.min)].forEach(py=>{s+=`<line x1="${ML}" y1="${py}" x2="${W-MR}" y2="${py}" stroke="rgba(26,86,219,0.2)" stroke-width="1" stroke-dasharray="3,3"/>`;});
 
   // Main dividers
-  s += `<line x1="${xDivPx}" y1="${MT}" x2="${xDivPx}" y2="${H-MB}" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="6,3"/>`;
-  s += `<line x1="${ML}" y1="${yDivPx}" x2="${W-MR}" y2="${yDivPx}" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="6,3"/>`;
+  s+=`<line x1="${xDivPx}" y1="${MT}" x2="${xDivPx}" y2="${H-MB}" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="6,3"/>`;
+  s+=`<line x1="${ML}" y1="${yDivPx}" x2="${W-MR}" y2="${yDivPx}" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="6,3"/>`;
 
   // Border
-  s += `<rect x="${ML}" y="${MT}" width="${CW}" height="${CH}" fill="none" stroke="#e4e6ea" stroke-width="1"/>`;
+  s+=`<rect x="${ML}" y="${MT}" width="${CW}" height="${CH}" fill="none" stroke="#e4e6ea" stroke-width="1"/>`;
 
-  // Quadrant labels
+  // Quadrant labels — TL, TR, BL, BR
   [
-    ['Speed Dominant','→ Prioritise strength', ML+8,    MT+16,   'start'],
-    ['Well-rounded',  '→ Maintain & refine',   W-MR-8,  MT+16,   'end'  ],
-    ['Developing',    '→ Foundation needed',   ML+8,    H-MB-8,  'start'],
-    ['Force Dominant','→ Prioritise speed',    W-MR-8,  H-MB-8,  'end'  ],
-  ].forEach(([title,sub,x,y,anchor]) => {
-    s += `<text x="${x}" y="${y}"    font-size="10" font-weight="600" fill="#64748b" text-anchor="${anchor}">${title}</text>`;
-    s += `<text x="${x}" y="${y+13}" font-size="9"  fill="#94a3b8" text-anchor="${anchor}">${sub}</text>`;
+    [ql.tl[0],ql.tl[1], ML+8,   MT+16,  'start'],
+    [ql.tr[0],ql.tr[1], W-MR-8, MT+16,  'end'  ],
+    [ql.bl[0],ql.bl[1], ML+8,   H-MB-8, 'start'],
+    [ql.br[0],ql.br[1], W-MR-8, H-MB-8, 'end'  ],
+  ].forEach(([title,sub,x,y,anchor])=>{
+    s+=`<text x="${x}" y="${y}"    font-size="10" font-weight="600" fill="#64748b" text-anchor="${anchor}">${title}</text>`;
+    s+=`<text x="${x}" y="${y+13}" font-size="9"  fill="#94a3b8"   text-anchor="${anchor}">${sub}</text>`;
   });
 
   // Axis ticks
   for(let i=0;i<=5;i++){
     const vx=xMin+(xMax-xMin)*i/5, px=sx(vx);
-    s += `<line x1="${px}" y1="${H-MB}" x2="${px}" y2="${H-MB+4}" stroke="#94a3b8" stroke-width="1"/>`;
-    s += `<text x="${px}" y="${H-MB+15}" font-size="9" text-anchor="middle" fill="#7a8290">${vx.toFixed(1)}</text>`;
+    s+=`<line x1="${px}" y1="${H-MB}" x2="${px}" y2="${H-MB+4}" stroke="#94a3b8" stroke-width="1"/>`;
+    s+=`<text x="${px}" y="${H-MB+15}" font-size="9" text-anchor="middle" fill="#7a8290">${vx.toFixed(1)}</text>`;
     const vy=yMin+(yMax-yMin)*i/5, py=sy(vy);
-    s += `<line x1="${ML-4}" y1="${py}" x2="${ML}" y2="${py}" stroke="#94a3b8" stroke-width="1"/>`;
-    s += `<text x="${ML-7}" y="${py+3}" font-size="9" text-anchor="end" fill="#7a8290">${vy.toFixed(1)}</text>`;
+    s+=`<line x1="${ML-4}" y1="${py}" x2="${ML}" y2="${py}" stroke="#94a3b8" stroke-width="1"/>`;
+    s+=`<text x="${ML-7}" y="${py+3}" font-size="9" text-anchor="end" fill="#7a8290">${vy.toFixed(1)}</text>`;
   }
 
-  // Axis labels
-  s += `<text x="${ML+CW/2}" y="${H-6}" font-size="11" text-anchor="middle" fill="#444c56" font-weight="500">${strNorm.label} (${strNorm.u})</text>`;
-  s += `<text x="11" y="${MT+CH/2}" font-size="11" text-anchor="middle" fill="#444c56" font-weight="500" transform="rotate(-90,11,${MT+CH/2})">${velNorm.label} (${velNorm.u})</text>`;
+  // Axis labels (Y label notes inversion for lb metrics)
+  const yAxisLabel = yLb ? `${yNorm.label} (${yNorm.u}) ← lower=better` : `${yNorm.label} (${yNorm.u})`;
+  s+=`<text x="${ML+CW/2}" y="${H-6}" font-size="11" text-anchor="middle" fill="#444c56" font-weight="500">${xNorm.label} (${xNorm.u})</text>`;
+  s+=`<text x="11" y="${MT+CH/2}" font-size="11" text-anchor="middle" fill="#444c56" font-weight="500" transform="rotate(-90,11,${MT+CH/2})">${yAxisLabel}</text>`;
 
   // Anonymous other athletes
-  points.filter(p=>!p.isCurrent).forEach(p => {
-    s += `<circle cx="${sx(p.str)}" cy="${sy(p.vel)}" r="6" fill="#cbd5e1" stroke="#94a3b8" stroke-width="1" opacity="0.65"/>`;
+  points.filter(p=>!p.isCurrent).forEach(p=>{
+    s+=`<circle cx="${sx(p.xv)}" cy="${sy(p.yv)}" r="6" fill="#cbd5e1" stroke="#94a3b8" stroke-width="1" opacity="0.65"/>`;
   });
 
   // Selected athlete
-  const cur = points.find(p=>p.isCurrent);
-  if (cur) {
+  const cur=points.find(p=>p.isCurrent);
+  if(cur){
     // Trail
-    if (cur.trail.length > 0) {
-      const allT=[...cur.trail,{str:cur.str,vel:cur.vel}];
-      s += `<path d="${allT.map((p,i)=>`${i===0?'M':'L'}${sx(p.str).toFixed(1)},${sy(p.vel).toFixed(1)}`).join(' ')}" fill="none" stroke="#1a56db" stroke-width="1.5" stroke-dasharray="4,3" opacity="0.35"/>`;
-      cur.trail.forEach(p => {
-        s += `<circle cx="${sx(p.str)}" cy="${sy(p.vel)}" r="5" fill="#bfdbfe" stroke="#1a56db" stroke-width="1.5" opacity="0.55"/>`;
-      });
+    if(cur.trail.length>0){
+      const allT=[...cur.trail,{xv:cur.xv,yv:cur.yv}];
+      s+=`<path d="${allT.map((p,i)=>`${i===0?'M':'L'}${sx(p.xv).toFixed(1)},${sy(p.yv).toFixed(1)}`).join(' ')}" fill="none" stroke="#1a56db" stroke-width="1.5" stroke-dasharray="4,3" opacity="0.35"/>`;
+      cur.trail.forEach(p=>{s+=`<circle cx="${sx(p.xv)}" cy="${sy(p.yv)}" r="5" fill="#bfdbfe" stroke="#1a56db" stroke-width="1.5" opacity="0.55"/>`;});
     }
-    // Main dot
-    const dotCol = sidebarCol(athleteMap[selectedId]?.sessions[0]);
-    const px=sx(cur.str), py=sy(cur.vel);
-    s += `<circle cx="${px}" cy="${py}" r="12" fill="${dotCol}" stroke="#fff" stroke-width="2.5"/>`;
-    s += `<text x="${px}" y="${py+4}" font-size="9" text-anchor="middle" fill="#fff" font-weight="700">${cur.ini}</text>`;
-    // Label — smart positioning to avoid edges
-    const lx = px+16 > W-MR-90 ? px-16 : px+16;
-    const la = px+16 > W-MR-90 ? 'end' : 'start';
-    const ly = py-10 < MT+20 ? py+22 : py-10;
-    s += `<text x="${lx}" y="${ly}"    font-size="11" text-anchor="${la}" fill="#0d1117" font-weight="600">${cur.name}</text>`;
-    s += `<text x="${lx}" y="${ly+13}" font-size="10" text-anchor="${la}" fill="#7a8290">${cur.str}${strNorm.u} · ${cur.vel} m/s</text>`;
+    const dotCol=sidebarCol(buildLatestAcrossSessions(athleteMap[selectedId]?.sessions||[]));
+    const px=sx(cur.xv), py=sy(cur.yv);
+    s+=`<circle cx="${px}" cy="${py}" r="12" fill="${dotCol}" stroke="#fff" stroke-width="2.5"/>`;
+    s+=`<text x="${px}" y="${py+4}" font-size="9" text-anchor="middle" fill="#fff" font-weight="700">${cur.ini}</text>`;
+    const lx=px+16>W-MR-90?px-16:px+16, la=px+16>W-MR-90?'end':'start', ly=py-10<MT+20?py+22:py-10;
+    s+=`<text x="${lx}" y="${ly}"    font-size="11" text-anchor="${la}" fill="#0d1117" font-weight="600">${cur.name}</text>`;
+    s+=`<text x="${lx}" y="${ly+13}" font-size="10" text-anchor="${la}" fill="#7a8290">${cur.xv}${xNorm.u} · ${cur.yv}${yNorm.u}</text>`;
   } else {
-    s += `<text x="${ML+CW/2}" y="${MT+CH/2-8}" font-size="13" text-anchor="middle" fill="#7a8290">No data available for this athlete.</text>`;
-    s += `<text x="${ML+CW/2}" y="${MT+CH/2+12}" font-size="11" text-anchor="middle" fill="#94a3b8">Add ${strNorm.label} and max velocity to your Google Sheet.</text>`;
+    // Name exactly which axis is missing so it's actionable
+    const selA = athleteMap[selectedId];
+    const selLd = selA ? buildLatestAcrossSessions(selA.sessions) : {};
+    const missing = [];
+    if (selLd[xKey] == null) missing.push(xNorm.label);
+    if (selLd[yKey] == null) missing.push(yNorm.label);
+    const msg = missing.length
+      ? `Missing: ${missing.join(' and ')}`
+      : 'No data for this athlete on selected axes.';
+    s+=`<text x="${ML+CW/2}" y="${MT+CH/2-14}" font-size="13" text-anchor="middle" fill="#7a8290" font-weight="600">${msg}</text>`;
+    s+=`<text x="${ML+CW/2}" y="${MT+CH/2+8}" font-size="11" text-anchor="middle" fill="#94a3b8">Add to your Google Sheet, or pick different axes above.</text>`;
+    // List axes this athlete DOES have data for
+    const haveX = QUAD_X_AXES.filter(o=>selLd[o.key]!=null).map(o=>o.label);
+    const haveY = QUAD_Y_AXES.filter(o=>selLd[o.key]!=null).map(o=>o.label);
+    if (haveX.length && haveY.length) {
+      s+=`<text x="${ML+CW/2}" y="${MT+CH/2+30}" font-size="10" text-anchor="middle" fill="#94a3b8">Available X: ${haveX.join(', ')}</text>`;
+      s+=`<text x="${ML+CW/2}" y="${MT+CH/2+45}" font-size="10" text-anchor="middle" fill="#94a3b8">Available Y: ${haveY.join(', ')}</text>`;
+    }
   }
 
-  s += '</svg>';
-  container.innerHTML = s;
+  s+='</svg>';
+  container.innerHTML=s;
 }
 </script>
 </body>
