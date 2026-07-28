@@ -1,0 +1,1915 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Athlete Performance Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg:#f2f3f5; --surface:#fff; --surface-alt:#f8f9fa;
+    --border:#e4e6ea; --text-primary:#0d1117; --text-secondary:#444c56; --text-muted:#7a8290;
+    --accent:#1a56db; --accent-light:#ebf0fd;
+    --c-exceeds-bg:#f0fdf4; --c-exceeds-text:#14532d;
+    --c-meets-bg:#eff6ff;   --c-meets-text:#1e3a5f;
+    --c-near-bg:#fffbeb;    --c-near-text:#78350f;
+    --c-below-bg:#fff7ed;   --c-below-text:#7c2d12;
+    --c-priority-bg:#fef2f2;--c-priority-text:#7f1d1d;
+    --radius:8px; --radius-lg:12px;
+  }
+  body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif; background:var(--bg); color:var(--text-primary); font-size:13px; line-height:1.5; min-height:100vh; }
+  .app { display:grid; grid-template-columns:248px 1fr; min-height:100vh; }
+  .sidebar { background:var(--surface); border-right:1px solid var(--border); display:flex; flex-direction:column; position:sticky; top:0; height:100vh; overflow:hidden; }
+  .sb-brand { padding:18px 16px 14px; border-bottom:1px solid var(--border); }
+  .sb-brand h1 { font-size:14px; font-weight:700; }
+  .sb-brand p  { font-size:10px; color:var(--text-muted); text-transform:uppercase; letter-spacing:.08em; margin-top:2px; }
+  .sb-search { padding:10px 12px; border-bottom:1px solid var(--border); }
+  .sb-search input { width:100%; padding:6px 10px; font-size:12px; background:var(--surface-alt); border:1px solid var(--border); border-radius:6px; color:var(--text-primary); outline:none; }
+  .sb-search input:focus { border-color:var(--accent); }
+  .sb-search input::placeholder { color:var(--text-muted); }
+  .alist { flex:1; overflow-y:auto; padding:6px 0; }
+  .aitem { display:flex; align-items:center; gap:10px; padding:8px 14px; cursor:pointer; border-left:2px solid transparent; }
+  .aitem:hover { background:var(--surface-alt); }
+  .aitem.active { background:var(--accent-light); border-left-color:var(--accent); }
+  .av { width:32px; height:32px; border-radius:50%; background:var(--accent-light); color:var(--accent); display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; flex-shrink:0; }
+  .aitem.active .av { background:var(--accent); color:#fff; }
+  .ameta { flex:1; min-width:0; }
+  .aname { font-size:13px; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .apos  { font-size:11px; color:var(--text-muted); }
+  .sdot  { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+  .settings-bar { display:flex; align-items:center; justify-content:space-between; padding:10px 14px; border-top:1px solid var(--border); background:var(--surface-alt); }
+  .settings-bar span { font-size:11px; color:var(--text-muted); }
+  .btn { display:inline-flex; align-items:center; gap:6px; padding:8px 16px; background:var(--accent); color:#fff; border:none; border-radius:var(--radius); font-size:13px; font-weight:600; cursor:pointer; margin-top:12px; }
+  .btn:hover { background:#1447c0; }
+  .btn-sm { padding:5px 12px; font-size:12px; background:var(--surface-alt); color:var(--text-secondary); border:1px solid var(--border); border-radius:var(--radius); cursor:pointer; font-weight:500; }
+  .btn-sm:hover { background:var(--border); }
+  .main { padding:24px 28px; display:flex; flex-direction:column; gap:20px; }
+  .state-screen { display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:60vh; gap:12px; text-align:center; }
+  .state-screen h2 { font-size:16px; font-weight:600; color:var(--text-secondary); }
+  .state-screen p  { font-size:13px; color:var(--text-muted); max-width:440px; line-height:1.6; }
+  .config-box { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-lg); padding:24px 28px; max-width:540px; width:100%; text-align:left; }
+  .config-box h3 { font-size:15px; font-weight:700; margin-bottom:6px; }
+  .config-box p  { font-size:12px; color:var(--text-secondary); margin-bottom:16px; line-height:1.6; }
+  .config-box label { font-size:12px; font-weight:600; display:block; margin-bottom:4px; margin-top:12px; }
+  .config-box input { width:100%; padding:8px 12px; font-size:13px; border:1px solid var(--border); border-radius:var(--radius); outline:none; color:var(--text-primary); }
+  .config-box input:focus { border-color:var(--accent); }
+  .hint { font-size:11px; color:var(--text-muted); margin-top:8px; line-height:1.6; }
+  .profile-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-lg); padding:18px 20px; display:flex; gap:16px; align-items:flex-start; }
+  .pav { width:52px; height:52px; border-radius:50%; background:var(--accent-light); color:var(--accent); display:flex; align-items:center; justify-content:center; font-size:17px; font-weight:700; flex-shrink:0; }
+  .pinfo h2    { font-size:20px; font-weight:700; letter-spacing:-.02em; }
+  .pinfo .pmeta { font-size:12px; color:var(--text-secondary); margin-top:3px; }
+  .ptags { display:flex; gap:6px; margin-top:10px; flex-wrap:wrap; }
+  .ptag  { font-size:11px; padding:3px 9px; border-radius:20px; background:var(--surface-alt); border:1px solid var(--border); color:var(--text-secondary); }
+  .ptag.inj { background:#fffbeb; border-color:#fbbf24; color:#92400e; }
+  .cat-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; }
+  .cat-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:12px 14px; }
+  .cat-name   { font-size:10px; color:var(--text-muted); text-transform:uppercase; letter-spacing:.07em; font-weight:600; margin-bottom:5px; }
+  .cat-status { font-size:13px; font-weight:600; }
+  .sec-heading { font-size:10px; color:var(--text-muted); text-transform:uppercase; letter-spacing:.08em; font-weight:600; margin-bottom:8px; padding-left:2px; }
+  .tab-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-lg); overflow:hidden; }
+  .tabs { display:flex; border-bottom:1px solid var(--border); background:var(--surface-alt); }
+  .tab { padding:10px 18px; font-size:13px; font-weight:500; color:var(--text-muted); cursor:pointer; border-bottom:2px solid transparent; }
+  .tab:hover { color:var(--text-primary); }
+  .tab.active { color:var(--accent); border-bottom-color:var(--accent); background:var(--surface); }
+  .tc { display:none; }
+  .tc.active { display:block; }
+  .results-body { padding:18px 20px; display:flex; flex-direction:column; gap:18px; }
+  table { width:100%; border-collapse:collapse; font-size:12px; }
+  thead th { padding:7px 14px; text-align:left; font-size:10px; font-weight:600; color:var(--text-muted); letter-spacing:.06em; text-transform:uppercase; background:var(--surface-alt); border-bottom:1px solid var(--border); }
+  tbody td { padding:10px 14px; border-bottom:1px solid #f3f4f6; vertical-align:middle; }
+  tbody tr:last-child td { border-bottom:none; }
+  tbody tr:hover { background:#fafbfc; }
+  td.lbl { color:var(--text-secondary); }
+  .miss  { color:var(--text-muted); font-style:italic; font-size:11px; }
+  .rval  { font-size:14px; font-weight:600; }
+  .runit { font-size:11px; color:var(--text-muted); margin-left:3px; }
+  .rsub  { font-size:11px; color:var(--text-muted); margin-left:6px; }
+  .delta { font-size:12px; font-weight:600; }
+  .pill  { display:inline-flex; align-items:center; gap:5px; padding:3px 10px; border-radius:20px; font-size:11px; font-weight:600; white-space:nowrap; }
+  .pill-dot { width:6px; height:6px; border-radius:50%; display:inline-block; }
+  .p4{background:var(--c-exceeds-bg);color:var(--c-exceeds-text)}
+  .p3{background:var(--c-meets-bg);color:var(--c-meets-text)}
+  .p2{background:var(--c-near-bg);color:var(--c-near-text)}
+  .p1{background:var(--c-below-bg);color:var(--c-below-text)}
+  .p0{background:var(--c-priority-bg);color:var(--c-priority-text)}
+  .calc-badge { display:inline-block; font-size:10px; background:#f0f4ff; color:#4a6fa5; border:1px solid #ccd9f0; border-radius:4px; padding:1px 5px; margin-left:5px; font-weight:500; vertical-align:middle; }
+  .status-key { display:flex; flex-wrap:wrap; gap:6px; padding:14px 20px; border-top:1px solid var(--border); background:var(--surface-alt); align-items:center; }
+  .key-label  { font-size:10px; color:var(--text-muted); font-weight:600; text-transform:uppercase; letter-spacing:.06em; margin-right:4px; }
+  .charts-body { padding:18px 20px; display:flex; flex-direction:column; gap:14px; }
+  .chart-grid  { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  .chart-wrap  { background:var(--surface-alt); border:1px solid var(--border); border-radius:var(--radius); padding:14px 16px; }
+  .chart-title { font-size:11px; font-weight:600; color:var(--text-secondary); text-transform:uppercase; letter-spacing:.06em; margin-bottom:10px; }
+  .chart-note  { font-size:11px; color:var(--text-muted); display:flex; gap:16px; flex-wrap:wrap; }
+  .print-header { display:none; }
+
+
+  .norm-source { display:block; font-size:9.5px; color:#bbb; margin-top:2px; font-style:italic; }
+  .pb-badge { display:inline-flex;align-items:center;font-size:9px;font-weight:700;background:#fef3c7;color:#92400e;border:1px solid #fcd34d;border-radius:4px;padding:1px 5px;margin-left:5px;vertical-align:middle; }
+  @media print { .norm-source { display:none !important; } }
+
+  .quadrant-controls { display:flex; align-items:center; gap:8px; }
+  .control-label { font-size:11px; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:.06em; margin-right:4px; }
+  .axis-btn { padding:5px 12px; font-size:12px; font-weight:500; background:var(--surface-alt); border:1px solid var(--border); border-radius:6px; cursor:pointer; color:var(--text-secondary); }
+  .axis-btn:hover { background:var(--accent-light); color:var(--accent); border-color:var(--accent); }
+  .axis-btn.active { background:var(--accent); color:#fff; border-color:var(--accent); }
+  .quadrant-legend { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+  .ql-dot { display:inline-block; width:10px; height:10px; border-radius:50%; }
+  .quad-ctrl-row { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+  .axis-select { font-size:12px; padding:5px 9px; border:1px solid var(--border); border-radius:6px; background:var(--surface); color:var(--text-secondary); cursor:pointer; font-family:inherit; }
+  .axis-select:focus { outline:none; border-color:var(--accent); }
+  .ql-you  { background:var(--accent); border:2px solid #fff; box-shadow:0 0 0 1px var(--accent); }
+  .ql-anon { background:#cbd5e1; border:1px solid #94a3b8; }
+
+
+  .feedback-empty { display:flex; flex-direction:column; align-items:center; justify-content:center; padding:40px 20px; gap:14px; text-align:center; }
+  .feedback-empty p { font-size:13px; color:var(--text-muted); max-width:360px; line-height:1.6; }
+  .feedback-empty h3 { font-size:15px; font-weight:600; color:var(--text-secondary); }
+  .feedback-loading { display:flex; flex-direction:column; align-items:center; justify-content:center; padding:48px 20px; gap:12px; }
+  .feedback-loading p { font-size:13px; color:var(--text-muted); }
+  .spinner { width:28px; height:28px; border:3px solid var(--border); border-top-color:var(--accent); border-radius:50%; animation:spin .8s linear infinite; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+  .feedback-section { background:var(--surface-alt); border:1px solid var(--border); border-radius:var(--radius-lg); overflow:hidden; }
+  .feedback-section-head { display:flex; align-items:center; justify-content:space-between; padding:12px 16px; border-bottom:1px solid var(--border); background:var(--surface); }
+  .feedback-section-label { font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:.07em; }
+  .feedback-section-label span { font-size:10px; font-weight:400; color:var(--text-muted); margin-left:8px; text-transform:none; letter-spacing:0; }
+  .feedback-text { padding:16px 18px; font-size:13px; line-height:1.75; color:var(--text-primary); white-space:pre-wrap; }
+  .copy-btn { display:inline-flex; align-items:center; gap:5px; font-size:11px; padding:4px 10px; background:var(--surface); border:1px solid var(--border); border-radius:6px; cursor:pointer; color:var(--text-secondary); font-weight:500; }
+  .copy-btn:hover { background:var(--accent-light); color:var(--accent); border-color:var(--accent); }
+  .copy-btn.copied { background:#f0fdf4; color:#16a34a; border-color:#16a34a; }
+  .feedback-meta { font-size:11px; color:var(--text-muted); padding:0 18px 12px; }
+  .regenerate-row { display:flex; justify-content:flex-end; padding-top:4px; }
+  @media print {
+    body { background:#fff; font-size:11px; }
+    .app { display:block; }
+    .sidebar, .no-print, .settings-bar { display:none !important; }
+    .main { padding:0; }
+    .print-header { display:flex; align-items:center; gap:14px; padding-bottom:14px; margin-bottom:14px; border-bottom:2px solid #0d1117; }
+    .print-header img { height:32px; }
+    .print-header-meta { font-size:12px; color:#444c56; display:flex; flex-direction:column; }
+    .print-header-meta strong { font-size:15px; color:#0d1117; }
+    .profile-card, .cat-card, .chart-wrap, .tab-card { border:1px solid #ccc !important; box-shadow:none !important; }
+    .tabs { display:none !important; }
+    .tc { display:block !important; }
+    .tc.active { display:block !important; }
+    table { font-size:10px; }
+    .chart-grid { grid-template-columns:1fr 1fr; page-break-inside:avoid; }
+    .chart-wrap { page-break-inside:avoid; }
+    .test-section, .results-body > div { page-break-inside:avoid; }
+    a { color:inherit; text-decoration:none; }
+  }
+
+  @media(max-width:900px){
+    .app{grid-template-columns:1fr} .sidebar{position:static;height:auto}
+    .cat-grid{grid-template-columns:repeat(2,1fr)} .chart-grid{grid-template-columns:1fr}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="sb-brand">
+      <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAfQAAAH0CAYAAADL1t+KAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAEs2lUWHRYTUw6Y29tLmFkb2JlLnhtcAAAAAAAPD94cGFja2V0IGJlZ2luPSfvu78nIGlkPSdXNU0wTXBDZWhpSHpyZVN6TlRjemtjOWQnPz4KPHg6eG1wbWV0YSB4bWxuczp4PSdhZG9iZTpuczptZXRhLyc+CjxyZGY6UkRGIHhtbG5zOnJkZj0naHR0cDovL3d3dy53My5vcmcvMTk5OS8wMi8yMi1yZGYtc3ludGF4LW5zIyc+CgogPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9JycKICB4bWxuczpBdHRyaWI9J2h0dHA6Ly9ucy5hdHRyaWJ1dGlvbi5jb20vYWRzLzEuMC8nPgogIDxBdHRyaWI6QWRzPgogICA8cmRmOlNlcT4KICAgIDxyZGY6bGkgcmRmOnBhcnNlVHlwZT0nUmVzb3VyY2UnPgogICAgIDxBdHRyaWI6Q3JlYXRlZD4yMDI1LTExLTIzPC9BdHRyaWI6Q3JlYXRlZD4KICAgICA8QXR0cmliOkV4dElkPmRhMTFiNjZhLTBlZTgtNDcxMS1hODA2LWRmMWYyNDczY2M2YTwvQXR0cmliOkV4dElkPgogICAgIDxBdHRyaWI6RmJJZD41MjUyNjU5MTQxNzk1ODA8L0F0dHJpYjpGYklkPgogICAgIDxBdHRyaWI6VG91Y2hUeXBlPjI8L0F0dHJpYjpUb3VjaFR5cGU+CiAgICA8L3JkZjpsaT4KICAgPC9yZGY6U2VxPgogIDwvQXR0cmliOkFkcz4KIDwvcmRmOkRlc2NyaXB0aW9uPgoKIDxyZGY6RGVzY3JpcHRpb24gcmRmOmFib3V0PScnCiAgeG1sbnM6ZGM9J2h0dHA6Ly9wdXJsLm9yZy9kYy9lbGVtZW50cy8xLjEvJz4KICA8ZGM6dGl0bGU+CiAgIDxyZGY6QWx0PgogICAgPHJkZjpsaSB4bWw6bGFuZz0neC1kZWZhdWx0Jz5GT09UQkFMTEZJVCAtIDE8L3JkZjpsaT4KICAgPC9yZGY6QWx0PgogIDwvZGM6dGl0bGU+CiA8L3JkZjpEZXNjcmlwdGlvbj4KCiA8cmRmOkRlc2NyaXB0aW9uIHJk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" alt="FOOTBALLFIT" style="width:200px;height:auto;margin-bottom:10px;display:block;max-width:100%">
+      <h1>Performance Dashboard</h1>
+      <p>Individual Coaching</p>
+    </div>
+    <div class="sb-search"><input id="sq" type="text" placeholder="Search athlete…" oninput="filterAthletes(this.value)"></div>
+    <div class="alist" id="alist"><div style="padding:16px;font-size:12px;color:#7a8290;text-align:center">Connect Google Sheet to load athletes</div></div>
+    <div class="settings-bar"><span id="sheetStatus">No sheet connected</span><span style="font-size:9px;color:#c8ccd2;margin:0 6px" title="Build version">BUILD 13</span><button class="btn-sm" onclick="showConfig()">⚙ Settings</button></div>
+  </aside>
+  <main class="main" id="main"></main>
+</div>
+<script>
+// ─── NORMATIVE BANDS ─────────────────────────────────────────────────────────
+// Sources:
+//   Jump/RSI:  Badby, Comfort et al. JSS 2025; McMahon et al. Sensors 2022
+//   EUR:       McGuigan et al. JSCR 2006
+//   DSI:       Thomas, Dos'Santos, Jones. Sports 2017
+//   IMTP:      Badby et al. JSS 2025 (professional soccer N/kg benchmarks)
+//   Aerobic:   Cardamone et al. Front Physiol 2025 (Serie A VO2 ~61.5); Buchheit & Laursen
+//   Strength:  Comfort et al. JSCR 2019; professional football literature
+//   Speed:     Haugen et al. IJSPP 2019
+// lb:true = lower is better
+
+const NORMS = {
+  // ── Jump / Power ──────────────────────────────────────────────────────────
+  broad_jump:    { min:220,  max:260,  u:'cm',        lb:false, label:'Broad jump',              cat:'jump', source:'Loturco et al.; professional football literature' },
+  // No validated professional football-specific normative dataset exists for SL broad jump absolute distance.
+  // Tracked for individual longitudinal comparison only — no min/max scoring applied.
+  slbj_L:        { min:null, max:null, u:'cm',        lb:false, label:'SL broad jump — L',       cat:'jump', noNorm:true, source:'No validated professional norm' },
+  slbj_R:        { min:null, max:null, u:'cm',        lb:false, label:'SL broad jump — R',       cat:'jump', noNorm:true, source:'No validated professional norm' },
+  // LSI: healthy footballers show natural variance of 97-106% (scoping review, 27 studies, JOSPT 2024).
+  // <90% is a distinct injury-risk threshold (not a benchmark tier) — flagged separately in the UI.
+  slbj_LSI:      { min:90,   max:100,  u:'%',         lb:false, label:'SL broad jump LSI',       cat:'jump', injuryFloor:90, source:'JOSPT scoping review 2024 (27 studies, soccer)' },
+  // Triple hop (single-leg): collegiate male soccer/basketball average 632±72cm (Myers et al. 2014).
+  // No professional-specific dataset found — moderate confidence, not pro-validated.
+  triple_hop:    { min:560,  max:704,  u:'cm',        lb:false, label:'Triple hop (SL)',         cat:'jump', note:'Collegiate data, not pro-specific', source:'Myers et al. 2014 (collegiate soccer/basketball)' },
+  cmj:           { min:35,   max:55,   u:'cm',        lb:false, label:'CMJ height',              cat:'jump', source:'Badby et al. 2025; VALD ForceDecks normative data' },
+  sj:            { min:30,   max:50,   u:'cm',        lb:false, label:'Squat jump (SJ)',         cat:'jump', source:'Professional football literature' },
+  // Flight-time derived jump heights (force plate / jump mat). Same benchmark band as impulse-derived height.
+  cmj_flight:    { min:35,   max:55,   u:'cm',        lb:false, label:'CMJ flight height',       cat:'jump', note:'Flight-time derived', source:'Systematic review: 33.6–57.2 cm across 54 studies, senior professional soccer' },
+  sj_flight:     { min:30,   max:50,   u:'cm',        lb:false, label:'SJ flight height',        cat:'jump', note:'Flight-time derived', source:'Professional football literature' },
+  // CMJ concentric (propulsive) force — benchmarked relative to body mass, not absolute N
+  cmj_con_force: { min:25.7, max:31.4, u:'N/kg',      lb:false, label:'CMJ concentric force',    cat:'jump', note:'Requires force plate · relative to BW', source:'EFL professional soccer benchmarks 2025 (relative peak propulsive force)' },
+  eur:           { min:0.90, max:1.15, u:'EUR',       lb:false, label:'EUR (CMJ÷SJ)',            cat:'jump',  note:'Auto: CMJ÷SJ', source:'McGuigan et al. 2006' },
+  // mRSI: CMJ jump height (m) ÷ contraction time (s). Pro football ~0.8–1.4 (McMahon/Badby)
+  cmj_mrsi:      { min:0.80, max:1.40, u:'m/s',       lb:false, label:'CMJ mRSI',               cat:'jump',  note:'Auto: JH(m)÷CT(s) — needs contraction time', source:'McMahon et al. 2022; Badby et al. 2025' },
+  // DJ RSI: DJ height (m) ÷ contact time (s). Pro football ~1.0–1.8 (McMahon 2021)
+  dj_rsi:        { min:1.00, max:1.80, u:'m/s',       lb:false, label:'DJ RSI',                 cat:'jump',  note:'Auto: JH(m)÷CT(s) — needs contact time', source:'McMahon et al. 2021' },
+  dj:            { min:30,   max:50,   u:'cm',        lb:false, label:'Drop jump height (DJ)',   cat:'jump', source:'Professional football literature' },
+  // DSI: ballistic PF ÷ isometric PF. Optimal 0.60–0.80 (Thomas et al. 2017)
+  // >0.80 = needs strength work; <0.60 = needs plyometric work
+  dsi:           { min:0.60, max:0.80, u:'DSI',       lb:false, label:'DSI',                    cat:'jump',  note:'Requires force plate', source:'Thomas, Dos\'Santos & Jones 2017' },
+  // ── Aerobic ───────────────────────────────────────────────────────────────
+  mas:           { min:5.0,  max:6.2,  u:'m/s',       lb:false, label:'MAS (5-min TT)',          cat:'aero', source:'Buchheit & Laursen 2013' },
+  vo2max:        { min:58,   max:68,   u:'ml/kg/min', lb:false, label:'Est. VO₂ max',            cat:'aero', source:'Cardamone et al. 2025 (Serie A ~61.5 ml/kg/min); Buchheit' },
+  // ── Strength ──────────────────────────────────────────────────────────────
+  sq_1rm_bw:     { min:1.5,  max:2.0,  u:'×BW',       lb:false, label:'Back squat',             cat:'strength', source:'Comfort et al. 2019 (professional football)' },
+  tb_1rm_bw:     { min:2.0,  max:2.8,  u:'×BW',       lb:false, label:'Trap bar DL',            cat:'strength', source:'Professional football literature' },
+  bp_1rm_bw:     { min:0.9,  max:1.3,  u:'×BW',       lb:false, label:'Bench press',            cat:'strength', source:'Professional football literature' },
+  // IMTP: relative peak force N/kg. Pro soccer median ~40 N/kg (Badby et al. 2025)
+  // <30 N/kg = below norm for professional; 30–45 = within range; >45 = exceeds
+  imtp:          { min:30,   max:45,   u:'N/kg',      lb:false, label:'IMTP',                   cat:'strength', note:'Requires force plate', source:'Badby et al. 2025 (professional soccer; median ~40 N/kg)' },
+  // ── Additional aerobic tests ──────────────────────────────────────────────
+  // Beep test (MSFT) level norm — professional footballers typically reach level 13–16.
+  beep_level:   { min:13, max:16, u:'level', lb:false, label:'Beep test level', cat:'aero', source:'Ramsbottom et al. 1988; professional football literature' },
+  // Bronco: time in seconds, lower is better. Limited football data; rugby league reference.
+  bronco:       { min:240,  max:280,  u:'s',   lb:true,  label:'Bronco',     cat:'aero', note:'Lower is better · Limited football data', source:'Rugby league reference; limited football-specific data' },
+  // Yo-Yo IR2: total distance in metres (Castagna et al. 2006 professional football data)
+  yoyo_ir2:     { min:640,  max:1200, u:'m',   lb:false, label:'Yo-Yo IR2',  cat:'aero', note:'Castagna et al. 2006', source:'Castagna et al. 2006; professional football' },
+  // ── Speed ─────────────────────────────────────────────────────────────────
+  sprint10:      { min:1.65, max:1.80, u:'s',         lb:true,  label:'10m sprint',             cat:'speed', source:'Haugen et al. 2019' },
+  sprint20:      { min:2.85, max:3.05, u:'s',         lb:true,  label:'20m sprint',             cat:'speed', source:'Haugen et al. 2019' },
+  // Match-derived peak speed: pro average ~31-32 km/h (8.6-8.9 m/s); EPL all-time fastest ~37.4 km/h (10.4 m/s, Van de Ven).
+  // 8.3-9.5 m/s covers typical professional range; >9.5 m/s is genuinely elite outlier territory.
+  max_vel:       { min:8.3,  max:9.5,  u:'m/s',       lb:false, label:'Max velocity (20m fly)', cat:'speed', source:'LaLiga match-speed data; EPL fastest-ever ~10.4 m/s' },
+};
+
+// ─── STRENGTH-SPEED QUADRANT ────────────────────────────────────────────────
+const QUAD_X_AXES = [
+  { key:'tb_1rm_bw',    label:'Trap bar DL (×BW)'        },
+  { key:'sq_1rm_bw',    label:'Back squat (×BW)'         },
+  { key:'imtp',         label:'IMTP (N/kg)'               },
+  { key:'cmj_con_force',label:'CMJ concentric force (N/kg)' },
+  { key:'cmj',          label:'CMJ height (cm)'           },
+  { key:'cmj_flight',   label:'CMJ flight height (cm)'    },
+];
+const QUAD_Y_AXES = [
+  { key:'max_vel',    label:'Max velocity (m/s)',      lb:false },
+  { key:'sprint10',   label:'10m sprint (s)',           lb:true  },
+  { key:'sprint20',   label:'20m sprint (s)',           lb:true  },
+  { key:'cmj',        label:'CMJ height (cm)',          lb:false },
+  { key:'cmj_flight', label:'CMJ flight height (cm)',   lb:false },
+  { key:'sj_flight',  label:'SJ flight height (cm)',    lb:false },
+  { key:'mas',        label:'MAS (m/s)',                lb:false },
+];
+const QUAD_PRESETS = [
+  { name:'Strength-Speed',     x:'tb_1rm_bw', y:'max_vel',
+    ql:{tl:['Speed Dominant','→ Build strength'],tr:['Well-rounded','→ Maintain & refine'],bl:['Developing','→ Foundation needed'],br:['Force Dominant','→ Build speed']} },
+  { name:'Strength-Power',     x:'sq_1rm_bw', y:'cmj',
+    ql:{tl:['Power Without Strength','→ Build maximal strength'],tr:['Complete Profile','→ Maintain'],bl:['Developing','→ Build both'],br:['Strength Without Power','→ Plyometric expression']} },
+  { name:'Acceleration-Force', x:'imtp',      y:'sprint10',
+    ql:{tl:['Fast, Low Force','→ Build max force'],tr:['Complete','→ Maintain'],bl:['Developing','→ Foundation needed'],br:['Strong, Slow','→ Reactive speed work']} },
+  { name:'Force-Power',        x:'cmj_con_force', y:'cmj_flight',
+    ql:{tl:['High Jump, Low Force','→ Build force production'],tr:['Complete Jumper','→ Maintain'],bl:['Developing','→ Build both'],br:['High Force, Low Jump','→ Rate of force development']} },
+  { name:'Speed-Endurance',    x:'mas',       y:'max_vel',
+    ql:{tl:['Speed Dominant','→ Build aerobic base'],tr:['Well-rounded','→ Maintain'],bl:['Developing','→ Build both'],br:['Endurance Dominant','→ Speed & power work']} },
+];
+
+let currentXAxis = QUAD_PRESETS[0].x;
+let currentYAxis = QUAD_PRESETS[0].y;
+
+
+const CAT_LABELS = { jump:'Jump / Power', aero:'Aerobic', strength:'Strength', speed:'Speed' };
+const SL = ['Priority Area','Below Benchmark','Near Benchmark','Meets Benchmark','Exceeds Benchmark'];
+const SC = ['p0','p1','p2','p3','p4'];
+const SD = ['#dc2626','#c2410c','#b45309','#1a56db','#16a34a'];
+const CC = ['#1a56db','#7c3aed','#0891b2','#16a34a','#dc2626','#c2410c','#6b7280'];
+
+// ─── CALCULATIONS ─────────────────────────────────────────────────────────────
+const pf  = v => { const n = parseFloat(v); return isNaN(n) || n === 0 ? null : n; };
+const epley = (kg, reps) => { const k=pf(kg),r=pf(reps); if(!k||!r)return null; return r===1?k:+(k*(1+r/30)).toFixed(1); };
+const masFromDist = d => { const v=pf(d); return v?+(v/300).toFixed(2):null; }; // m/s
+// Léger & Mercier (1984): VO2max (ml/kg/min) = MAS (km/h) × 3.5. MAS is stored in m/s, so convert to km/h first.
+const vo2FromMas  = mas_ms => { const v=pf(mas_ms); return v?+((v*3.6)*3.5).toFixed(1):null; };
+const calcLSI     = (L,R) => { const l=pf(L),r=pf(R); return(l&&r)?+(Math.min(l,r)/Math.max(l,r)*100).toFixed(1):null; };
+// Format seconds → MM:SS
+const fmtTime = s => { if(!s)return'—'; const m=Math.floor(s/60),sec=Math.round(s%60); return `${m}:${String(sec).padStart(2,'0')}`; };
+// VO2max from any distance TT — Daniels & Gilbert 1979
+function vo2FromDistTT(dist_m, time_s) {
+  if(!dist_m||!time_s||time_s<60)return null;
+  const v=(dist_m/time_s)*60; // m/min
+  const t=time_s/60;          // min
+  const frac=0.8+0.1894393*Math.exp(-0.012778*t)+0.2989558*Math.exp(-0.1932605*t);
+  const vo2v=-4.60+0.182258*v+0.000104*v*v;
+  const est=+(vo2v/frac).toFixed(1);
+  return est>20&&est<100?est:null; // sanity bounds
+}
+// VO2max from Yo-Yo IR2 distance — Castagna et al. 2006
+const vo2FromYoyo = d => { const v=pf(d); return v?+(v*0.0136+45.3).toFixed(1):null; };
+// Beep test speed (km/h) from level
+const beepSpeed = lvl => { const v=pf(lvl); return v?+(8.5+(v-1)*0.5):null; };
+// VO2max from beep test level + age — Léger et al. 1988
+function vo2FromBeep(level, age_yr) {
+  const v=beepSpeed(level); if(!v)return null;
+  const a=parseFloat(age_yr)||25;
+  const est=+(31.025+3.238*v-3.248*a+0.1536*v*a).toFixed(1);
+  return est>20&&est<100?est:null;
+}
+const bwRatio     = (rm,bw) => (rm&&bw)?+(rm/bw).toFixed(2):null;
+const imtpNkg     = (N,bw) => { const n=pf(N),b=pf(bw); return(n&&b)?+(n/b).toFixed(2):null; };
+// mRSI = jump height (m) ÷ contraction time (s)
+const calcMrsi    = (cm,ms) => { const h=pf(cm),t=pf(ms); return(h&&t)?+((h/100)/(t/1000)).toFixed(2):null; };
+// DJ RSI = jump height (m) ÷ contact time (s)
+const calcDjRsi   = (cm,ms) => { const h=pf(cm),t=pf(ms); return(h&&t)?+((h/100)/(t/1000)).toFixed(2):null; };
+// EUR = CMJ ÷ SJ (jump height)
+const calcEur     = (cmj,sj) => { const c=pf(cmj),s=pf(sj); return(c&&s)?+(c/s).toFixed(2):null; };
+
+function deriveSession(row, bw_kg, age_yr) {
+  // Per-session bodyweight takes priority; falls back to athlete's profile weight
+  const bw = pf(row.weight_kg) || pf(bw_kg);
+  const d  = {};
+  d.weight_kg   = bw; // store whichever was used, for display
+  d.notes       = (row.notes || '').trim();
+  // Jump — direct
+  d.broad_jump  = pf(row.broad_jump_cm);
+  d.slbj_L      = pf(row.slbj_L_cm);
+  d.slbj_R      = pf(row.slbj_R_cm);
+  d.slbj_LSI    = calcLSI(row.slbj_L_cm, row.slbj_R_cm);
+  d.triple_hop  = pf(row.triple_hop_cm);
+  d.cmj         = pf(row.cmj_cm);
+  d.sj          = pf(row.sj_cm);
+  d.dj          = pf(row.dj_cm);
+  // EUR — auto from CMJ and SJ
+  d.eur         = calcEur(row.cmj_cm, row.sj_cm);
+  // mRSI — auto if contraction time provided, else null (future-proof)
+  d.cmj_ct_ms   = pf(row.cmj_contraction_time_ms);
+  d.cmj_mrsi    = calcMrsi(row.cmj_cm, row.cmj_contraction_time_ms);
+  // DJ RSI — auto if contact time provided
+  d.dj_ct_ms    = pf(row.dj_contact_time_ms);
+  d.dj_rsi      = calcDjRsi(row.dj_cm, row.dj_contact_time_ms);
+  // DSI — direct (force plate only)
+  d.dsi         = pf(row.dsi);
+  // Aerobic
+  d.tt5min_dist = pf(row.tt5min_dist_m);
+  d.mas         = masFromDist(row.tt5min_dist_m);
+  d.mas_vo2max  = d.mas ? vo2FromMas(d.mas) : null;
+  // General distance TT (any distance)
+  d.tt_dist     = pf(row.tt_dist_m);
+  d.tt_time     = pf(row.tt_time_s);
+  d.tt_speed    = (d.tt_dist&&d.tt_time)?+(d.tt_dist/d.tt_time).toFixed(3):null; // m/s
+  d.tt_vo2max   = vo2FromDistTT(d.tt_dist, d.tt_time);
+  // Yo-Yo IR2
+  d.yoyo_ir2     = pf(row.yoyo_ir2_dist_m);
+  d.yoyo_vo2max  = vo2FromYoyo(row.yoyo_ir2_dist_m);
+  // Beep test (MSFT)
+  d.beep_level   = pf(row.beep_level);
+  d.beep_shuttle = pf(row.beep_shuttle);
+  d.beep_speed   = beepSpeed(row.beep_level); // km/h
+  d.beep_vo2max  = vo2FromBeep(row.beep_level, age_yr);
+  // Bronco
+  d.bronco       = pf(row.bronco_time_s);
+  // Best available VO2max — 5-min TT first priority, then others
+  d.vo2max = d.mas_vo2max || d.tt_vo2max || d.yoyo_vo2max || d.beep_vo2max || pf(row.vo2max);
+  // Strength — Epley → BW ratio (uses session bodyweight)
+  const sq1rm   = epley(row.sq_kg, row.sq_reps);
+  const tb1rm   = epley(row.tb_kg, row.tb_reps);
+  const bp1rm   = epley(row.bp_kg, row.bp_reps);
+  d.sq_1rm      = sq1rm; d.sq_kg_raw = pf(row.sq_kg); d.sq_reps_raw = pf(row.sq_reps);
+  d.tb_1rm      = tb1rm; d.tb_kg_raw = pf(row.tb_kg); d.tb_reps_raw = pf(row.tb_reps);
+  d.bp_1rm      = bp1rm; d.bp_kg_raw = pf(row.bp_kg); d.bp_reps_raw = pf(row.bp_reps);
+  d.sq_1rm_bw   = bwRatio(sq1rm, bw);
+  d.tb_1rm_bw   = bwRatio(tb1rm, bw);
+  d.bp_1rm_bw   = bwRatio(bp1rm, bw);
+  // Flight-time derived jump heights (optional — separate from impulse-derived cmj/sj)
+  d.cmj_flight  = pf(row.cmj_flight_cm);
+  d.sj_flight   = pf(row.sj_flight_cm);
+  // CMJ concentric force — raw Newtons in, N/kg out (same pattern as IMTP)
+  d.cmj_con_force_N = pf(row.cmj_con_force_N);
+  d.cmj_con_force   = (d.cmj_con_force_N && bw) ? +(d.cmj_con_force_N / bw).toFixed(1) : null;
+  d.imtp_raw_N  = pf(row.imtp_N);
+  d.imtp        = imtpNkg(row.imtp_N, bw);
+  // Speed
+  d.sprint10    = pf(row.sprint10_s);
+  d.sprint20    = pf(row.sprint20_s);
+  d.max_vel     = pf(row.max_vel_ms);
+  d.test_date   = row.test_date;
+  return d;
+}
+
+// ─── BENCHMARK SCORING ───────────────────────────────────────────────────────
+function bs(v, nk) {
+  const n = NORMS[nk]; if (!n || v==null || n.noNorm) return null;
+  if (n.lb) {
+    if (v<=n.min) return 4; if (v<=n.max) return 3;
+    if (v<=n.min*1.10) return 2; if (v<=n.min*1.20) return 1; return 0;
+  } else {
+    if (v>=n.max) return 4; if (v>=n.min) return 3;
+    if (v>=n.min*0.90) return 2; if (v>=n.min*0.80) return 1; return 0;
+  }
+}
+function injuryFlag(v, nk) {
+  const n = NORMS[nk];
+  if (!n || !n.injuryFloor || v==null) return null;
+  return v < n.injuryFloor;
+}
+function pill(s) {
+  if (s===null) return '';
+  return `<span class="pill ${SC[s]}"><span class="pill-dot" style="background:${SD[s]}"></span>${SL[s]}</span>`;
+}
+function dHtml(val, prev, lb) {
+  if (val==null||prev==null) return '<span class="miss">—</span>';
+  const d=((val-prev)/prev*100), imp=lb?d<0:d>0, unc=Math.abs(d)<0.5;
+  const col=unc?'#7a8290':imp?'#16a34a':'#dc2626';
+  return `<span class="delta" style="color:${col}">${unc?'→':imp?'↑':'↓'} ${d>0?'+':''}${d.toFixed(1)}%</span>`;
+}
+function catLabel(avg) {
+  if (avg===null) return null;
+  if (avg>=3.5) return {l:'Strong Area',     c:'#16a34a'};
+  if (avg>=2.5) return {l:'On Track',        c:'#1a56db'};
+  if (avg>=1.5) return {l:'Developing Area', c:'#c2410c'};
+  return              {l:'Priority Focus',  c:'#dc2626'};
+}
+function catCard(catKey, keys, d) {
+  const scores = keys.map(k=>bs(d[k],k)).filter(s=>s!==null);
+  if (!scores.length) return `<div class="cat-card"><div class="cat-name">${CAT_LABELS[catKey]}</div><div class="cat-status" style="color:#7a8290">No data</div></div>`;
+  const avg = scores.reduce((a,b)=>a+b,0)/scores.length;
+  const cl  = catLabel(avg);
+  return `<div class="cat-card" style="border-left:3px solid ${cl.c}"><div class="cat-name">${CAT_LABELS[catKey]}</div><div class="cat-status" style="color:${cl.c}">${cl.l}</div></div>`;
+}
+function sidebarCol(d) {
+  if (!d) return '#7a8290';
+  const scores = Object.keys(NORMS).map(k=>bs(d[k],k)).filter(s=>s!==null);
+  if (!scores.length) return '#7a8290';
+  const avg = scores.reduce((a,b)=>a+b,0)/scores.length;
+  return avg>=3.5?'#16a34a':avg>=2.5?'#1a56db':avg>=1.5?'#c2410c':'#dc2626';
+}
+// Get most recently tested value for a key across all sessions (sessions sorted newest-first)
+function latestVal(sessions, key) {
+  for (const s of sessions) { if (s[key]!=null) return s[key]; }
+  return null;
+}
+// Build a composite "best available" data object across all sessions for category scoring
+function buildLatestAcrossSessions(sessions) {
+  const out = {};
+  Object.keys(NORMS).forEach(k => { out[k] = latestVal(sessions, k); });
+  return out;
+}
+
+// ─── TABLE ROW BUILDERS ───────────────────────────────────────────────────────
+let _rSessions=[]; // set in renderMain for PB detection
+
+function mRow(nk, val, prevVal, subtext, isAuto) {
+  const n = NORMS[nk]; if (!n) return '';
+  const normText = n.noNorm ? 'No validated norm' : `${n.min}–${n.max} ${n.u}`;
+  const normStyle = n.noNorm ? 'font-style:italic;color:var(--text-muted)' : 'color:var(--text-muted)';
+  if (val==null) return `<tr><td class="lbl">${n.label}${n.note?` <span style="font-size:10px;color:var(--text-muted)">(${n.note})</span>`:''}</td><td colspan="2" class="miss">— not tested</td><td style="font-size:11px;${normStyle}">${normText}${n.source?`<span class="norm-source">${n.source}</span>`:''}</td><td class="miss">—</td></tr>`;
+  const s = bs(val, nk);
+  const sub = subtext ? `<span class="rsub">${subtext}</span>` : '';
+  const badge = isAuto ? '<span class="calc-badge">auto</span>' : '';
+  const flagged = injuryFlag(val, nk);
+  // PB detection
+  let pbHtml = '';
+  if (val != null && _rSessions.length >= 2) {
+    const hist = _rSessions.map(sess=>sess[nk]).filter(v=>v!=null);
+    if (hist.length >= 2) {
+      const best = n.lb ? Math.min(...hist) : Math.max(...hist);
+      if (val === best) pbHtml = '<span class="pb-badge">★ PB</span>';
+    }
+  }
+  const statusCell = n.noNorm
+    ? `<span style="font-size:11px;color:var(--text-muted);font-style:italic">Track individually</span>`
+    : flagged
+      ? `<span class="pill p0" style="background:#fef2f2"><span class="pill-dot" style="background:#dc2626"></span>Injury risk flag (&lt;${n.injuryFloor}%)</span>`
+      : pill(s);
+  return `<tr>
+    <td class="lbl">${n.label}</td>
+    <td><span class="rval">${val}</span><span class="runit">${n.u}</span>${sub}${badge}${pbHtml}</td>
+    <td>${statusCell}</td>
+    <td style="font-size:11px;${normStyle}">${normText}${n.source?`<span class="norm-source">${n.source}</span>`:''}</td>
+    <td>${dHtml(val, prevVal, n.lb)}</td>
+  </tr>`;
+}
+function strengthRow(nk, d, pv, label) {
+  const n = NORMS[nk];
+  const normText  = `${n.min}–${n.max} ${n.u}`;
+  const srcAttr   = '';
+  const srcIcon   = '';
+  const srcText   = n.source ? `<span class="norm-source">${n.source}</span>` : '';
+  const val  = d[nk], prev = pv?pv[nk]:null;
+  const pfx  = nk.replace('_1rm_bw','');
+  const kg   = d[pfx+'_kg_raw'], reps = d[pfx+'_reps_raw'], rm1 = d[pfx+'_1rm'];
+  if (val==null) return `<tr><td class="lbl">${label}</td><td colspan="2" class="miss">— not tested</td><td style="font-size:11px;color:var(--text-muted)">${normText}${n.source?`<span class="norm-source">${n.source}</span>`:''}</td><td class="miss">—</td></tr>`;
+  const s = bs(val, nk);
+  let sub = reps&&reps>1 ? `<span class="rsub">(${kg}kg × ${reps} → est. 1RM ${rm1}kg)</span>` : rm1?`<span class="rsub">(1RM ${rm1}kg)</span>`:'';
+  return `<tr>
+    <td class="lbl">${label}</td>
+    <td><span class="rval">${val}</span><span class="runit">×BW</span>${sub}<span class="calc-badge">auto</span></td>
+    <td>${pill(s)}</td>
+    <td style="font-size:11px;color:var(--text-muted)">${normText}${srcText}</td>
+    <td>${dHtml(val, prev, false)}</td>
+  </tr>`;
+}
+
+// ─── DATA STATE ───────────────────────────────────────────────────────────────
+let athleteMap={}, selectedId=null, searchQ='';
+
+// ─── GOOGLE SHEETS ────────────────────────────────────────────────────────────
+const getConfig = () => { try{return JSON.parse(localStorage.getItem('dashConfig')||'{}')}catch(e){return{}} };
+const saveConfig = c => localStorage.setItem('dashConfig', JSON.stringify(c));
+
+async function fetchSheet(url) {
+  const r = await fetch(url);
+  if (!r.ok) throw new Error(`HTTP ${r.status} — check the URL`);
+  return r.text();
+}
+function parseCSV(text) {
+  const lines = text.trim().split('\n').map(l => {
+    const cols=[]; let cur='', inQ=false;
+    for (const ch of l) {
+      if (ch==='"'){inQ=!inQ} else if (ch===','&&!inQ){cols.push(cur.trim());cur=''} else {cur+=ch}
+    }
+    cols.push(cur.trim()); return cols;
+  });
+  const headers = lines[0].map(h=>h.trim());
+  return lines.slice(1).filter(r=>r.some(c=>c)).map(r=>{
+    const obj={}; headers.forEach((h,i)=>obj[h]=(r[i]||'').trim()); return obj;
+  });
+}
+async function loadData() {
+  const cfg = getConfig();
+  if (!cfg.athletesUrl||!cfg.resultsUrl){showSetup();return;}
+  showLoading();
+  try {
+    const [aText,rText] = await Promise.all([fetchSheet(cfg.athletesUrl),fetchSheet(cfg.resultsUrl)]);
+    const athletes=parseCSV(aText), results=parseCSV(rText);
+    athleteMap={};
+    athletes.forEach(a=>{
+      // Calculate age from birthdate (YYYY-MM-DD) if present; fall back to static age field
+      let computedAge = null;
+      if (a.birthdate && /\d{4}-\d{2}-\d{2}/.test(a.birthdate)) {
+        const diff = Date.now() - new Date(a.birthdate).getTime();
+        computedAge = Math.floor(diff / (365.25*24*60*60*1000));
+      } else {
+        computedAge = parseFloat(a.age) || null;
+      }
+      athleteMap[a.id]={...a, age:computedAge, sessions:[]};
+    });
+    results.forEach(r=>{
+      if(athleteMap[r.athlete_id]) athleteMap[r.athlete_id].sessions.push(deriveSession(r,athleteMap[r.athlete_id].weight_kg,athleteMap[r.athlete_id].age));
+    });
+    Object.values(athleteMap).forEach(a=>a.sessions.sort((x,y)=>new Date(y.test_date)-new Date(x.test_date)));
+    document.getElementById('sheetStatus').textContent=`${athletes.length} athletes · ${results.length} sessions`;
+    renderList();
+    const ids=Object.keys(athleteMap);
+    if(ids.length){selectedId=ids[0];renderMain();}
+  } catch(e){showError(e.message);}
+}
+
+// ─── STATE SCREENS ────────────────────────────────────────────────────────────
+function showSetup(){
+  document.getElementById('main').innerHTML=`<div class="state-screen"><div class="config-box">
+    <h3>Connect your Google Sheet</h3>
+    <p>Paste the two published CSV URLs. See <strong>SETUP.md</strong> for instructions.</p>
+    <label>Athletes tab — CSV URL</label><input id="urlA" type="text" placeholder="https://docs.google.com/spreadsheets/d/…/pub?gid=0&single=true&output=csv">
+    <label>Test results tab — CSV URL</label><input id="urlR" type="text" placeholder="https://docs.google.com/spreadsheets/d/…/pub?gid=1&single=true&output=csv">
+    <label>Your name (shown on printouts)</label><input id="urlCN" type="text" placeholder="e.g. Performance Coach Henri Joensuu">
+    <button class="btn" onclick="connectSheet()">Connect sheet</button>
+    <p class="hint">URLs saved in your browser only.</p>
+  </div></div>`;
+}
+function showLoading(){document.getElementById('main').innerHTML='<div class="state-screen"><h2>Loading…</h2><p>Fetching data from Google Sheets</p></div>';}
+function showError(msg){document.getElementById('main').innerHTML=`<div class="state-screen"><h2>Could not load data</h2><p>${msg}</p><button class="btn" onclick="showSetup()">Update settings</button></div>`;}
+function showConfig(){
+  const cfg=getConfig();
+  document.getElementById('main').innerHTML=`<div class="state-screen"><div class="config-box">
+    <h3>Sheet settings</h3><p>Update published CSV URLs below.</p>
+    <label>Athletes tab URL</label><input id="urlA" type="text" value="${cfg.athletesUrl||''}">
+    <label>Test results tab URL</label><input id="urlR" type="text" value="${cfg.resultsUrl||''}">
+    <label>Your name (shown on printouts)</label><input id="urlCN" type="text" value="${cfg.coachName||'Physical Performance Coach - Henri Joensuu'}" placeholder="e.g. Performance Coach Henri Joensuu">
+    <button class="btn" onclick="connectSheet()">Save & reload</button>
+    <button class="btn-sm" style="margin-top:12px;margin-left:8px" onclick="loadData()">Cancel</button>
+  </div></div>`;
+}
+function connectSheet(){
+  const a=document.getElementById('urlA').value.trim(), r=document.getElementById('urlR').value.trim();
+  if(!a||!r){alert('Please enter both URLs.');return;}
+  const cn=document.getElementById('urlCN')?.value.trim()||'';
+  saveConfig({athletesUrl:a,resultsUrl:r,coachName:cn}); loadData();
+}
+
+// ─── SIDEBAR ──────────────────────────────────────────────────────────────────
+function filterAthletes(v){searchQ=v.toLowerCase();renderList();}
+function renderList(){
+  const el=document.getElementById('alist');
+  const list=Object.values(athleteMap).filter(a=>a.name.toLowerCase().includes(searchQ)||(a.position||'').toLowerCase().includes(searchQ));
+  if(!list.length){el.innerHTML='<div style="padding:16px;font-size:12px;color:#7a8290;text-align:center">No athletes found</div>';return;}
+  el.innerHTML=list.map(a=>{
+    const ini=a.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+    return `<div class="aitem${a.id===selectedId?' active':''}" onclick="selectAthlete('${a.id}')">
+      <div class="av">${ini}</div>
+      <div class="ameta"><div class="aname">${a.name}</div><div class="apos">${a.position||'—'} · ${a.age||'—'}y</div></div>
+      <div class="sdot" style="background:${sidebarCol(a.sessions[0]||null)}"></div>
+    </div>`;
+  }).join('');
+}
+function selectAthlete(id){selectedId=id;renderList();renderMain();}
+
+// ─── TAB SWITCH ───────────────────────────────────────────────────────────────
+function switchTab(t){
+  document.querySelectorAll('.tab').forEach(e=>e.classList.toggle('active',e.dataset.t===t));
+  document.querySelectorAll('.tc').forEach(e=>e.classList.toggle('active',e.dataset.t===t));
+  if(t==='trends')   setTimeout(drawCharts,60);
+  if(t==='quadrant') setTimeout(()=>drawQuadrant(currentXAxis,currentYAxis),60);
+  if(t==='history')  setTimeout(renderHistory,60);
+  if(t==='radar')    setTimeout(renderRadar,60);
+}
+
+// ─── MAIN RENDER ──────────────────────────────────────────────────────────────
+function renderMain(){
+  const a=athleteMap[selectedId]; if(!a) return;
+  _rSessions=a.sessions; // set for PB detection in mRow
+  const d=a.sessions[0], pv=a.sessions[1]||null;
+  // prevVal(key): find the most recent previous session that has a value for this key.
+  // Fixes "vs Previous" showing — when the 2nd session didn't test a metric, look further back.
+  const prevVal = k => { for(let i=1;i<a.sessions.length;i++){ if(a.sessions[i][k]!=null) return a.sessions[i][k]; } return null; };
+  if(!d){document.getElementById('main').innerHTML=`<div class="state-screen"><h2>${a.name}</h2><p>No test sessions recorded yet.</p></div>`;return;}
+  const ini=a.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+  const inj=a.injury_hx?`<span class="ptag inj">⚠ Injury hx</span><span class="ptag" style="font-size:10px">${a.injury_hx}</span>`:'';
+
+  const jumpKeys     = ['broad_jump','slbj_LSI','triple_hop','cmj','cmj_flight','sj','sj_flight','eur','cmj_mrsi','cmj_con_force','dj','dj_rsi','dsi'];
+  const aeroKeys     = ['mas','vo2max','yoyo_ir2','bronco'];
+  const strengthKeys = ['sq_1rm_bw','tb_1rm_bw','bp_1rm_bw','imtp'];
+  const speedKeys    = ['sprint10','sprint20','max_vel'];
+
+  document.getElementById('main').innerHTML=`
+    <div class="print-header">
+      <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAfQAAAH0CAYAAADL1t+KAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAEs2lUWHRYTUw6Y29tLmFkb2JlLnhtcAAAAAAAPD94cGFja2V0IGJlZ2luPSfvu78nIGlkPSdXNU0wTXBDZWhpSHpyZVN6TlRjemtjOWQnPz4KPHg6eG1wbWV0YSB4bWxuczp4PSdhZG9iZTpuczptZXRhLyc+CjxyZGY6UkRGIHhtbG5zOnJkZj0naHR0cDovL3d3dy53My5vcmcvMTk5OS8wMi8yMi1yZGYtc3ludGF4LW5zIyc+CgogPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9JycKICB4bWxuczpBdHRyaWI9J2h0dHA6Ly9ucy5hdHRyaWJ1dGlvbi5jb20vYWRzLzEuMC8nPgogIDxBdHRyaWI6QWRzPgogICA8cmRmOlNlcT4KICAgIDxyZGY6bGkgcmRmOnBhcnNlVHlwZT0nUmVzb3VyY2UnPgogICAgIDxBdHRyaWI6Q3JlYXRlZD4yMDI1LTExLTIzPC9BdHRyaWI6Q3JlYXRlZD4KICAgICA8QXR0cmliOkV4dElkPmRhMTFiNjZhLTBlZTgtNDcxMS1hODA2LWRmMWYyNDczY2M2YTwvQXR0cmliOkV4dElkPgogICAgIDxBdHRyaWI6RmJJZD41MjUyNjU5MTQxNzk1ODA8L0F0dHJpYjpGYklkPgogICAgIDxBdHRyaWI6VG91Y2hUeXBlPjI8L0F0dHJpYjpUb3VjaFR5cGU+CiAgICA8L3JkZjpsaT4KICAgPC9yZGY6U2VxPgogIDwvQXR0cmliOkFkcz4KIDwvcmRmOkRlc2NyaXB0aW9uPgoKIDxyZGY6RGVzY3JpcHRpb24gcmRmOmFib3V0PScnCiAgeG1sbnM6ZGM9J2h0dHA6Ly9wdXJsLm9yZy9kYy9lbGVtZW50cy8xLjEvJz4KICA8ZGM6dGl0bGU+CiAgIDxyZGY6QWx0PgogICAgPHJkZjpsaSB4bWw6bGFuZz0neC1kZWZhdWx0Jz5GT09UQkFMTEZJVCAtIDE8L3JkZjpsaT4KICAgPC9yZGY6QWx0PgogIDwvZGM6dGl0bGU+CiA8L3JkZjpEZXNjcmlwdGlvbj4KCiA8cmRmOkRlc2NyaXB0aW9uIHJk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" alt="FOOTBALLFIT" style="width:120px;height:auto">
+      <div class="print-header-meta">
+        <strong>${a.name}</strong> — Performance Report
+        <span>${a.position||'—'} · Generated ${new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'})}</span>
+      </div>
+    </div>
+    <div class="profile-card">
+      <div class="pav">${ini}</div>
+      <div class="pinfo">
+        <h2>${a.name}</h2>
+        <p class="pmeta">${a.position||'—'} · ${a.age||'—'} yrs · ${a.height_cm||'—'} cm · ${a.weight_kg||'—'} kg · Last tested ${d.test_date||'—'}</p>
+        <div class="ptags"><span class="ptag">Remote coaching</span><span class="ptag">Professional football / futsal</span><span class="ptag">${a.sessions.length} session${a.sessions.length!==1?'s':''}</span>${d.weight_kg && d.weight_kg !== parseFloat(a.weight_kg) ? `<span class="ptag" style="background:#eff6ff;border-color:#bfdbfe;color:#1e40af">⚖ ${d.weight_kg} kg (session)</span>` : ''}${inj}</div>
+      ${d.notes ? `<div style="margin-top:10px;padding:8px 12px;background:var(--surface-alt);border-left:3px solid var(--accent);border-radius:0 6px 6px 0;font-size:12px;color:var(--text-secondary);line-height:1.5"><span style="font-size:10px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:2px">Session note</span>${d.notes}</div>` : ''}
+      </div>
+      <button class="btn-sm no-print" style="margin-left:auto;align-self:flex-start" onclick="generatePrintReport()">⬇ Save as PDF</button>
+    </div>
+    <div>
+      <div class="sec-heading">Performance category status</div>
+      <div class="cat-grid">
+        ${(()=>{ const ld=buildLatestAcrossSessions(a.sessions); return catCard('jump',jumpKeys,ld)+catCard('aero',aeroKeys,ld)+catCard('strength',strengthKeys,ld)+catCard('speed',speedKeys,ld); })()}
+      </div>
+    </div>
+    <div class="tab-card">
+      <div class="tabs">
+        <div class="tab active" data-t="results" onclick="switchTab('results')">Latest Results</div>
+        <div class="tab" data-t="trends"   onclick="switchTab('trends')">Trend Charts</div>
+        <div class="tab" data-t="quadrant" onclick="switchTab('quadrant')">Quadrants</div>
+        <div class="tab" data-t="radar"    onclick="switchTab('radar')">Athletic Profile</div>
+        <div class="tab" data-t="history"  onclick="switchTab('history')">Test History</div>
+        <div class="tab" data-t="feedback" onclick="switchTab('feedback')">Athlete Feedback</div>
+      </div>
+      <div class="tc active" data-t="results">
+        <div class="results-body">
+
+          <div>
+            <div class="sec-heading">Jump / Power</div>
+            <table><thead><tr><th>Test</th><th>Result</th><th>Test result status</th><th>Normative range</th><th>vs previous</th></tr></thead><tbody>
+              ${mRow('broad_jump',  d.broad_jump,  prevVal('broad_jump'))}
+              ${mRow('slbj_L',      d.slbj_L,      pv?.slbj_L)}
+              ${mRow('slbj_R',      d.slbj_R,      pv?.slbj_R)}
+              ${d.slbj_LSI!=null ? mRow('slbj_LSI', d.slbj_LSI, pv?.slbj_LSI, null, true) : ''}
+              ${mRow('triple_hop',  d.triple_hop,  prevVal('triple_hop'))}
+              ${mRow('cmj',         d.cmj,         prevVal('cmj'))}
+              ${mRow('sj',          d.sj,          prevVal('sj'))}
+              ${d.cmj_flight!=null ? mRow('cmj_flight', d.cmj_flight, prevVal('cmj_flight')) : ''}
+              ${d.sj_flight!=null  ? mRow('sj_flight',  d.sj_flight,  prevVal('sj_flight'))  : ''}
+              ${d.cmj_con_force!=null ? mRow('cmj_con_force', d.cmj_con_force, prevVal('cmj_con_force'), `(${d.cmj_con_force_N}N raw)`, true) : ''}
+              ${d.eur!=null ? mRow('eur', d.eur, pv?.eur, '(CMJ÷SJ)', true) : ''}
+              ${d.cmj_mrsi!=null
+                ? mRow('cmj_mrsi', d.cmj_mrsi, pv?.cmj_mrsi, `(${d.cmj}cm ÷ ${d.cmj_ct_ms}ms)`, true)
+                : `<tr><td class="lbl">CMJ mRSI <span style="font-size:10px;color:var(--text-muted)">(needs contraction time)</span></td><td colspan="2" class="miss">— add cmj_contraction_time_ms to unlock</td><td style="font-size:11px;color:var(--text-muted)">${NORMS.cmj_mrsi.min}–${NORMS.cmj_mrsi.max} ${NORMS.cmj_mrsi.u}</td><td class="miss">—</td></tr>`}
+              ${mRow('dj',          d.dj,          prevVal('dj'))}
+              ${d.dj_rsi!=null
+                ? mRow('dj_rsi', d.dj_rsi, pv?.dj_rsi, `(${d.dj}cm ÷ ${d.dj_ct_ms}ms)`, true)
+                : `<tr><td class="lbl">DJ RSI <span style="font-size:10px;color:var(--text-muted)">(needs contact time)</span></td><td colspan="2" class="miss">— add dj_contact_time_ms to unlock</td><td style="font-size:11px;color:var(--text-muted)">${NORMS.dj_rsi.min}–${NORMS.dj_rsi.max} ${NORMS.dj_rsi.u}</td><td class="miss">—</td></tr>`}
+              ${mRow('dsi',         d.dsi,         pv?.dsi, '(force plate)', false)}
+            </tbody></table>
+          </div>
+
+          <div>
+            <div class="sec-heading">Aerobic fitness</div>
+            <table><thead><tr><th>Test</th><th>Result</th><th>Test result status</th><th>Normative range</th><th>vs previous</th></tr></thead><tbody>
+              <tr>
+                <td class="lbl">MAS (5-min TT)</td>
+                <td><span class="rval">${d.mas??'—'}</span><span class="runit">m/s</span>${d.tt5min_dist?`<span class="rsub">(${d.tt5min_dist}m)</span>`:''}<span class="calc-badge">auto</span></td>
+                <td>${pill(bs(d.mas,'mas'))}</td>
+                <td style="font-size:11px;color:var(--text-muted)">${NORMS.mas.min}–${NORMS.mas.max} ${NORMS.mas.u}</td>
+                <td>${dHtml(d.mas,pv?.mas,false)}</td>
+              </tr>
+              <tr>
+                <td class="lbl">Est. VO₂ max</td>
+                <td><span class="rval">${d.vo2max??'—'}</span><span class="runit">ml/kg/min</span>${d.mas?'<span class="calc-badge">auto</span>':''}</td>
+                <td>${pill(bs(d.vo2max,'vo2max'))}</td>
+                <td style="font-size:11px;color:var(--text-muted)">${NORMS.vo2max.min}–${NORMS.vo2max.max} ${NORMS.vo2max.u}</td>
+                <td>${dHtml(d.vo2max,pv?.vo2max,false)}</td>
+              </tr>
+              ${d.tt_dist&&d.tt_time?`<tr>
+                <td class="lbl">Distance TT (${(d.tt_dist/1000).toFixed(d.tt_dist%1000===0?0:1)}km)</td>
+                <td><span class="rval">${fmtTime(d.tt_time)}</span><span class="runit">&nbsp;(${d.tt_time}s)</span>
+                  <span class="rsub">${d.tt_speed} m/s avg speed</span>
+                  ${d.tt_vo2max?`<span class="rsub">· est. VO₂max ${d.tt_vo2max} ml/kg/min <span class="calc-badge">auto</span></span>`:''}
+                </td>
+                <td>${pill(bs(d.tt_speed,'mas'))}</td>
+                <td style="font-size:11px;color:var(--text-muted)">${NORMS.mas.min}–${NORMS.mas.max} ${NORMS.mas.u}<span class="norm-source">${NORMS.mas.source||''}</span></td>
+                <td>${dHtml(d.tt_speed,prevVal('tt_speed'),false)}</td>
+              </tr>`:''}
+              ${d.yoyo_ir2?`<tr>
+                <td class="lbl">Yo-Yo IR2</td>
+                <td><span class="rval">${d.yoyo_ir2}</span><span class="runit">m</span>
+                  ${d.yoyo_vo2max?`<span class="rsub">· est. VO₂max ${d.yoyo_vo2max} ml/kg/min <span class="calc-badge">auto</span></span>`:''}
+                </td>
+                <td>${pill(bs(d.yoyo_ir2,'yoyo_ir2'))}</td>
+                <td style="font-size:11px;color:var(--text-muted)">${NORMS.yoyo_ir2.min}–${NORMS.yoyo_ir2.max} ${NORMS.yoyo_ir2.u}<span class="norm-source">${NORMS.yoyo_ir2.source||''}</span></td>
+                <td>${dHtml(d.yoyo_ir2,prevVal('yoyo_ir2'),false)}</td>
+              </tr>`:''}
+              ${d.beep_level?`<tr>
+                <td class="lbl">Beep test (MSFT)</td>
+                <td><span class="rval">Level ${d.beep_level}${d.beep_shuttle?`, shuttle ${d.beep_shuttle}`:''}</span>
+                  ${d.beep_speed?`<span class="rsub">(${d.beep_speed} km/h · ${d.beep_vo2max?`est. VO₂max ${d.beep_vo2max} ml/kg/min`:''} <span class="calc-badge">auto</span>)</span>`:''}
+                </td>
+                <td>${pill(bs(d.beep_level,'beep_level'))}</td>
+                <td style="font-size:11px;color:var(--text-muted)">${NORMS.beep_level.min}–${NORMS.beep_level.max} level<span class="norm-source">${NORMS.beep_level.source||''}</span></td>
+                <td>${dHtml(d.beep_level,prevVal('beep_level'),false)}</td>
+              </tr>`:''}
+              ${d.bronco?`<tr>
+                <td class="lbl">Bronco test</td>
+                <td><span class="rval">${fmtTime(d.bronco)}</span><span class="runit">&nbsp;(${d.bronco}s)</span></td>
+                <td>${pill(bs(d.bronco,'bronco'))}</td>
+                <td style="font-size:11px;color:var(--text-muted)">${NORMS.bronco.min}–${NORMS.bronco.max}s <span style="font-size:9px;color:#aaa">(lower=better)</span><span class="norm-source">${NORMS.bronco.source||''}</span></td>
+                <td>${dHtml(d.bronco,prevVal('bronco'),true)}</td>
+              </tr>`:''}
+            </tbody></table>
+          </div>
+
+          <div>
+            <div class="sec-heading">Strength — Lifts (×BW)</div>
+            <table><thead><tr><th>Test</th><th>Result</th><th>Test result status</th><th>Normative range</th><th>vs previous</th></tr></thead><tbody>
+              ${strengthRow('sq_1rm_bw',d,pv,'Back squat')}
+              ${strengthRow('tb_1rm_bw',d,pv,'Trap bar DL')}
+              ${strengthRow('bp_1rm_bw',d,pv,'Bench press')}
+            </tbody></table>
+          </div>
+
+          <div>
+            <div class="sec-heading">Strength — Force Plate</div>
+            <table><thead><tr><th>Test</th><th>Result</th><th>Test result status</th><th>Normative range</th><th>vs previous</th></tr></thead><tbody>
+              ${d.imtp!=null
+                ? mRow('imtp', d.imtp, pv?.imtp, `(${d.imtp_raw_N}N)`, true)
+                : `<tr><td class="lbl">IMTP <span style="font-size:10px;color:var(--text-muted)">(force plate)</span></td><td colspan="2" class="miss">— add imtp_N to unlock</td><td style="font-size:11px;color:var(--text-muted)">${NORMS.imtp.min}–${NORMS.imtp.max} ${NORMS.imtp.u}</td><td class="miss">—</td></tr>`}
+            </tbody></table>
+          </div>
+
+          <div>
+            <div class="sec-heading">Speed (Vuemotion)</div>
+            <table><thead><tr><th>Test</th><th>Result</th><th>Test result status</th><th>Normative range</th><th>vs previous</th></tr></thead><tbody>
+              ${mRow('sprint10', d.sprint10, prevVal('sprint10'))}
+              ${mRow('sprint20', d.sprint20, prevVal('sprint20'))}
+              ${mRow('max_vel',  d.max_vel,  prevVal('max_vel'))}
+            </tbody></table>
+          </div>
+
+        </div>
+        <div class="status-key">
+          <span class="key-label">Status key</span>
+          ${[4,3,2,1,0].map(s=>`<span class="pill ${SC[s]}"><span class="pill-dot" style="background:${SD[s]}"></span>${SL[s]}</span>`).join('')}
+          <span style="margin-left:8px;font-size:11px;color:#7a8290"><span class="calc-badge">auto</span> = calculated from your raw input</span>
+        </div>
+      </div>
+      <div class="tc" data-t="radar"><div id="radarContent" style="padding:18px 20px;display:flex;flex-direction:column;align-items:center;gap:12px"></div></div>
+      <div class="tc" data-t="history"><div id="historyContent" style="overflow-x:auto;padding:18px 20px"></div></div>
+      <div class="tc" data-t="feedback"><div id="feedbackContent"><div class="feedback-empty"><h3>Athlete Feedback</h3><p>Generate a personalised coach report and athlete message based on the latest test results.</p><button class="btn" onclick="generateFeedback()">Generate Feedback</button></div></div></div>
+      <div class="tc" data-t="quadrant">
+        <div class="quadrant-body">
+          <div class="quadrant-controls" style="flex-direction:column;align-items:flex-start;gap:8px">
+            <div class="quad-ctrl-row">
+              <span class="control-label">Preset</span>
+              ${QUAD_PRESETS.map(p=>`<button class="axis-btn${p.x===currentXAxis&&p.y===currentYAxis?' active':''}" onclick="applyPreset('${p.x}','${p.y}')">${p.name}</button>`).join('')}
+            </div>
+            <div class="quad-ctrl-row">
+              <span class="control-label">X axis</span>
+              <select class="axis-select" id="xAxisSel" onchange="setQuadAxes(this.value,document.getElementById('yAxisSel').value)">
+                ${QUAD_X_AXES.map(a=>`<option value="${a.key}"${a.key===currentXAxis?' selected':''}>${a.label}</option>`).join('')}
+              </select>
+              <span class="control-label">Y axis</span>
+              <select class="axis-select" id="yAxisSel" onchange="setQuadAxes(document.getElementById('xAxisSel').value,this.value)">
+                ${QUAD_Y_AXES.map(a=>`<option value="${a.key}"${a.key===currentYAxis?' selected':''}>${a.label}</option>`).join('')}
+              </select>
+            </div>
+          </div>
+          <div id="quadrantContainer"></div>
+          <div class="quadrant-legend">
+            <span class="ql-dot ql-you"></span><span>You (${a.name})</span>
+            <span class="ql-dot ql-anon"></span><span>Other athletes (anonymous)</span>
+            <span style="color:var(--text-muted);font-size:11px">Faded trail = previous sessions · Dividers at normative midpoint</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="tc" data-t="trends">
+        <div class="charts-body">
+          <div class="chart-grid" id="chartGrid"></div>
+          <div class="chart-note">
+            <span>▪ Shaded band = normative range</span>
+            <span>▪ Dashed line = lower boundary</span>
+            <span>▪ Sprint times: downward trend = improvement</span>
+          </div>
+        </div>
+      </div>
+    </div>`;
+}
+
+// ─── CHARTS ───────────────────────────────────────────────────────────────────
+let CI={};
+function mkChart(id,labels,datasets,yLabel,nMin,nMax){
+  if(CI[id]){CI[id].destroy();delete CI[id];}
+  const el=document.getElementById(id); if(!el)return;
+  const allV=datasets.flatMap(d=>d.data).filter(v=>v!=null&&!isNaN(v));
+  if(!allV.length){el.parentElement.style.display='none';return;}
+  el.parentElement.style.display='';
+  const hasNorm=nMin!=null&&nMax!=null;
+  const dMin=hasNorm?Math.min(...allV,nMin):Math.min(...allV);
+  const dMax=hasNorm?Math.max(...allV,nMax):Math.max(...allV);
+  const pad=(dMax-dMin)*0.22;
+  const bandDS=hasNorm?[
+    {label:'_nu',data:labels.map(()=>nMax),borderColor:'transparent',backgroundColor:'rgba(26,86,219,0.07)',fill:'+1',pointRadius:0,tension:0,borderWidth:0},
+    {label:'_nl',data:labels.map(()=>nMin),borderColor:'rgba(26,86,219,0.22)',backgroundColor:'transparent',fill:false,pointRadius:0,tension:0,borderDash:[4,3],borderWidth:1.5}
+  ]:[];
+  CI[id]=new Chart(el.getContext('2d'),{
+    type:'line',
+    data:{labels,datasets:bandDS.concat(datasets)},
+    options:{
+      responsive:true,maintainAspectRatio:true,aspectRatio:1.9,
+      plugins:{
+        legend:{display:datasets.length>1,position:'bottom',labels:{font:{size:10},boxWidth:10,padding:8,filter:i=>!i.text.startsWith('_')}},
+        tooltip:{filter:i=>!i.dataset.label.startsWith('_'),callbacks:{label:c=>`${c.dataset.label}: ${c.parsed.y} ${yLabel}`}}
+      },
+      scales:{
+        x:{ticks:{font:{size:10}},grid:{display:false}},
+        y:{min:+(dMin-pad).toFixed(2),max:+(dMax+pad).toFixed(2),ticks:{font:{size:10},maxTicksLimit:4},grid:{color:'rgba(0,0,0,0.05)'},title:{display:true,text:yLabel,font:{size:10}}}
+      }
+    }
+  });
+}
+// Value label plugin — passed directly into each chart instance (more reliable than Chart.register in CJ4)
+const ValueLabelPlugin = {
+  id:'valueLabels',
+  afterDatasetsDraw(chart){
+    const ctx=chart.ctx;
+    chart.data.datasets.forEach((ds,i)=>{
+      if(!ds.label||ds.label.startsWith('_'))return;
+      const meta=chart.getDatasetMeta(i);
+      if(meta.hidden)return;
+      meta.data.forEach((pt,j)=>{
+        const v=ds.data[j];
+        if(v==null||isNaN(v))return;
+        const disp=typeof v==='number'
+          ?(v<5&&!Number.isInteger(v)?v.toFixed(2):v%1!==0?v.toFixed(1):String(v))
+          :String(v);
+        ctx.save();
+        ctx.font='600 9px -apple-system,BlinkMacSystemFont,sans-serif';
+        ctx.fillStyle=ds.borderColor||'#555';
+        ctx.textAlign='center';
+        ctx.textBaseline='bottom';
+        ctx.fillText(disp,pt.x,pt.y-5);
+        ctx.restore();
+      });
+    });
+  }
+};
+
+function ls(col,dash=[]){return{borderColor:col,backgroundColor:col,fill:false,tension:0.3,pointRadius:4,pointHoverRadius:6,borderWidth:2,borderDash:dash,spanGaps:true};}
+
+function drawCharts(){
+  const a=athleteMap[selectedId]; if(!a||!a.sessions.length)return;
+  const sessions=[...a.sessions].reverse();
+  const ld=buildLatestAcrossSessions(a.sessions); // for dynamic chart titles
+  const singleSession = sessions.length === 1;
+  // For single-session athletes, pad x-axis with empty labels so the
+  // normative band fills the chart and the dot sits centred — no connecting line.
+  const lb = singleSession
+    ? ['', sessions[0].test_date, '']
+    : sessions.map(s=>s.test_date);
+  const ser=(key,col,dash=[])=>({label:NORMS[key]?.label||key,...ls(col,dash),
+    data: singleSession
+      ? [null, sessions[0][key], null]   // null edges = no connecting line
+      : sessions.map(s=>s[key])
+  });
+
+  const charts=[
+    {id:'ch-broadjump',  title:'Broad jump',  u:'cm', nk:'broad_jump',  ds:[ser('broad_jump',CC[0])]},
+    {id:'ch-triplehop',  title:'Triple hop',  u:'cm', nk:'triple_hop',  ds:[ser('triple_hop',CC[2])]},
+    {id:'ch-lsi', title:`SL Broad Jump — L vs R${ld.slbj_LSI!=null?' (LSI: '+ld.slbj_LSI+'%)':''}`, u:'cm', nk:null, nMin:null, nMax:null, ds:[ser('slbj_L',CC[0]),ser('slbj_R',CC[1],[5,3])]},
+    {id:'ch-cmj',    title:'CMJ / SJ heights',        u:'cm',   nk:'cmj',         ds:[ser('cmj',CC[0]),ser('sj',CC[1],[5,3])]},
+    {id:'ch-conforce', title:'CMJ concentric force',   u:'N/kg', nk:'cmj_con_force', ds:[ser('cmj_con_force',CC[5])]},
+    {id:'ch-eur',    title:'EUR (CMJ÷SJ)',             u:'ratio',nk:'eur',         ds:[ser('eur',CC[3])]},
+    {id:'ch-mrsi',   title:'CMJ mRSI',                u:'m/s',  nk:'cmj_mrsi',    ds:[ser('cmj_mrsi',CC[0])]},
+    {id:'ch-djrsi',  title:'DJ RSI',                  u:'m/s',  nk:'dj_rsi',      ds:[ser('dj_rsi',CC[4])]},
+    {id:'ch-mas',    title:'MAS — 5-min TT',          u:'m/s',  nk:'mas',         ds:[ser('mas',CC[3])]},
+    {id:'ch-squat', title:'Back squat (×BW)',    u:'×BW', nk:'sq_1rm_bw', ds:[ser('sq_1rm_bw',CC[4])]},
+    {id:'ch-tb',    title:'Trap bar DL (×BW)',   u:'×BW', nk:'tb_1rm_bw', ds:[ser('tb_1rm_bw',CC[5])]},
+    {id:'ch-bp',    title:'Bench press (×BW)',   u:'×BW', nk:'bp_1rm_bw', ds:[ser('bp_1rm_bw',CC[6])]},
+    {id:'ch-sprint10', title:'10m sprint', u:'s', nk:'sprint10', ds:[ser('sprint10',CC[0])]},
+    {id:'ch-sprint20', title:'20m sprint', u:'s', nk:'sprint20', ds:[ser('sprint20',CC[1])]},
+    {id:'ch-vel',    title:'Max velocity (20m fly)',  u:'m/s',  nk:'max_vel',     ds:[ser('max_vel',CC[4])]},
+  ];
+
+  const grid=document.getElementById('chartGrid'); if(!grid)return;
+  grid.innerHTML=charts.map(ch=>`<div class="chart-wrap" id="wrap-${ch.id}"><div class="chart-title">${ch.title}</div><canvas id="${ch.id}"></canvas></div>`).join('');
+  charts.forEach(ch=>{
+    try {
+      if(ch.nk===null){mkChart(ch.id,lb,ch.ds,ch.u,ch.nMin,ch.nMax);return;}
+      const n=NORMS[ch.nk];if(n)mkChart(ch.id,lb,ch.ds,ch.u,n.min,n.max);
+    } catch(e){ console.warn('Chart error:',ch.id,e); }
+  });
+}
+
+// ─── FEEDBACK GENERATION ──────────────────────────────────────────────────────
+function buildResultsForPrompt(a) {
+  const ld = buildLatestAcrossSessions(a.sessions);
+  const pv = a.sessions.length > 1 ? a.sessions[1] : null;
+  const bw = parseFloat(a.weight_kg);
+  const lines = [];
+
+  function dText(val, prev, lb) {
+    if (!val || !prev) return '';
+    const d = ((val-prev)/prev*100);
+    const imp = lb ? d<0 : d>0;
+    return ` (${imp?'improved':'regressed'} ${d>0?'+':''}${d.toFixed(1)}%)`;
+  }
+  function row(label, val, nk, prevVal, lb=false) {
+    if (val==null) return;
+    const s = bs(val, nk);
+    const status = s!==null ? SL[s] : 'no validated norm';
+    lines.push(`${label}: ${val} ${NORMS[nk]?.u||''} — ${status}${dText(val, prevVal, lb)}`);
+  }
+
+  lines.push('=== JUMP / POWER ===');
+  row('Broad jump',    ld.broad_jump, 'broad_jump', prevVal('broad_jump'));
+  if (ld.slbj_L)  lines.push(`SL broad jump L: ${ld.slbj_L}cm (no validated norm)`);
+  if (ld.slbj_R)  lines.push(`SL broad jump R: ${ld.slbj_R}cm (no validated norm)`);
+  if (ld.slbj_LSI!=null) {
+    const flag = ld.slbj_LSI < 90 ? ' WARNING: INJURY RISK FLAG (<90%)' : '';
+    const stat = bs(ld.slbj_LSI,'slbj_LSI')!==null ? SL[bs(ld.slbj_LSI,'slbj_LSI')] : '';
+    lines.push(`SL broad jump LSI: ${ld.slbj_LSI}% — ${stat}${flag}${dText(ld.slbj_LSI, pv?.slbj_LSI, false)}`);
+  }
+  row('Triple hop',   ld.triple_hop, 'triple_hop', prevVal('triple_hop'));
+  row('CMJ height',   ld.cmj,        'cmj',        prevVal('cmj'));
+  row('SJ height',    ld.sj,         'sj',         prevVal('sj'));
+  row('EUR',          ld.eur,        'eur',        prevVal('eur'));
+  row('CMJ mRSI',     ld.cmj_mrsi,   'cmj_mrsi',   prevVal('cmj_mrsi'));
+  row('DJ height',    ld.dj,         'dj',         prevVal('dj'));
+  row('DJ RSI',       ld.dj_rsi,     'dj_rsi',     prevVal('dj_rsi'));
+  row('DSI',          ld.dsi,        'dsi',        prevVal('dsi'));
+
+  lines.push('=== AEROBIC ===');
+  row('MAS',          ld.mas,        'mas',        pv?.mas);
+  row('Est. VO2max',  ld.vo2max,     'vo2max',     pv?.vo2max);
+
+  lines.push('=== STRENGTH ===');
+  if (ld.sq_1rm_bw!=null) lines.push(`Back squat: ${ld.sq_1rm_bw}xBW${ld.sq_1rm?' (est. 1RM '+ld.sq_1rm+'kg)':''} — ${SL[bs(ld.sq_1rm_bw,'sq_1rm_bw')]||''}${dText(ld.sq_1rm_bw, pv&&bw?+(pv.sq_1rm/bw).toFixed(2):null, false)}`);
+  if (ld.tb_1rm_bw!=null) lines.push(`Trap bar DL: ${ld.tb_1rm_bw}xBW${ld.tb_1rm?' (est. 1RM '+ld.tb_1rm+'kg)':''} — ${SL[bs(ld.tb_1rm_bw,'tb_1rm_bw')]||''}${dText(ld.tb_1rm_bw, pv&&bw?+(pv.tb_1rm/bw).toFixed(2):null, false)}`);
+  if (ld.bp_1rm_bw!=null) lines.push(`Bench press: ${ld.bp_1rm_bw}xBW${ld.bp_1rm?' (est. 1RM '+ld.bp_1rm+'kg)':''} — ${SL[bs(ld.bp_1rm_bw,'bp_1rm_bw')]||''}${dText(ld.bp_1rm_bw, pv&&bw?+(pv.bp_1rm/bw).toFixed(2):null, false)}`);
+  row('IMTP',         ld.imtp,       'imtp',       prevVal('imtp'));
+
+  lines.push('=== SPEED ===');
+  row('10m sprint',   ld.sprint10,   'sprint10',   pv?.sprint10, true);
+  row('20m sprint',   ld.sprint20,   'sprint20',   pv?.sprint20, true);
+  row('Max velocity', ld.max_vel,    'max_vel',    prevVal('max_vel'));
+
+  return lines.join('\n');
+}
+
+function buildCategoryStatusForPrompt(a) {
+  const ld = buildLatestAcrossSessions(a.sessions);
+  const cats = [
+    {name:'Jump/Power', keys:['broad_jump','slbj_LSI','triple_hop','cmj','sj','eur','cmj_mrsi','dj','dj_rsi','dsi']},
+    {name:'Aerobic',    keys:['mas','vo2max']},
+    {name:'Strength',   keys:['sq_1rm_bw','tb_1rm_bw','bp_1rm_bw','imtp']},
+    {name:'Speed',      keys:['sprint10','sprint20','max_vel']},
+  ];
+  return cats.map(cat => {
+    const scores = cat.keys.map(k=>bs(ld[k],k)).filter(s=>s!==null);
+    if (!scores.length) return `${cat.name}: No data available`;
+    const avg = scores.reduce((a,b)=>a+b,0)/scores.length;
+    return `${cat.name}: ${catLabel(avg).l}`;
+  }).join('\n');
+}
+
+function escHtml(str) {
+  return (str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function copyText(id, btn) {
+  const text = document.getElementById(id)?.innerText || '';
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = '✓ Copied';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = '⎘ Copy'; btn.classList.remove('copied'); }, 2000);
+  });
+}
+
+function renderFeedback(a, coachNotes, athleteMsg) {
+  const tested   = a.sessions[0]?.test_date || '—';
+  const sessions = a.sessions.length;
+  document.getElementById('feedbackContent').innerHTML = `
+    <div class="feedback-wrap">
+      <div class="feedback-meta">Generated for ${a.name} · Last tested ${tested} · ${sessions} session${sessions!==1?'s':''}</div>
+      <div class="feedback-section">
+        <div class="feedback-section-head">
+          <div class="feedback-section-label">Coach Notes <span>Professional S&amp;C assessment — not shared with athlete</span></div>
+          <button class="copy-btn no-print" onclick="copyText('coachText', this)">⎘ Copy</button>
+        </div>
+        <div class="feedback-text" id="coachText">${escHtml(coachNotes)}</div>
+      </div>
+      <div class="feedback-section">
+        <div class="feedback-section-head">
+          <div class="feedback-section-label">Athlete Message <span>Ready to send directly to ${a.name}</span></div>
+          <button class="copy-btn no-print" onclick="copyText('athleteText', this)">⎘ Copy</button>
+        </div>
+        <div class="feedback-text" id="athleteText">${escHtml(athleteMsg)}</div>
+      </div>
+      <div class="regenerate-row no-print">
+        <button class="btn-sm" onclick="generateFeedback()">↺ Regenerate</button>
+      </div>
+    </div>`;
+}
+
+// ─── TEMPLATE-BASED FEEDBACK GENERATION ─────────────────────────────────────
+const CAT_KEYS = {
+  jump:     ['broad_jump','slbj_LSI','triple_hop','cmj','sj','eur','cmj_mrsi','dj','dj_rsi','dsi'],
+  aero:     ['mas','vo2max'],
+  strength: ['sq_1rm_bw','tb_1rm_bw','bp_1rm_bw','imtp'],
+  speed:    ['sprint10','sprint20','max_vel'],
+};
+const CAT_PLAIN = {
+  jump:     'explosive power and jump ability',
+  aero:     'aerobic fitness and running capacity',
+  strength: 'overall strength levels',
+  speed:    'sprint speed and acceleration',
+};
+const CAT_FOCUS = {
+  jump:     'explosive power — jumping, bounding, and sprint-specific plyometrics',
+  aero:     'aerobic base development — consistent high-intensity running and MAS-based interval sessions',
+  strength: 'maximal strength — prioritising heavy compound lifts with progressive overload',
+  speed:    'speed development — sprint mechanics, acceleration work, and max velocity exposure',
+};
+const CAT_COACH_REC = {
+  jump:     'Plyometric volume and specificity should be reviewed. Consider bilateral and unilateral jump progressions to address the power deficit.',
+  aero:     'Aerobic base development warrants prioritisation. Structured MAS-based interval sessions and repeated high-intensity running should be the central stimulus.',
+  strength: 'Maximal strength development is the primary training priority for this athlete. Progressive overload in squat and trap bar deadlift should anchor the programme.',
+  speed:    'Sprint mechanics and acceleration development require targeted attention. Repeated sprint sessions and max velocity exposure should be built into the weekly structure.',
+};
+
+function analyseFeedbackData(a) {
+  const ld = buildLatestAcrossSessions(a.sessions);
+  const pv = a.sessions.length > 1 ? a.sessions[1] : null;
+  const bw = parseFloat(a.weight_kg);
+
+  // Category scores
+  const catAvg = {};
+  Object.keys(CAT_KEYS).forEach(cat => {
+    const scores = CAT_KEYS[cat].map(k => bs(ld[k], k)).filter(s => s !== null);
+    catAvg[cat] = scores.length ? +(scores.reduce((a,b)=>a+b,0)/scores.length).toFixed(2) : null;
+  });
+
+  // All scored metrics
+  const metrics = [];
+  Object.keys(NORMS).forEach(k => {
+    const val = ld[k]; if (val == null) return;
+    const score = bs(val, k); if (score === null) return;
+    const prevVal = pv ? pv[k] : null;
+    const changePct = (prevVal && prevVal !== 0) ? ((val - prevVal) / Math.abs(prevVal) * 100) : null;
+    const improved = changePct !== null ? (NORMS[k].lb ? changePct < -0.5 : changePct > 0.5) : null;
+    metrics.push({ k, val, score, changePct, improved, label: NORMS[k].label, u: NORMS[k].u, lb: NORMS[k].lb });
+  });
+
+  // Sort categories best → worst
+  const rankedCats = Object.keys(catAvg).filter(c => catAvg[c] !== null).sort((a,b) => catAvg[b] - catAvg[a]);
+  const best  = rankedCats[0] || null;
+  const worst = rankedCats[rankedCats.length - 1] || null;
+
+  const improved   = metrics.filter(m => m.improved === true).sort((a,b) => Math.abs(b.changePct) - Math.abs(a.changePct));
+  const regressed  = metrics.filter(m => m.improved === false).sort((a,b) => Math.abs(b.changePct) - Math.abs(a.changePct));
+  const exceedsCats = rankedCats.filter(c => catAvg[c] >= 3.5);
+  const onTrackCats = rankedCats.filter(c => catAvg[c] >= 2.5 && catAvg[c] < 3.5);
+  const concernCats = rankedCats.filter(c => catAvg[c] < 2.5);
+  const lsiFlag  = ld.slbj_LSI != null && ld.slbj_LSI < 90;
+  const hasPrev  = a.sessions.length > 1;
+
+  return { ld, pv, bw, catAvg, rankedCats, best, worst, metrics, improved, regressed, exceedsCats, onTrackCats, concernCats, lsiFlag, hasPrev };
+}
+
+function buildCoachNotes(a, f) {
+  const { ld, pv, catAvg, best, worst, improved, regressed, exceedsCats, concernCats, lsiFlag, hasPrev } = f;
+  const date     = a.sessions[0]?.test_date || '—';
+  const prevDate = pv?.test_date;
+  const paras    = [];
+
+  // ── Para 1: Profile overview ──
+  const validCats = Object.values(catAvg).filter(s => s !== null);
+  const overall   = validCats.length ? validCats.reduce((a,b)=>a+b,0)/validCats.length : null;
+  const overallLbl = overall !== null ? catLabel(overall).l : 'insufficient data to rate';
+  let p1 = `${a.name} (${a.position||'—'}, ${a.age||'—'} yrs, ${a.weight_kg||'—'} kg) most recently tested ${date} with ${a.sessions.length} session${a.sessions.length!==1?'s':''} on record. Overall physical profile: ${overallLbl}.`;
+  if (a.injury_hx) p1 += ` Injury history: ${a.injury_hx}.`;
+  if (!hasPrev)    p1 += ' Note: first session recorded — inter-session comparison not yet available.';
+  paras.push(p1);
+
+  // ── Para 2: Category breakdown ──
+  const catLines = [];
+  ['jump','aero','strength','speed'].forEach(cat => {
+    if (catAvg[cat] === null) return;
+    const cl = catLabel(catAvg[cat]);
+    // Find best and worst metric in this category that have a score
+    const catMetrics = CAT_KEYS[cat]
+      .map(k => ({ k, val: ld[k], score: bs(ld[k], k) }))
+      .filter(m => m.val != null && m.score !== null)
+      .sort((a,b) => b.score - a.score);
+    let line = `${CAT_LABELS[cat]}: ${cl.l}.`;
+    if (catMetrics.length > 0) {
+      const top = catMetrics[0];
+      if (top.score >= 3) line += ` ${NORMS[top.k].label} is a highlight at ${top.val} ${NORMS[top.k].u} (${SL[top.score]}).`;
+    }
+    if (catMetrics.length > 1) {
+      const bot = catMetrics[catMetrics.length - 1];
+      if (bot.score <= 1) line += ` ${NORMS[bot.k].label} at ${bot.val} ${NORMS[bot.k].u} is a concern (${SL[bot.score]}).`;
+    }
+    catLines.push(line);
+  });
+  if (catLines.length) paras.push(catLines.join(' '));
+
+  // ── Para 3: Progress since last session ──
+  if (hasPrev && (improved.length || regressed.length)) {
+    let p3 = `Progress since ${prevDate}: `;
+    if (improved.length) {
+      const names = improved.slice(0,2).map(m => `${m.label} (${m.changePct > 0 ? '+' : ''}${m.changePct.toFixed(1)}%)`);
+      p3 += `Improvements noted in ${names.join(' and ')}. `;
+    }
+    if (regressed.length) {
+      const names = regressed.slice(0,2).map(m => `${m.label} (${m.changePct.toFixed(1)}%)`);
+      p3 += `Regressions observed in ${names.join(' and ')} — monitor whether this reflects fatigue, detraining, or measurement variance.`;
+    }
+    paras.push(p3.trim());
+  }
+
+  // ── Para 4: Priorities and flags ──
+  let p4 = '';
+  if (worst && catAvg[worst] !== null && catAvg[worst] < 2.5) {
+    p4 += `Priority training focus: ${CAT_LABELS[worst]} (${catLabel(catAvg[worst]).l}). ${CAT_COACH_REC[worst]}`;
+  } else if (worst) {
+    p4 += `No category is in critical deficit. Continue general programme progression with emphasis on maintaining ${CAT_LABELS[best]||'current strengths'} while driving adaptation in ${CAT_LABELS[worst]}.`;
+  }
+  if (lsiFlag) p4 += ` LSI below 90% — limb asymmetry flag raised. Clinical review and targeted unilateral intervention are recommended before return-to-full-training progression.`;
+  if (p4) paras.push(p4.trim());
+
+  return paras.join('\n\n');
+}
+
+function positionArchetype(pos) {
+  const p=(pos||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
+  if(/GK|GOALKEEPER/.test(p))            return 'goalkeeper';
+  if(/^(CB|CD)$|CENTREBACK|CENTREDEF|DEFENDER/.test(p)) return 'centre-back';
+  if(/^(RB|LB|WB)$|FULLBACK|WINGBACK/.test(p)) return 'fullback';
+  if(/^CDM$|DEFENSIVEMID|HOLDINGMID/.test(p)) return 'defensive-mid';
+  if(/^(CM|CMF)$|CENTRALMID/.test(p))   return 'central-mid';
+  if(/^(CAM|AM)$|ATTACKINGMID/.test(p)) return 'attacking-mid';
+  if(/^(LW|RW|LM|RM)$|WINGER/.test(p)) return 'winger';
+  if(/^(ST|CF|FW|SS)$|STRIKER|FORWARD/.test(p)) return 'forward';
+  return 'professional footballer';
+}
+
+const POS_CONTEXT = {
+  'goalkeeper':     (b,w) => `As a goalkeeper, your explosive power and reactive speed are directly relevant to your shot-stopping and cross-claiming — keep investing in those qualities.`,
+  'centre-back':    (b,w) => w==='speed'?`At centre-back, top-end speed matters, but dominant strength and aerial power are the foundation of your position — those remain the priority.`:`As a centre-back, your ${CAT_PLAIN[b]} is a genuine physical weapon at this level.`,
+  'fullback':       (b,w) => `Full-backs at professional level need to cover ground repeatedly and contribute to attacks — your ${CAT_PLAIN[b]} is a real asset for this role.`,
+  'defensive-mid':  (b,w) => `As a holding midfielder, your ability to sustain high-intensity actions is what you'll be judged on. Your ${CAT_PLAIN[b]} gives you a strong foundation for that.`,
+  'central-mid':    (b,w) => `Central midfielders need everything. Your ${CAT_PLAIN[b]} stands out right now — it's a genuine advantage in transitions and high-pressure situations.`,
+  'attacking-mid':  (b,w) => `As a 10, your ability to accelerate into space and repeat explosive actions is what separates you. Your ${CAT_PLAIN[b]} is a real weapon in tight areas.`,
+  'winger':         (b,w) => (w==='speed'||w==='jump')?`Wide players at professional level are judged on their ability to beat defenders with pace and power — getting your ${CAT_PLAIN[w]} up is the priority for your position.`:`As a winger, your ${CAT_PLAIN[b]} is exactly what the position demands. You're building the right physical profile.`,
+  'forward':        (b,w) => `Strikers who can accelerate explosively and maintain power late in games are the most dangerous. Your ${CAT_PLAIN[b]} translates directly to your threat in behind.`,
+  'professional footballer': (b,w) => `Your ${CAT_PLAIN[b]} stands out as a physical strength right now — keep building on it.`,
+};
+
+function buildAthleteMessage(a, f) {
+  const { catAvg, best, worst, improved, regressed, exceedsCats, concernCats, lsiFlag, hasPrev } = f;
+  const firstName = a.name.split(' ')[0];
+  const paras = [];
+
+  // ── Para 1: Positive opening ──
+  let p1 = '';
+  const goodCats = Object.keys(catAvg).filter(c => catAvg[c] !== null && catAvg[c] >= 3.0).sort((a,b) => catAvg[b] - catAvg[a]);
+  if (goodCats.length > 0 && improved.length > 0) {
+    p1 = `Good work in the testing. Your ${CAT_PLAIN[goodCats[0]]} is a real strength in your profile right now`;
+    if (goodCats.length > 1) p1 += `, and your ${CAT_PLAIN[goodCats[1]]} is also tracking well`;
+    p1 += '. ';
+    p1 += `You\'ve also shown clear improvement since your last session, which shows the training is working — keep that consistency going.`;
+  } else if (goodCats.length > 0) {
+    p1 = `Your testing results show some clear positives. Your ${CAT_PLAIN[goodCats[0]]} is a genuine strength`;
+    if (goodCats.length > 1) p1 += `, and ${CAT_PLAIN[goodCats[1]]} is tracking solidly too`;
+    p1 += `. These are areas you can feel confident about going into the next block.`;
+  } else if (improved.length > 0) {
+    p1 = `The most important thing from this testing block is that you\'ve improved since last time. Progress is progress — the work you\'re putting in is showing up in the numbers. Keep the consistency going.`;
+  } else {
+    p1 = `Your testing results give us a clear baseline to work from. There are no red flags, and you have a solid foundation to build on going into the next block.`;
+  }
+  paras.push(p1.trim());
+
+  // ── Position-specific context ──
+  const archetype = positionArchetype(a.position);
+  const posFn = POS_CONTEXT[archetype] || POS_CONTEXT['professional footballer'];
+  const posLine = posFn(best, worst);
+  if (posLine) paras.push(posLine);
+
+  // ── Para 2: Honest about areas needing work ──
+  let p2 = '';
+  if (concernCats.length > 0 || lsiFlag || regressed.length > 0) {
+    if (worst && catAvg[worst] !== null && catAvg[worst] < 2.5) {
+      p2 = `The area that needs the most focus right now is your ${CAT_PLAIN[worst]}. It\'s not where we need it to be at this level, and it\'s the priority for the next block. `;
+    }
+    if (regressed.length > 0 && hasPrev) {
+      p2 += `There are a couple of areas that have dipped slightly since your last session. Nothing to be alarmed about, but it\'s a signal that we may need to look at your recovery or training load. `;
+    }
+    if (lsiFlag) {
+      p2 += `There\'s also a noticeable difference in strength and power between your left and right leg right now. This is something we\'ll be targeting directly — leg imbalances can affect both your performance on the pitch and your injury risk, so it\'s important we address it.`;
+    }
+  }
+  if (p2) paras.push(p2.trim());
+
+  // ── Para 3: Clear focus ──
+  let p3 = '';
+  if (worst) {
+    p3 = `For the next training block, the focus is ${CAT_FOCUS[worst]}. `;
+    if (goodCats.length > 0 && goodCats[0] !== worst) {
+      p3 += `Keep maintaining your ${CAT_PLAIN[goodCats[0]]} alongside this — we don\'t want that to drop while we bring the other areas up. `;
+    }
+  } else {
+    p3 = `For the next block, the goal is to keep building across the board. `;
+  }
+  p3 += `Stay consistent with your sessions, look after your recovery, and the improvements will follow.`;
+  paras.push(p3.trim());
+
+  return paras.join('\n\n');
+}
+
+function generateFeedback() {
+  const a = athleteMap[selectedId]; if (!a) return;
+  const fc = document.getElementById('feedbackContent'); if (!fc) return;
+  if (!a.sessions.length) {
+    fc.innerHTML = `<div class="feedback-empty"><h3>No data yet</h3><p>Add test sessions for ${a.name} to generate feedback.</p></div>`;
+    return;
+  }
+  const f = analyseFeedbackData(a);
+  const coachNotes  = buildCoachNotes(a, f);
+  const athleteMsg  = buildAthleteMessage(a, f);
+  renderFeedback(a, coachNotes, athleteMsg);
+}
+
+// ─── PRINT REPORT GENERATOR ──────────────────────────────────────────────────
+function generatePrintReport() {
+  const a = athleteMap[selectedId];
+  if (!a || !a.sessions.length) { alert('No data available to print.'); return; }
+
+  // Temporarily show hidden tabs so Chart.js and the quadrant SVG can render
+  const trendsEl   = document.querySelector('.tc[data-t="trends"]');
+  const quadrantEl = document.querySelector('.tc[data-t="quadrant"]');
+  const origT = trendsEl?.style.display;
+  const origQ = quadrantEl?.style.display;
+  if (trendsEl)   trendsEl.style.display   = 'block';
+  if (quadrantEl) quadrantEl.style.display = 'block';
+  drawCharts();
+  drawQuadrant(currentXAxis, currentYAxis);
+
+  // Wait for Chart.js to finish rendering before capturing canvas data
+  setTimeout(() => {
+    // ── Capture trend chart images ──────────────────────────────────────────
+    const chartImages = [];
+    document.getElementById('chartGrid')?.querySelectorAll('.chart-wrap').forEach(wrap => {
+      if (wrap.style.display === 'none') return;
+      const title  = wrap.querySelector('.chart-title')?.textContent?.trim() || '';
+      const canvas = wrap.querySelector('canvas');
+      if (canvas) {
+        try {
+          const url = canvas.toDataURL('image/png', 0.85);
+          if (url && url.length > 200) chartImages.push({ title, url });
+        } catch(e) {}
+      }
+    });
+
+    // ── Capture quadrant SVG ────────────────────────────────────────────────
+    const qContainer = document.getElementById('quadrantContainer');
+    const quadrantSVG = (qContainer?.innerHTML || '').includes('<svg') ? qContainer.innerHTML : '';
+
+    // Restore tabs to original state
+    if (trendsEl)   trendsEl.style.display   = origT   || '';
+    if (quadrantEl) quadrantEl.style.display = origQ   || '';
+
+    // ── Build the print report ──────────────────────────────────────────────
+    _buildAndOpenPrintReport(a, chartImages, quadrantSVG);
+  }, 350);
+}
+
+function _buildAndOpenPrintReport(a, chartImages, quadrantSVG) {
+  const ld    = buildLatestAcrossSessions(a.sessions);
+  // prevVal(key): find most recent previous session with a value for this key
+  const prevVal = k => { for(let i=1;i<a.sessions.length;i++){ if(a.sessions[i][k]!=null) return a.sessions[i][k]; } return null; };
+  const pv    = a.sessions.length > 1 ? a.sessions[1] : null; // kept for backward compat
+  const bw    = parseFloat(a.weight_kg);
+  const logoSrc   = document.querySelector('.sb-brand img')?.src || '';
+  const coachName = getConfig().coachName || 'Physical Performance Coach - Henri Joensuu';
+  const today = new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'});
+
+  // Build a date map: for each metric key, which session date was the source?
+  const dateSrc = {};
+  Object.keys(NORMS).forEach(k => {
+    for (const s of a.sessions) {
+      if (s[k] != null) { dateSrc[k] = s.test_date; break; }
+    }
+  });
+  // Also map derived keys back to the session that provided the raw input
+  ['slbj_L','slbj_R','slbj_LSI'].forEach(k => {
+    for (const s of a.sessions) {
+      if (s.slbj_L != null || s.slbj_R != null) { dateSrc[k] = s.test_date; break; }
+    }
+  });
+  ['sq_1rm_bw','tb_1rm_bw','bp_1rm_bw'].forEach((k,i) => {
+    const rawKey = ['sq_1rm','tb_1rm','bp_1rm'][i];
+    for (const s of a.sessions) {
+      if (s[rawKey] != null) { dateSrc[k] = s.test_date; break; }
+    }
+  });
+  // EUR and MAS/VO2 derive from CMJ+SJ and TT distance
+  for (const s of a.sessions) { if (s.cmj!=null&&s.sj!=null){ dateSrc['eur']=s.test_date; break; } }
+  for (const s of a.sessions) { if (s.mas!=null){ dateSrc['mas']=dateSrc['vo2max']=s.test_date; break; } }
+
+  const latestDate = a.sessions[0]?.test_date;
+
+  function getCatStatus(keys) {
+    const scores = keys.map(k=>bs(ld[k],k)).filter(s=>s!==null);
+    if (!scores.length) return null;
+    return catLabel(scores.reduce((a,b)=>a+b,0)/scores.length);
+  }
+  const catDefs = [
+    { name:'Jump / Power',  keys:['broad_jump','slbj_LSI','triple_hop','cmj','sj','eur','cmj_mrsi','dj','dj_rsi','dsi'] },
+    { name:'Aerobic',       keys:['mas','vo2max'] },
+    { name:'Strength',      keys:['sq_1rm_bw','tb_1rm_bw','bp_1rm_bw','imtp'] },
+    { name:'Speed',         keys:['sprint10','sprint20','max_vel'] },
+  ];
+
+  function pctHtml(val, prev, lb) {
+    if (val==null||prev==null||isNaN(prev)||prev===0) return '<span style="color:#ccc">—</span>';
+    const d=((val-prev)/Math.abs(prev)*100);
+    const imp=lb?d<0:d>0; const unc=Math.abs(d)<0.5;
+    const col=unc?'#888':imp?'#16a34a':'#dc2626';
+    return `<span style="color:${col};font-weight:600">${unc?'→':imp?'↑':'↓'} ${d>0?'+':''}${d.toFixed(1)}%</span>`;
+  }
+
+  function badge(score, noNorm) {
+    if (noNorm||score===null) return '<span style="color:#aaa;font-size:10px;font-style:italic">No validated norm</span>';
+    const cols=['#dc2626','#c2410c','#b45309','#1a56db','#16a34a'];
+    return `<span style="color:${cols[score]};font-weight:700;font-size:10.5px">● ${SL[score]}</span>`;
+  }
+
+  function section(title, metrics) {
+    const rows = metrics.filter(m => m.val != null);
+    if (!rows.length) return '';
+    const tbody = rows.map((m,i) => {
+      const normStr = m.noNorm ? '<i style="color:#aaa">No validated norm</i>'
+        : `<span style="color:#666">${m.nMin}–${m.nMax} ${m.u}</span>`;
+      const autoTag = m.auto ? '<span style="font-size:9px;background:#eef2ff;color:#4a6fa5;border-radius:3px;padding:1px 4px;margin-left:5px">auto</span>' : '';
+      const subSpan = m.sub ? `<br><span style="font-size:9.5px;color:#999">${m.sub}</span>` : '';
+      const dateSpan = m.date && m.date !== latestDate
+        ? `<br><span style="font-size:9px;color:#bbb">Tested ${m.date}</span>` : '';
+      return `<tr style="background:${i%2===0?'#fff':'#fafafa'}">
+        <td style="padding:6px 10px;color:#444;font-size:10.5px;border-bottom:1px solid #f0f0f0">${m.label}${autoTag}</td>
+        <td style="padding:6px 10px;font-size:11.5px;font-weight:700;border-bottom:1px solid #f0f0f0">${m.val}<span style="font-size:10px;font-weight:400;color:#999;margin-left:3px">${m.u}</span>${subSpan}${dateSpan}</td>
+        <td style="padding:6px 10px;border-bottom:1px solid #f0f0f0">${badge(m.score, m.noNorm)}</td>
+        <td style="padding:6px 10px;font-size:10.5px;border-bottom:1px solid #f0f0f0">${normStr}</td>
+        <td style="padding:6px 10px;font-size:10.5px;text-align:right;border-bottom:1px solid #f0f0f0">${pctHtml(m.val,m.prevVal,m.lb)}</td>
+      </tr>`;
+    }).join('');
+    return `<div style="margin-bottom:16px;page-break-inside:avoid">
+      <div style="font-size:9px;font-weight:700;color:#7a8290;text-transform:uppercase;letter-spacing:.08em;margin-bottom:5px;padding-left:2px;padding-bottom:3px;border-bottom:1px solid #ebebeb">${title}</div>
+      <table style="width:100%;border-collapse:collapse;border:1px solid #e8e8e8">
+        <thead><tr style="background:#f5f5f5">
+          <th style="padding:5px 10px;text-align:left;font-size:9px;font-weight:700;color:#999;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid #e8e8e8">Test</th>
+          <th style="padding:5px 10px;text-align:left;font-size:9px;font-weight:700;color:#999;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid #e8e8e8">Result</th>
+          <th style="padding:5px 10px;text-align:left;font-size:9px;font-weight:700;color:#999;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid #e8e8e8">Status</th>
+          <th style="padding:5px 10px;text-align:left;font-size:9px;font-weight:700;color:#999;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid #e8e8e8">Normative range</th>
+          <th style="padding:5px 10px;text-align:right;font-size:9px;font-weight:700;color:#999;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid #e8e8e8">vs previous</th>
+        </tr></thead>
+        <tbody>${tbody}</tbody>
+      </table>
+    </div>`;
+  }
+
+  function mk(nk, val, prevVal, sub='', auto=false) {
+    if (val==null) return {val:null};
+    const n=NORMS[nk]||{};
+    return { val, prevVal, label:n.label||nk, u:n.u||'', score:bs(val,nk), lb:n.lb||false, noNorm:n.noNorm||false, nMin:n.min, nMax:n.max, sub, auto, date:dateSrc[nk]||null };
+  }
+  function strMk(nk, rawPfx) {
+    const val=ld[nk], prev=pv?pv[nk]:null;
+    if (val==null) return {val:null};
+    const n=NORMS[nk]; const kg=ld[rawPfx+'_kg_raw'], reps=ld[rawPfx+'_reps_raw'], rm1=ld[rawPfx+'_1rm'];
+    const sub=reps&&reps>1?`${kg}kg×${reps} → est. 1RM ${rm1}kg`:rm1?`1RM ${rm1}kg`:'';
+    return { val, prevVal:prev, label:n.label, u:n.u, score:bs(val,nk), lb:false, noNorm:false, nMin:n.min, nMax:n.max, sub, auto:true, date:dateSrc[nk]||null };
+  }
+
+  const lsi=(ld.slbj_L!=null&&ld.slbj_R!=null)?+(Math.min(ld.slbj_L,ld.slbj_R)/Math.max(ld.slbj_L,ld.slbj_R)*100).toFixed(1):null;
+  const lsiPv=(pv?.slbj_L!=null&&pv?.slbj_R!=null)?+(Math.min(pv.slbj_L,pv.slbj_R)/Math.max(pv.slbj_L,pv.slbj_R)*100).toFixed(1):null;
+  const lsiFlag=lsi!=null&&lsi<90;
+
+  const jumpM=[
+    mk('broad_jump',ld.broad_jump,prevVal('broad_jump')),
+    ld.slbj_L!=null?{val:ld.slbj_L,prevVal:prevVal('slbj_L'),label:'SL broad jump — L',u:'cm',score:null,noNorm:true,lb:false,sub:'',date:dateSrc['slbj_L']||null}:{val:null},
+    ld.slbj_R!=null?{val:ld.slbj_R,prevVal:prevVal('slbj_R'),label:'SL broad jump — R',u:'cm',score:null,noNorm:true,lb:false,sub:'',date:dateSrc['slbj_R']||null}:{val:null},
+    lsi!=null?{val:lsi,prevVal:(()=>{const pS=prevVal('slbj_L'),pR=prevVal('slbj_R');return(pS!=null&&pR!=null)?+(Math.min(pS,pR)/Math.max(pS,pR)*100).toFixed(1):null;})(),label:'SL broad jump LSI'+(lsiFlag?' ⚠':''),u:'%',score:lsiFlag?null:bs(lsi,'slbj_LSI'),noNorm:false,lb:false,nMin:90,nMax:100,sub:'',auto:true,date:dateSrc['slbj_LSI']||null}:{val:null},
+    mk('triple_hop',ld.triple_hop,prevVal('triple_hop')),
+    mk('cmj',ld.cmj,prevVal('cmj')),
+    mk('sj',ld.sj,prevVal('sj')),
+    mk('cmj_flight',ld.cmj_flight,prevVal('cmj_flight')),
+    mk('sj_flight',ld.sj_flight,prevVal('sj_flight')),
+    ld.cmj_con_force!=null?{...mk('cmj_con_force',ld.cmj_con_force,prevVal('cmj_con_force')),auto:true,sub:`${ld.cmj_con_force_N}N raw`}:{val:null},
+    ld.cmj!=null&&ld.sj!=null?{...mk('eur',ld.eur,prevVal('eur')),auto:true,sub:'CMJ÷SJ'}:{val:null},
+    ld.cmj_mrsi!=null?{...mk('cmj_mrsi',ld.cmj_mrsi,prevVal('cmj_mrsi')),auto:true}:{val:null},
+    mk('dj',ld.dj,prevVal('dj')),
+    ld.dj_rsi!=null?{...mk('dj_rsi',ld.dj_rsi,prevVal('dj_rsi')),auto:true}:{val:null},
+    mk('dsi',ld.dsi,prevVal('dsi')),
+  ];
+  const aeroM=[
+    ld.mas!=null?{...mk('mas',ld.mas,prevVal('mas')),auto:true,sub:ld.tt5min_dist?`${ld.tt5min_dist}m TT`:''}:{val:null},
+    ld.vo2max!=null?{...mk('vo2max',ld.vo2max,prevVal('vo2max')),auto:true}:{val:null},
+    // Distance TT — benchmark average speed vs MAS norm
+    (ld.tt_dist&&ld.tt_speed)?{val:fmtTime(ld.tt_time),prevVal:null,label:`Distance TT (${(ld.tt_dist/1000).toFixed(ld.tt_dist%1000===0?0:1)}km)`,u:'',score:bs(ld.tt_speed,'mas'),lb:false,noNorm:false,nMin:NORMS.mas.min,nMax:NORMS.mas.max,sub:`${ld.tt_speed} m/s avg${ld.tt_vo2max?' · est. VO₂max '+ld.tt_vo2max+' ml/kg/min':''}`,auto:true,date:dateSrc['mas']||null}:{val:null},
+    ld.yoyo_ir2!=null?{val:ld.yoyo_ir2,prevVal:prevVal('yoyo_ir2'),label:'Yo-Yo IR2',u:'m',score:bs(ld.yoyo_ir2,'yoyo_ir2'),lb:false,noNorm:false,nMin:NORMS.yoyo_ir2.min,nMax:NORMS.yoyo_ir2.max,sub:ld.yoyo_vo2max?`est. VO₂max ${ld.yoyo_vo2max} ml/kg/min`:'',auto:true,date:dateSrc['yoyo_ir2']||null}:{val:null},
+    ld.beep_level!=null?{val:`Level ${ld.beep_level}${ld.beep_shuttle?', shuttle '+ld.beep_shuttle:''}`,prevVal:null,label:'Beep test (MSFT)',u:'',score:bs(ld.beep_level,'beep_level'),lb:false,noNorm:false,nMin:NORMS.beep_level.min,nMax:NORMS.beep_level.max,sub:ld.beep_speed?`${ld.beep_speed} km/h${ld.beep_vo2max?' · est. VO₂max '+ld.beep_vo2max+' ml/kg/min':''}`:'' ,auto:true,date:null}:{val:null},
+    ld.bronco!=null?{val:fmtTime(ld.bronco),prevVal:null,label:'Bronco test',u:'',score:bs(ld.bronco,'bronco'),lb:true,noNorm:false,nMin:NORMS.bronco.min,nMax:NORMS.bronco.max,sub:`${ld.bronco}s (lower is better)`,auto:false,date:dateSrc['bronco']||null}:{val:null},
+  ];
+  const strM=[strMk('sq_1rm_bw','sq'),strMk('tb_1rm_bw','tb'),strMk('bp_1rm_bw','bp'),
+    ld.imtp!=null?{...mk('imtp',ld.imtp,prevVal('imtp')),auto:true,sub:`${ld.imtp_raw_N}N`}:{val:null}];
+  const spdM=[mk('sprint10',ld.sprint10,prevVal('sprint10')),mk('sprint20',ld.sprint20,prevVal('sprint20')),mk('max_vel',ld.max_vel,prevVal('max_vel'))];
+
+  const catCardsHtml = catDefs.map(c=>{
+    const cl=getCatStatus(c.keys); const col=cl?cl.c:'#94a3b8'; const lbl=cl?cl.l:'No data';
+    return `<div style="flex:1;border:1px solid #e8e8e8;border-left:3px solid ${col};border-radius:6px;padding:9px 11px;background:#fff">
+      <div style="font-size:9px;font-weight:700;color:#999;text-transform:uppercase;letter-spacing:.07em;margin-bottom:4px">${c.name}</div>
+      <div style="font-size:11.5px;font-weight:700;color:${col}">${lbl}</div>
+    </div>`;
+  }).join('');
+
+  // Charts HTML (2-column grid of captured images)
+  const chartsHtml = chartImages.length ? `
+    <div style="page-break-before:always"></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;padding-bottom:10px;border-bottom:2px solid #111;margin-bottom:16px">
+      ${logoSrc?`<img src="${logoSrc}" style="height:22px;width:auto" alt="FootballFit">`:''}
+      <div style="font-size:14px;font-weight:700;color:#111">${a.name} — Trend Charts</div>
+      <div style="font-size:10px;color:#aaa">${today}</div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      ${chartImages.map(c=>`
+        <div style="page-break-inside:avoid">
+          <div style="font-size:9px;font-weight:700;color:#7a8290;text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px">${c.title}</div>
+          <img src="${c.url}" style="width:100%;height:auto;border:1px solid #ebebeb;border-radius:4px">
+        </div>`).join('')}
+    </div>` : '';
+
+  // Quadrant HTML (only if SVG captured)
+  const quadrantHtml = quadrantSVG ? `
+    <div style="margin-top:24px;page-break-inside:avoid">
+      <div style="font-size:9px;font-weight:700;color:#7a8290;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;padding-bottom:4px;border-bottom:1px solid #ebebeb">Strength-Speed Profile</div>
+      <div style="max-width:480px;margin:0 auto">${quadrantSVG}</div>
+      <p style="font-size:9px;color:#aaa;text-align:center;margin-top:6px">Dividers at normative midpoint · Gray dots = other athletes (anonymous)</p>
+    </div>` : '';
+
+  // Feedback if generated
+  const coachTxt  = document.getElementById('coachText')?.innerText?.trim();
+  const athleteTxt= document.getElementById('athleteText')?.innerText?.trim();
+  const esc = str => (str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+  const feedbackHtml = athleteTxt ? `
+    <div style="page-break-before:always"></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;padding-bottom:10px;border-bottom:2px solid #111;margin-bottom:16px">
+      ${logoSrc?`<img src="${logoSrc}" style="height:22px;width:auto" alt="FootballFit">`:''}
+      <div style="font-size:14px;font-weight:700;color:#111">${a.name} — Athlete Message</div>
+      <div style="font-size:10px;color:#aaa">${today}</div>
+    </div>
+    <div style="background:#f8f8f8;border:1px solid #ebebeb;border-radius:6px;padding:14px 16px;font-size:11px;line-height:1.75;white-space:pre-wrap">${esc(athleteTxt)}</div>
+  ` : '';
+
+  const reportHTML = `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">
+  <title>Performance Report — ${a.name}</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    @page{size:A4;margin:14mm 16mm}
+    body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;font-size:11px;color:#111;background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    .page{max-width:182mm;margin:0 auto}
+    img{max-width:100%}
+  </style>
+</head><body><div class="page">
+
+  <!-- Page 1 Header -->
+  <div style="display:flex;align-items:center;justify-content:space-between;padding-bottom:12px;border-bottom:2px solid #111;margin-bottom:16px">
+    <div style="display:flex;align-items:center;gap:12px">
+      ${logoSrc?`<img src="${logoSrc}" style="height:26px;width:auto" alt="FootballFit">`:''}
+      <div>
+        <div style="font-size:17px;font-weight:700;color:#111;letter-spacing:-.02em">Performance Report</div>
+        ${coachName?`<div style="font-size:11px;font-weight:500;color:#444;margin-top:2px">${coachName}</div>`:''}
+        <div style="font-size:10px;color:#888;margin-top:1px">Generated ${today}</div>
+      </div>
+    </div>
+    <div style="text-align:right">
+      <div style="font-size:10px;color:#888">Last tested</div>
+      <div style="font-size:14px;font-weight:700;color:#111">${a.sessions[0]?.test_date||'—'}</div>
+      ${pv?`<div style="font-size:10px;color:#aaa">Previous: ${pv.test_date}</div>`:''}
+    </div>
+  </div>
+
+  <!-- Athlete Profile -->
+  <div style="display:flex;align-items:flex-start;gap:14px;padding:13px;background:#f8f8f8;border-radius:8px;margin-bottom:16px;border:1px solid #ebebeb">
+    <div style="width:40px;height:40px;border-radius:50%;background:#1a56db;color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0">${a.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase()}</div>
+    <div>
+      <div style="font-size:17px;font-weight:700;color:#111;letter-spacing:-.01em">${a.name}</div>
+      <div style="font-size:10.5px;color:#555;margin-top:3px">${a.position||'—'} · ${a.age||'—'} yrs · ${a.height_cm||'—'} cm · ${a.weight_kg||'—'} kg · ${a.sessions.length} session${a.sessions.length!==1?'s':''}</div>
+      ${a.injury_hx?`<div style="margin-top:6px;font-size:10px;background:#fff8e6;border:1px solid #f59e0b;border-radius:12px;padding:3px 10px;display:inline-block;color:#92400e;font-weight:600">⚠ ${a.injury_hx}</div>`:''}
+      ${ld.weight_kg && ld.weight_kg !== parseFloat(a.weight_kg)?`<div style="margin-top:4px;font-size:10px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:12px;padding:3px 10px;display:inline-block;color:#1e40af;font-weight:600;margin-left:4px">⚖ Body weight at testing: ${ld.weight_kg} kg</div>`:''}
+      ${a.sessions[0]?.notes?`<div style="margin-top:10px;padding:8px 12px;background:#f8f8f8;border-left:3px solid #1a56db;border-radius:0 4px 4px 0;font-size:10.5px;color:#444;line-height:1.6"><span style="font-size:9px;font-weight:700;color:#999;text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:2px">Session note</span>${a.sessions[0].notes}</div>`:''}
+    </div>
+  </div>
+
+  <!-- Category Overview -->
+  <div style="font-size:9px;font-weight:700;color:#7a8290;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;padding-bottom:3px;border-bottom:1px solid #ebebeb">Performance Category Status</div>
+  <div style="display:flex;gap:8px;margin-bottom:18px">${catCardsHtml}</div>
+
+  <!-- Test Results -->
+  <div style="font-size:9px;font-weight:700;color:#7a8290;text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px;padding-bottom:3px;border-bottom:1px solid #ebebeb">
+    Test Results${pv?` <span style="font-weight:400;text-transform:none;letter-spacing:0;color:#bbb">vs previous: ${pv.test_date}</span>`:''}
+  </div>
+  ${section('Jump / Power',jumpM)}
+  ${section('Aerobic Fitness',aeroM)}
+  ${section('Strength — Lifts (×BW)',strM)}
+  ${section('Speed (Vuemotion)',spdM)}
+
+  ${chartsHtml}
+  ${quadrantHtml}
+  ${feedbackHtml}
+
+  <!-- Footer -->
+  <div style="margin-top:20px;padding-top:8px;border-top:1px solid #ebebeb;font-size:9px;color:#bbb;display:flex;justify-content:space-between">
+    <span>FootballFit · Individual Coaching · ${a.name}</span>
+    <span>Normative ranges: professional football literature</span>
+  </div>
+
+</div>
+<script>window.onload=()=>setTimeout(()=>window.print(),500);<\/script>
+</body></html>`;
+
+  const win = window.open('','_blank','width=900,height=700');
+  if (!win) { alert('Please allow popups for this page to generate the print report.'); return; }
+  win.document.write(reportHTML);
+  win.document.close();
+}
+
+// ─── TEST HISTORY LOG ────────────────────────────────────────────────────────
+function renderHistory() {
+  const a = athleteMap[selectedId];
+  const el = document.getElementById('historyContent');
+  if (!a || !el) return;
+  if (!a.sessions.length) { el.innerHTML='<p style="color:var(--text-muted);padding:8px">No sessions recorded.</p>'; return; }
+
+  const COLS = [
+    { key:'broad_jump', label:'Broad jump',   u:'cm',  cat:'Jump' },
+    { key:'slbj_L',     label:'SL jump L',    u:'cm',  cat:'Jump' },
+    { key:'slbj_R',     label:'SL jump R',    u:'cm',  cat:'Jump' },
+    { key:'slbj_LSI',   label:'LSI',          u:'%',   cat:'Jump' },
+    { key:'triple_hop', label:'Triple hop',   u:'cm',  cat:'Jump' },
+    { key:'cmj',        label:'CMJ',          u:'cm',  cat:'Jump' },
+    { key:'sj',            label:'SJ',            u:'cm',   cat:'Jump' },
+    { key:'cmj_flight',    label:'CMJ flight',    u:'cm',   cat:'Jump' },
+    { key:'sj_flight',     label:'SJ flight',     u:'cm',   cat:'Jump' },
+    { key:'cmj_con_force', label:'CMJ con force', u:'N/kg', cat:'Jump' },
+    { key:'eur',        label:'EUR',          u:'',    cat:'Jump' },
+    { key:'cmj_mrsi',   label:'CMJ mRSI',     u:'m/s', cat:'Jump' },
+    { key:'dj',         label:'DJ',           u:'cm',  cat:'Jump' },
+    { key:'dj_rsi',     label:'DJ RSI',       u:'m/s', cat:'Jump' },
+    { key:'dsi',        label:'DSI',          u:'',    cat:'Jump' },
+    { key:'mas',        label:'MAS',          u:'m/s', cat:'Aerobic' },
+    { key:'vo2max',     label:'VO₂max',       u:'ml/kg/min', cat:'Aerobic' },
+    { key:'tt_speed',   label:'TT speed',     u:'m/s', cat:'Aerobic' },
+    { key:'yoyo_ir2',   label:'Yo-Yo IR2',    u:'m',   cat:'Aerobic' },
+    { key:'beep_level', label:'Beep',         u:'lvl', cat:'Aerobic' },
+    { key:'bronco',     label:'Bronco',       u:'s',   cat:'Aerobic', lb:true },
+    { key:'sq_1rm_bw',  label:'Squat ×BW',   u:'',    cat:'Strength' },
+    { key:'tb_1rm_bw',  label:'Trap DL ×BW', u:'',    cat:'Strength' },
+    { key:'bp_1rm_bw',  label:'Bench ×BW',   u:'',    cat:'Strength' },
+    { key:'imtp',       label:'IMTP',         u:'N/kg',cat:'Strength' },
+    { key:'sprint10',   label:'10m',          u:'s',   cat:'Speed', lb:true },
+    { key:'sprint20',   label:'20m',          u:'s',   cat:'Speed', lb:true },
+    { key:'max_vel',    label:'Max vel',      u:'m/s', cat:'Speed' },
+  ];
+
+  const sessions = [...a.sessions].reverse(); // oldest → newest
+  const activeCols = COLS.filter(c => sessions.some(s => s[c.key] != null));
+  const cats = ['Jump','Aerobic','Strength','Speed'];
+  const catSpans = cats.map(cat => ({ cat, count: activeCols.filter(c=>c.cat===cat).length })).filter(c=>c.count>0);
+
+  const scoreColor = (key, val) => {
+    if (val==null) return '';
+    const s = bs(val, key); if (s===null) return '';
+    return ['#dc2626','#c2410c','#b45309','#1a56db','#16a34a'][s];
+  };
+
+  const fmtCell = (key, val) => {
+    if (val==null) return `<span style="color:var(--border)">—</span>`;
+    let display = val;
+    if (key==='bronco') display = fmtTime(val);
+    else if (key==='tt_speed') display = val.toFixed(2);
+    else if (typeof val==='number' && !Number.isInteger(val)) display = val < 5 ? val.toFixed(2) : val.toFixed(1);
+    const col = scoreColor(key, val);
+    return `<span style="${col?`color:${col};font-weight:700`:'color:var(--text-secondary)'}">${display}</span>`;
+  };
+
+  const th = (txt, extra='') => `<th style="padding:6px 9px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);background:var(--surface-alt);border:1px solid var(--border);white-space:nowrap;text-align:center${extra}">${txt}</th>`;
+
+  let t = `<table style="border-collapse:collapse;font-size:11px">
+  <thead>
+    <tr>
+      <th style="padding:6px 10px;font-size:9px;font-weight:700;color:var(--text-muted);background:var(--surface-alt);border:1px solid var(--border);text-align:left;position:sticky;left:0;z-index:2" rowspan="2">Date</th>
+      ${catSpans.map(c=>`<th colspan="${c.count}" style="padding:6px 9px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--accent);background:var(--surface-alt);border:1px solid var(--border);border-bottom:2px solid var(--accent);text-align:center">${c.cat}</th>`).join('')}
+    </tr>
+    <tr>${activeCols.map(c=>th(`${c.label}${c.u?`<br><span style="font-weight:400;font-size:8px;opacity:.7">${c.u}</span>`:''}`)).join('')}</tr>
+  </thead>
+  <tbody>`;
+
+  sessions.forEach((s,i) => {
+    const bg = i%2===0 ? 'var(--surface)' : 'var(--surface-alt)';
+    const noteHtml = s.notes ? `<br><span style="font-size:9px;color:var(--text-muted);font-style:italic;font-weight:400">${s.notes}</span>` : '';
+    t += `<tr>
+      <td style="padding:6px 10px;font-size:11px;font-weight:600;color:var(--text-secondary);background:${bg};border:1px solid var(--border);position:sticky;left:0;z-index:1;min-width:88px">${s.test_date||'—'}${noteHtml}</td>
+      ${activeCols.map(c=>`<td style="padding:5px 9px;text-align:center;background:${bg};border:1px solid var(--border)">${fmtCell(c.key,s[c.key])}</td>`).join('')}
+    </tr>`;
+  });
+
+  el.innerHTML = t + `</tbody></table>
+  <p style="font-size:10px;color:var(--text-muted);margin-top:8px">Oldest → newest · Values colour-coded: <span style="color:#16a34a">●</span> Exceeds <span style="color:#1a56db">●</span> Meets <span style="color:#b45309">●</span> Near <span style="color:#c2410c">●</span> Below <span style="color:#dc2626">●</span> Priority</p>`;
+}
+
+// ─── ATHLETIC PROFILE RADAR ──────────────────────────────────────────────────
+function renderRadar() {
+  const a = athleteMap[selectedId];
+  const el = document.getElementById('radarContent');
+  if (!a || !el) return;
+  const ld = buildLatestAcrossSessions(a.sessions);
+  const AXES = [
+    { label:'Jump / Power', keys:['broad_jump','triple_hop','cmj','cmj_flight','sj','sj_flight','eur','cmj_mrsi','cmj_con_force','dj','dj_rsi','dsi'] },
+    { label:'Speed',        keys:['sprint10','sprint20','max_vel'] },
+    { label:'Strength',     keys:['sq_1rm_bw','tb_1rm_bw','bp_1rm_bw','imtp'] },
+    { label:'Aerobic',      keys:['mas','vo2max','yoyo_ir2','beep_level'] },
+    { label:'Symmetry',     keys:['slbj_LSI'] },
+  ];
+  const scores = AXES.map(ax => {
+    const ss = ax.keys.map(k=>bs(ld[k],k)).filter(s=>s!==null);
+    return ss.length ? +(ss.reduce((a,b)=>a+b,0)/ss.length) : null;
+  });
+  const CX=250,CY=225,R=155,N=5,W=500,H=470;
+  const ang = i => -Math.PI/2 + i*2*Math.PI/N;
+  const pt  = (i,f) => ({
+    x:+(CX+R*f*Math.cos(ang(i))).toFixed(1),
+    y:+(CY+R*f*Math.sin(ang(i))).toFixed(1)
+  });
+  const poly = fs => fs.map((f,i)=>`${pt(i,f).x},${pt(i,f).y}`).join(' ');
+  const scCol = s => s===null?'#94a3b8':s>=3.5?'#16a34a':s>=2.5?'#1a56db':s>=1.5?'#c2410c':'#dc2626';
+  const vals = scores.filter(s=>s!==null);
+  const overall = vals.length ? vals.reduce((a,b)=>a+b,0)/vals.length : null;
+  const pCol = scCol(overall);
+
+  let svg = `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:460px;font-family:-apple-system,BlinkMacSystemFont,sans-serif">`;
+  // Background rings
+  [1,2,3,4].forEach(sc => {
+    const f=sc/4, ib=sc===3;
+    svg+=`<polygon points="${poly(Array(N).fill(f))}" fill="${ib?'rgba(26,86,219,0.05)':'none'}" stroke="${ib?'rgba(26,86,219,0.35)':'rgba(0,0,0,0.07)'}" stroke-width="${ib?1.5:.8}"${ib?' stroke-dasharray="5,3"':''}/>`;
+  });
+  // Axis lines
+  for(let i=0;i<N;i++){const t=pt(i,1);svg+=`<line x1="${CX}" y1="${CY}" x2="${t.x}" y2="${t.y}" stroke="rgba(0,0,0,0.1)" stroke-width="1"/>`;}
+  // Benchmark label
+  const bRef=pt(2,0.80); svg+=`<text x="${+bRef.x+6}" y="${bRef.y}" font-size="9" fill="rgba(26,86,219,0.65)" font-weight="600">Benchmark</text>`;
+  // Athlete polygon
+  if(scores.some(s=>s!==null)){
+    const fracs=scores.map(sc=>sc!==null?sc/4:0);
+    svg+=`<polygon points="${poly(fracs)}" fill="${pCol}30" stroke="${pCol}" stroke-width="2.5"/>`;
+    scores.forEach((sc,i)=>{if(sc===null)return;const p=pt(i,sc/4);svg+=`<circle cx="${p.x}" cy="${p.y}" r="5" fill="${scCol(sc)}" stroke="#fff" stroke-width="2"/>`;});
+  }
+  // Axis labels
+  scores.forEach((sc,i)=>{
+    const lp=pt(i,1.27);
+    const anchor=lp.x<CX-10?'end':lp.x>CX+10?'start':'middle';
+    const col=scCol(sc);
+    svg+=`<text x="${lp.x}" y="${lp.y}" font-size="12" font-weight="700" fill="${col}" text-anchor="${anchor}">${AXES[i].label}</text>`;
+    svg+=`<text x="${lp.x}" y="${+lp.y+14}" font-size="9.5" fill="${col}" text-anchor="${anchor}" opacity=".85">${sc!==null?SL[Math.round(sc)]:'No data'}</text>`;
+    if(sc!==null){const vp=pt(i,sc/4*0.58);svg+=`<text x="${vp.x}" y="${+vp.y+3}" font-size="9" fill="${col}" text-anchor="middle" font-weight="600">${sc.toFixed(1)}/4</text>`;}
+  });
+  // Ring tick numbers on top axis
+  [1,2,3,4].forEach(sc=>{const p=pt(0,sc/4);svg+=`<text x="${+p.x+7}" y="${+p.y+3}" font-size="8" fill="#aaa">${sc}</text>`;});
+  svg+='</svg>';
+
+  const legend=`<div style="display:flex;align-items:center;gap:14px;font-size:10.5px;color:var(--text-muted);flex-wrap:wrap">
+    <span><span style="display:inline-block;width:14px;height:3px;background:${pCol};vertical-align:middle;border-radius:2px;margin-right:4px"></span>${a.name}</span>
+    <span><span style="display:inline-block;width:14px;height:0;border-top:2px dashed rgba(26,86,219,0.55);vertical-align:middle;margin-right:4px"></span>Professional benchmark (meets standard)</span>
+  </div>`;
+  const pills=AXES.map((ax,i)=>{const sc=scores[i],col=scCol(sc);return`<span style="display:inline-flex;align-items:center;gap:4px;font-size:10px;color:${col};font-weight:600"><span style="width:8px;height:8px;border-radius:50%;background:${col};display:inline-block"></span>${ax.label}: ${sc!==null?SL[Math.round(sc)]:'No data'}</span>`;}).join('<span style="color:#e4e6ea;margin:0 2px">·</span>');
+  el.innerHTML=`<div style="display:flex;flex-direction:column;align-items:center;gap:8px;width:100%">${svg}${legend}<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:2px">${pills}</div></div>`;
+}
+
+loadData();
+
+// ─── STRENGTH-SPEED QUADRANT ─────────────────────────────────────────────────
+// Extensible axis options — add new entries here as tests are added.
+// Future option example (when force plate available):
+//   { key: 'cmj_peak_power_bw', label: 'CMJ peak power ×BW' }
+
+
+function applyPreset(x, y) {
+  currentXAxis = x; currentYAxis = y;
+  const xs = document.getElementById('xAxisSel');
+  const ys = document.getElementById('yAxisSel');
+  if(xs) xs.value = x;
+  if(ys) ys.value = y;
+  document.querySelectorAll('.axis-btn').forEach(b => b.classList.remove('active'));
+  const match = [...document.querySelectorAll('.axis-btn')].find(b => b.textContent === QUAD_PRESETS.find(p=>p.x===x&&p.y===y)?.name);
+  if(match) match.classList.add('active');
+  drawQuadrant(x, y);
+}
+
+function setQuadAxes(x, y) {
+  currentXAxis = x; currentYAxis = y;
+  // Clear preset button active states; re-highlight if combination matches a preset
+  document.querySelectorAll('.axis-btn').forEach(b => {
+    const p = QUAD_PRESETS.find(p=>p.name===b.textContent);
+    if(p) b.classList.toggle('active', p.x===x && p.y===y);
+  });
+  drawQuadrant(x, y);
+}
+
+// Keep backward-compat alias
+function setStrengthAxis(key) { setQuadAxes(key, currentYAxis); }
+
+function drawQuadrant(xKey, yKey) {
+  const container = document.getElementById('quadrantContainer');
+  if (!container) return;
+
+  const xNorm = NORMS[xKey];
+  const yNorm = NORMS[yKey];
+  if (!xNorm || !yNorm) {
+    container.innerHTML=`<p style="padding:20px;color:var(--text-muted)">No normative data for selected axes.</p>`;
+    return;
+  }
+
+  const yLb = !!yNorm.lb; // true = lower is better (sprint times)
+
+  // Quad labels: use preset if combination matches, else generic
+  const preset = QUAD_PRESETS.find(p => p.x===xKey && p.y===yKey);
+  const ql = preset ? preset.ql : {
+    tl:[`High ${yNorm.label}`, `Low ${xNorm.label}`],
+    tr:['Well-rounded','→ Maintain'],
+    bl:['Developing','→ Foundation needed'],
+    br:[`High ${xNorm.label}`, `Low ${yNorm.label}`]
+  };
+
+  const allAthletes = Object.values(athleteMap);
+  const points = [];
+
+  allAthletes.forEach(a => {
+    const ld = buildLatestAcrossSessions(a.sessions);
+    const xv = ld[xKey], yv = ld[yKey];
+    if (xv == null || yv == null) return;
+    const isCurrent = a.id === selectedId;
+    const ini = a.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+    const trail = [];
+    if (isCurrent && a.sessions.length > 1) {
+      a.sessions.slice(1).forEach(s => {
+        const sx2=s[xKey], sy2=s[yKey];
+        if(sx2!=null&&sy2!=null) trail.push({xv:sx2,yv:sy2,date:s.test_date});
+      });
+      trail.reverse();
+    }
+    points.push({id:a.id,name:a.name,ini,xv,yv,isCurrent,trail});
+  });
+
+  const W=580,H=460,ML=56,MR=24,MT=24,MB=56;
+  const CW=W-ML-MR, CH=H-MT-MB;
+
+  const xPad=(xNorm.max-xNorm.min)*0.7, yPad=(yNorm.max-yNorm.min)*1.0;
+  let xMin=Math.max(0,xNorm.min-xPad), xMax=xNorm.max+xPad;
+  let yMin=Math.max(0,yNorm.min-yPad), yMax=yNorm.max+yPad;
+
+  if(points.length){
+    const aX=points.map(p=>p.xv), aY=points.map(p=>p.yv);
+    const xP=(xMax-xMin)*0.12, yP=(yMax-yMin)*0.12;
+    xMin=Math.min(xMin,Math.min(...aX)-xP); xMax=Math.max(xMax,Math.max(...aX)+xP);
+    yMin=Math.min(yMin,Math.min(...aY)-yP); yMax=Math.max(yMax,Math.max(...aY)+yP);
+  }
+
+  const sx = v => ML+(v-xMin)/(xMax-xMin)*CW;
+  // Invert Y for lb=true metrics (lower val = higher on chart = better)
+  const sy = yLb
+    ? v => MT+(v-yMin)/(yMax-yMin)*CH
+    : v => MT+CH-(v-yMin)/(yMax-yMin)*CH;
+
+  const xDiv=(xNorm.min+xNorm.max)/2, yDiv=(yNorm.min+yNorm.max)/2;
+  const xDivPx=sx(xDiv), yDivPx=sy(yDiv);
+
+  let s=`<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-height:440px;font-family:-apple-system,BlinkMacSystemFont,sans-serif">`;
+
+  // Quadrant backgrounds (TL=amber, TR=green, BL=red, BR=blue)
+  [[ML,MT,xDivPx-ML,yDivPx-MT,'#fff8e1'],[xDivPx,MT,W-MR-xDivPx,yDivPx-MT,'#f0fdf4'],
+   [ML,yDivPx,xDivPx-ML,H-MB-yDivPx,'#fef2f2'],[xDivPx,yDivPx,W-MR-xDivPx,H-MB-yDivPx,'#eff6ff']]
+    .forEach(([x,y,w,h,fill])=>{s+=`<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${fill}" opacity="0.75"/>`;});
+
+  // Norm band overlays
+  s+=`<rect x="${sx(xNorm.min)}" y="${MT}" width="${sx(xNorm.max)-sx(xNorm.min)}" height="${CH}" fill="rgba(26,86,219,0.04)"/>`;
+  const yNormTop=sy(yLb?yNorm.min:yNorm.max), yNormBot=sy(yLb?yNorm.max:yNorm.min);
+  s+=`<rect x="${ML}" y="${yNormTop}" width="${CW}" height="${yNormBot-yNormTop}" fill="rgba(26,86,219,0.04)"/>`;
+
+  // Norm boundary dashes
+  [sx(xNorm.min),sx(xNorm.max)].forEach(px=>{s+=`<line x1="${px}" y1="${MT}" x2="${px}" y2="${H-MB}" stroke="rgba(26,86,219,0.2)" stroke-width="1" stroke-dasharray="3,3"/>`;});
+  [sy(yLb?yNorm.min:yNorm.max),sy(yLb?yNorm.max:yNorm.min)].forEach(py=>{s+=`<line x1="${ML}" y1="${py}" x2="${W-MR}" y2="${py}" stroke="rgba(26,86,219,0.2)" stroke-width="1" stroke-dasharray="3,3"/>`;});
+
+  // Main dividers
+  s+=`<line x1="${xDivPx}" y1="${MT}" x2="${xDivPx}" y2="${H-MB}" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="6,3"/>`;
+  s+=`<line x1="${ML}" y1="${yDivPx}" x2="${W-MR}" y2="${yDivPx}" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="6,3"/>`;
+
+  // Border
+  s+=`<rect x="${ML}" y="${MT}" width="${CW}" height="${CH}" fill="none" stroke="#e4e6ea" stroke-width="1"/>`;
+
+  // Quadrant labels — TL, TR, BL, BR
+  [
+    [ql.tl[0],ql.tl[1], ML+8,   MT+16,  'start'],
+    [ql.tr[0],ql.tr[1], W-MR-8, MT+16,  'end'  ],
+    [ql.bl[0],ql.bl[1], ML+8,   H-MB-8, 'start'],
+    [ql.br[0],ql.br[1], W-MR-8, H-MB-8, 'end'  ],
+  ].forEach(([title,sub,x,y,anchor])=>{
+    s+=`<text x="${x}" y="${y}"    font-size="10" font-weight="600" fill="#64748b" text-anchor="${anchor}">${title}</text>`;
+    s+=`<text x="${x}" y="${y+13}" font-size="9"  fill="#94a3b8"   text-anchor="${anchor}">${sub}</text>`;
+  });
+
+  // Axis ticks
+  for(let i=0;i<=5;i++){
+    const vx=xMin+(xMax-xMin)*i/5, px=sx(vx);
+    s+=`<line x1="${px}" y1="${H-MB}" x2="${px}" y2="${H-MB+4}" stroke="#94a3b8" stroke-width="1"/>`;
+    s+=`<text x="${px}" y="${H-MB+15}" font-size="9" text-anchor="middle" fill="#7a8290">${vx.toFixed(1)}</text>`;
+    const vy=yMin+(yMax-yMin)*i/5, py=sy(vy);
+    s+=`<line x1="${ML-4}" y1="${py}" x2="${ML}" y2="${py}" stroke="#94a3b8" stroke-width="1"/>`;
+    s+=`<text x="${ML-7}" y="${py+3}" font-size="9" text-anchor="end" fill="#7a8290">${vy.toFixed(1)}</text>`;
+  }
+
+  // Axis labels (Y label notes inversion for lb metrics)
+  const yAxisLabel = yLb ? `${yNorm.label} (${yNorm.u}) ← lower=better` : `${yNorm.label} (${yNorm.u})`;
+  s+=`<text x="${ML+CW/2}" y="${H-6}" font-size="11" text-anchor="middle" fill="#444c56" font-weight="500">${xNorm.label} (${xNorm.u})</text>`;
+  s+=`<text x="11" y="${MT+CH/2}" font-size="11" text-anchor="middle" fill="#444c56" font-weight="500" transform="rotate(-90,11,${MT+CH/2})">${yAxisLabel}</text>`;
+
+  // Anonymous other athletes
+  points.filter(p=>!p.isCurrent).forEach(p=>{
+    s+=`<circle cx="${sx(p.xv)}" cy="${sy(p.yv)}" r="6" fill="#cbd5e1" stroke="#94a3b8" stroke-width="1" opacity="0.65"/>`;
+  });
+
+  // Selected athlete
+  const cur=points.find(p=>p.isCurrent);
+  if(cur){
+    // Trail
+    if(cur.trail.length>0){
+      const allT=[...cur.trail,{xv:cur.xv,yv:cur.yv}];
+      s+=`<path d="${allT.map((p,i)=>`${i===0?'M':'L'}${sx(p.xv).toFixed(1)},${sy(p.yv).toFixed(1)}`).join(' ')}" fill="none" stroke="#1a56db" stroke-width="1.5" stroke-dasharray="4,3" opacity="0.35"/>`;
+      cur.trail.forEach(p=>{s+=`<circle cx="${sx(p.xv)}" cy="${sy(p.yv)}" r="5" fill="#bfdbfe" stroke="#1a56db" stroke-width="1.5" opacity="0.55"/>`;});
+    }
+    const dotCol=sidebarCol(athleteMap[selectedId]?.sessions[0]);
+    const px=sx(cur.xv), py=sy(cur.yv);
+    s+=`<circle cx="${px}" cy="${py}" r="12" fill="${dotCol}" stroke="#fff" stroke-width="2.5"/>`;
+    s+=`<text x="${px}" y="${py+4}" font-size="9" text-anchor="middle" fill="#fff" font-weight="700">${cur.ini}</text>`;
+    const lx=px+16>W-MR-90?px-16:px+16, la=px+16>W-MR-90?'end':'start', ly=py-10<MT+20?py+22:py-10;
+    s+=`<text x="${lx}" y="${ly}"    font-size="11" text-anchor="${la}" fill="#0d1117" font-weight="600">${cur.name}</text>`;
+    s+=`<text x="${lx}" y="${ly+13}" font-size="10" text-anchor="${la}" fill="#7a8290">${cur.xv}${xNorm.u} · ${cur.yv}${yNorm.u}</text>`;
+  } else {
+    s+=`<text x="${ML+CW/2}" y="${MT+CH/2-8}" font-size="13" text-anchor="middle" fill="#7a8290">No data for this athlete on selected axes.</text>`;
+  }
+
+  s+='</svg>';
+  container.innerHTML=s;
+}
+</script>
+</body>
+</html>
