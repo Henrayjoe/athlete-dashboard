@@ -175,7 +175,7 @@
     </div>
     <div class="sb-search"><input id="sq" type="text" placeholder="Search athlete…" oninput="filterAthletes(this.value)"></div>
     <div class="alist" id="alist"><div style="padding:16px;font-size:12px;color:#7a8290;text-align:center">Connect Google Sheet to load athletes</div></div>
-    <div class="settings-bar"><span id="sheetStatus">No sheet connected</span><span style="font-size:9px;color:#c8ccd2;margin:0 6px" title="Build version">BUILD 17</span><button class="btn-sm" onclick="showConfig()">⚙ Settings</button></div>
+    <div class="settings-bar"><span id="sheetStatus">No sheet connected</span><span style="font-size:9px;color:#c8ccd2;margin:0 6px" title="Build version">BUILD 18</span><button class="btn-sm" onclick="showConfig()">⚙ Settings</button></div>
   </aside>
   <main class="main" id="main"></main>
 </div>
@@ -203,7 +203,14 @@ const NORMS = {
   slbj_LSI:      { min:90,   max:100,  u:'%',         lb:false, label:'SL broad jump LSI',       cat:'jump', injuryFloor:90, source:'JOSPT scoping review 2024 (27 studies, soccer)' },
   // Triple hop (single-leg): collegiate male soccer/basketball average 632±72cm (Myers et al. 2014).
   // No professional-specific dataset found — moderate confidence, not pro-validated.
-  triple_hop:    { min:560,  max:704,  u:'cm',        lb:false, label:'Triple hop (SL)',         cat:'jump', note:'Collegiate data, not pro-specific', source:'Myers et al. 2014 (collegiate soccer/basketball)' },
+  triple_hop:    { min:560,  max:704,  u:'cm',        lb:false, label:'Triple hop (SL) — best leg', cat:'jump', note:'Collegiate data, not pro-specific', source:'Myers et al. 2014 (collegiate soccer/basketball)' },
+  // L/R legs tracked individually — no separate norm, benchmarked against the same band
+  triple_hop_L:  { min:560,  max:704,  u:'cm',        lb:false, label:'Triple hop — L',          cat:'jump', source:'Myers et al. 2014 (collegiate soccer/basketball)' },
+  triple_hop_R:  { min:560,  max:704,  u:'cm',        lb:false, label:'Triple hop — R',          cat:'jump', source:'Myers et al. 2014 (collegiate soccer/basketball)' },
+  // LSI: healthy athletes average 98.8% (SD 4.6); post-ACLR collegiate ~94.4%. <90% = flag.
+  triple_hop_LSI:{ min:90,   max:100,  u:'%',         lb:false, label:'Triple hop LSI',          cat:'jump', injuryFloor:90, source:'Healthy mean 98.8% (Pilot ref values 2018); post-ACLR ~94.4% (IJSPT)' },
+  // Height-normalised — removes the advantage taller athletes have on absolute distance
+  triple_hop_norm:{min:3.2,  max:4.0,  u:'×height',   lb:false, label:'Triple hop ÷ height',     cat:'jump', note:'Distance ÷ body height', source:'Normalisation method per Compound Hop Index, JCM 2022 (first-league soccer)' },
   cmj:           { min:35,   max:55,   u:'cm',        lb:false, label:'CMJ height',              cat:'jump', source:'Badby et al. 2025; VALD ForceDecks normative data' },
   sj:            { min:30,   max:50,   u:'cm',        lb:false, label:'Squat jump (SJ)',         cat:'jump', source:'Professional football literature' },
   // Flight-time derived jump heights (force plate / jump mat). Same benchmark band as impulse-derived height.
@@ -253,6 +260,7 @@ const QUAD_X_AXES = [
   { key:'cmj_con_force',label:'CMJ concentric force (N/kg)' },
   { key:'cmj',          label:'CMJ height (cm)'           },
   { key:'sj',           label:'Squat jump height (cm)'    },
+  { key:'triple_hop',   label:'Triple hop — best leg (cm)' },
   { key:'cmj_flight',   label:'CMJ flight height (cm)', fb:'cmj' },
 ];
 const QUAD_Y_AXES = [
@@ -328,7 +336,7 @@ const calcDjRsi   = (cm,ms) => { const h=pf(cm),t=pf(ms); return(h&&t)?+((h/100)
 // EUR = CMJ ÷ SJ (jump height)
 const calcEur     = (cmj,sj) => { const c=pf(cmj),s=pf(sj); return(c&&s)?+(c/s).toFixed(2):null; };
 
-function deriveSession(row, bw_kg, age_yr) {
+function deriveSession(row, bw_kg, age_yr, height_cm) {
   // Per-session bodyweight takes priority; falls back to athlete's profile weight
   const bw = pf(row.weight_kg) || pf(bw_kg);
   const d  = {};
@@ -339,7 +347,17 @@ function deriveSession(row, bw_kg, age_yr) {
   d.slbj_L      = pf(row.slbj_L_cm);
   d.slbj_R      = pf(row.slbj_R_cm);
   d.slbj_LSI    = calcLSI(row.slbj_L_cm, row.slbj_R_cm);
-  d.triple_hop  = pf(row.triple_hop_cm);
+  // Triple hop — accepts L/R split, or a single legacy triple_hop_cm value
+  d.triple_hop_L   = pf(row.triple_hop_L_cm);
+  d.triple_hop_R   = pf(row.triple_hop_R_cm);
+  d.triple_hop_LSI = calcLSI(row.triple_hop_L_cm, row.triple_hop_R_cm);
+  // Headline value = best leg if L/R given, else the legacy single column
+  d.triple_hop = (d.triple_hop_L!=null||d.triple_hop_R!=null)
+    ? Math.max(d.triple_hop_L||0, d.triple_hop_R||0) || null
+    : pf(row.triple_hop_cm);
+  // Height-normalised (distance cm ÷ height cm)
+  const _ht = pf(height_cm);
+  d.triple_hop_norm = (d.triple_hop && _ht) ? +(d.triple_hop/_ht).toFixed(2) : null;
   d.cmj         = pf(row.cmj_cm);
   d.sj          = pf(row.sj_cm);
   d.dj          = pf(row.dj_cm);
@@ -561,7 +579,7 @@ async function loadData() {
       athleteMap[a.id]={...a, age:computedAge, sessions:[]};
     });
     results.forEach(r=>{
-      if(athleteMap[r.athlete_id]) athleteMap[r.athlete_id].sessions.push(deriveSession(r,athleteMap[r.athlete_id].weight_kg,athleteMap[r.athlete_id].age));
+      if(athleteMap[r.athlete_id]) athleteMap[r.athlete_id].sessions.push(deriveSession(r,athleteMap[r.athlete_id].weight_kg,athleteMap[r.athlete_id].age,athleteMap[r.athlete_id].height_cm));
     });
     Object.values(athleteMap).forEach(a=>a.sessions.sort((x,y)=>new Date(y.test_date)-new Date(x.test_date)));
     document.getElementById('sheetStatus').textContent=`${athletes.length} athletes · ${results.length} sessions`;
@@ -660,7 +678,7 @@ function renderMain(){
   const ini=a.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
   const inj=a.injury_hx?`<span class="ptag inj">⚠ Injury hx</span><span class="ptag" style="font-size:10px">${a.injury_hx}</span>`:'';
 
-  const jumpKeys     = ['broad_jump','slbj_LSI','triple_hop','cmj','cmj_flight','sj','sj_flight','eur','cmj_mrsi','cmj_con_force','dj','dj_rsi','dsi'];
+  const jumpKeys     = ['broad_jump','slbj_LSI','triple_hop','triple_hop_LSI','cmj','cmj_flight','sj','sj_flight','eur','cmj_mrsi','cmj_con_force','dj','dj_rsi','dsi'];
   const aeroKeys     = ['mas','vo2max','yoyo_ir2','bronco'];
   const strengthKeys = ['sq_1rm_bw','tb_1rm_bw','bp_1rm_bw','imtp'];
   const speedKeys    = ['sprint10','sprint20','max_vel'];
@@ -709,6 +727,10 @@ function renderMain(){
               ${mRow('slbj_R',      d.slbj_R,      pv?.slbj_R)}
               ${d.slbj_LSI!=null ? mRow('slbj_LSI', d.slbj_LSI, pv?.slbj_LSI, null, true) : ''}
               ${mRow('triple_hop',  d.triple_hop,  prevVal('triple_hop'))}
+              ${d.triple_hop_L!=null ? mRow('triple_hop_L', d.triple_hop_L, prevVal('triple_hop_L')) : ''}
+              ${d.triple_hop_R!=null ? mRow('triple_hop_R', d.triple_hop_R, prevVal('triple_hop_R')) : ''}
+              ${d.triple_hop_LSI!=null ? mRow('triple_hop_LSI', d.triple_hop_LSI, prevVal('triple_hop_LSI'), null, true) : ''}
+              ${d.triple_hop_norm!=null ? mRow('triple_hop_norm', d.triple_hop_norm, prevVal('triple_hop_norm'), null, true) : ''}
               ${mRow('cmj',         d.cmj,         prevVal('cmj'))}
               ${mRow('sj',          d.sj,          prevVal('sj'))}
               ${d.cmj_flight!=null ? mRow('cmj_flight', d.cmj_flight, prevVal('cmj_flight')) : ''}
@@ -937,7 +959,8 @@ function drawCharts(){
 
   const charts=[
     {id:'ch-broadjump',  title:'Broad jump',  u:'cm', nk:'broad_jump',  ds:[ser('broad_jump',CC[0])]},
-    {id:'ch-triplehop',  title:'Triple hop',  u:'cm', nk:'triple_hop',  ds:[ser('triple_hop',CC[2])]},
+    {id:'ch-thlr', title:`Triple Hop — L vs R${ld.triple_hop_LSI!=null?' (LSI: '+ld.triple_hop_LSI+'%)':''}`, u:'cm', nk:null, nMin:null, nMax:null, ds:[ser('triple_hop_L',CC[0]),ser('triple_hop_R',CC[1],[5,3])]},
+    {id:'ch-triplehop',  title:'Triple hop (best leg)',  u:'cm', nk:'triple_hop',  ds:[ser('triple_hop',CC[2])]},
     {id:'ch-lsi', title:`SL Broad Jump — L vs R${ld.slbj_LSI!=null?' (LSI: '+ld.slbj_LSI+'%)':''}`, u:'cm', nk:null, nMin:null, nMax:null, ds:[ser('slbj_L',CC[0]),ser('slbj_R',CC[1],[5,3])]},
     {id:'ch-cmj',    title:'CMJ / SJ heights',        u:'cm',   nk:'cmj',         ds:[ser('cmj',CC[0]),ser('sj',CC[1],[5,3])]},
     {id:'ch-conforce', title:'CMJ concentric force',   u:'N/kg', nk:'cmj_con_force', ds:[ser('cmj_con_force',CC[5])]},
@@ -1464,6 +1487,9 @@ function _buildAndOpenPrintReport(a, chartImages, quadrantSVG) {
     ld.slbj_R!=null?{val:ld.slbj_R,prevVal:prevVal('slbj_R'),label:'SL broad jump — R',u:'cm',score:null,noNorm:true,lb:false,sub:'',date:dateSrc['slbj_R']||null}:{val:null},
     lsi!=null?{val:lsi,prevVal:(()=>{const pS=prevVal('slbj_L'),pR=prevVal('slbj_R');return(pS!=null&&pR!=null)?+(Math.min(pS,pR)/Math.max(pS,pR)*100).toFixed(1):null;})(),label:'SL broad jump LSI'+(lsiFlag?' ⚠':''),u:'%',score:lsiFlag?null:bs(lsi,'slbj_LSI'),noNorm:false,lb:false,nMin:90,nMax:100,sub:'',auto:true,date:dateSrc['slbj_LSI']||null}:{val:null},
     mk('triple_hop',ld.triple_hop,prevVal('triple_hop')),
+    mk('triple_hop_L',ld.triple_hop_L,prevVal('triple_hop_L')),
+    mk('triple_hop_R',ld.triple_hop_R,prevVal('triple_hop_R')),
+    ld.triple_hop_LSI!=null?{...mk('triple_hop_LSI',ld.triple_hop_LSI,prevVal('triple_hop_LSI')),auto:true}:{val:null},
     mk('cmj',ld.cmj,prevVal('cmj')),
     mk('sj',ld.sj,prevVal('sj')),
     mk('cmj_flight',ld.cmj_flight,prevVal('cmj_flight')),
@@ -1620,7 +1646,10 @@ function renderHistory() {
     { key:'slbj_L',     label:'SL jump L',    u:'cm',  cat:'Jump' },
     { key:'slbj_R',     label:'SL jump R',    u:'cm',  cat:'Jump' },
     { key:'slbj_LSI',   label:'LSI',          u:'%',   cat:'Jump' },
-    { key:'triple_hop', label:'Triple hop',   u:'cm',  cat:'Jump' },
+    { key:'triple_hop',     label:'Triple hop',   u:'cm', cat:'Jump' },
+    { key:'triple_hop_L',   label:'T-hop L',      u:'cm', cat:'Jump' },
+    { key:'triple_hop_R',   label:'T-hop R',      u:'cm', cat:'Jump' },
+    { key:'triple_hop_LSI', label:'T-hop LSI',    u:'%',  cat:'Jump' },
     { key:'cmj',        label:'CMJ',          u:'cm',  cat:'Jump' },
     { key:'sj',            label:'SJ',            u:'cm',   cat:'Jump' },
     { key:'cmj_flight',    label:'CMJ flight',    u:'cm',   cat:'Jump' },
@@ -1699,7 +1728,7 @@ function renderRadar() {
   if (!a || !el) return;
   const ld = buildLatestAcrossSessions(a.sessions);
   const AXES = [
-    { label:'Jump / Power', keys:['broad_jump','triple_hop','cmj','cmj_flight','sj','sj_flight','eur','cmj_mrsi','cmj_con_force','dj','dj_rsi','dsi'] },
+    { label:'Jump / Power', keys:['broad_jump','triple_hop','triple_hop_LSI','cmj','cmj_flight','sj','sj_flight','eur','cmj_mrsi','cmj_con_force','dj','dj_rsi','dsi'] },
     { label:'Speed',        keys:['sprint10','sprint20','max_vel'] },
     { label:'Strength',     keys:['sq_1rm_bw','tb_1rm_bw','bp_1rm_bw','imtp'] },
     { label:'Aerobic',      keys:['mas','vo2max','yoyo_ir2','beep_level'] },
