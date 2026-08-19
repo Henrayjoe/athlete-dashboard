@@ -175,7 +175,7 @@
     </div>
     <div class="sb-search"><input id="sq" type="text" placeholder="Search athlete…" oninput="filterAthletes(this.value)"></div>
     <div class="alist" id="alist"><div style="padding:16px;font-size:12px;color:#7a8290;text-align:center">Connect Google Sheet to load athletes</div></div>
-    <div class="settings-bar"><span id="sheetStatus">No sheet connected</span><span style="font-size:9px;color:#c8ccd2;margin:0 6px" title="Build version">BUILD 18</span><button class="btn-sm" onclick="showConfig()">⚙ Settings</button></div>
+    <div class="settings-bar"><span id="sheetStatus">No sheet connected</span><span style="font-size:9px;color:#c8ccd2;margin:0 6px" title="Build version">BUILD 19</span><button class="btn-sm" onclick="showConfig()">⚙ Settings</button></div>
   </aside>
   <main class="main" id="main"></main>
 </div>
@@ -646,6 +646,7 @@ function switchTab(t){
   if(t==='quadrant') setTimeout(()=>drawQuadrant(currentXAxis,currentYAxis),60);
   if(t==='history')  setTimeout(renderHistory,60);
   if(t==='radar')    setTimeout(renderRadar,60);
+  if(t==='asr')      setTimeout(renderASR,60);
 }
 
 // ─── MAIN RENDER ──────────────────────────────────────────────────────────────
@@ -713,6 +714,7 @@ function renderMain(){
         <div class="tab" data-t="trends"   onclick="switchTab('trends')">Trend Charts</div>
         <div class="tab" data-t="quadrant" onclick="switchTab('quadrant')">Quadrants</div>
         <div class="tab" data-t="radar"    onclick="switchTab('radar')">Athletic Profile</div>
+        <div class="tab" data-t="asr"      onclick="switchTab('asr')">Speed Reserve</div>
         <div class="tab" data-t="history"  onclick="switchTab('history')">Test History</div>
         <div class="tab" data-t="feedback" onclick="switchTab('feedback')">Athlete Feedback</div>
       </div>
@@ -838,6 +840,7 @@ function renderMain(){
         </div>
       </div>
       <div class="tc" data-t="radar"><div id="radarContent" style="padding:18px 20px;display:flex;flex-direction:column;align-items:center;gap:12px"></div></div>
+      <div class="tc" data-t="asr"><div id="asrContent" style="padding:18px 20px"></div></div>
       <div class="tc" data-t="history"><div id="historyContent" style="overflow-x:auto;padding:18px 20px"></div></div>
       <div class="tc" data-t="feedback"><div id="feedbackContent"><div class="feedback-empty"><h3>Athlete Feedback</h3><p>Generate a personalised coach report and athlete message based on the latest test results.</p><button class="btn" onclick="generateFeedback()">Generate Feedback</button></div></div></div>
       <div class="tc" data-t="quadrant">
@@ -1785,6 +1788,176 @@ function renderRadar() {
   </div>`;
   const pills=AXES.map((ax,i)=>{const sc=scores[i],col=scCol(sc);return`<span style="display:inline-flex;align-items:center;gap:4px;font-size:10px;color:${col};font-weight:600"><span style="width:8px;height:8px;border-radius:50%;background:${col};display:inline-block"></span>${ax.label}: ${sc!==null?SL[Math.round(sc)]:'No data'}</span>`;}).join('<span style="color:#e4e6ea;margin:0 2px">·</span>');
   el.innerHTML=`<div style="display:flex;flex-direction:column;align-items:center;gap:8px;width:100%">${svg}${legend}<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:2px">${pills}</div></div>`;
+}
+
+// ─── ANAEROBIC SPEED RESERVE ────────────────────────────────────────────────
+// ASR = MSS - MAS ; SRR = MSS / MAS
+// Profile: Speed >=1.90 | Hybrid 1.70-1.90 | Endurance <1.70
+function resolveMAS(ld) {
+  // Priority: measured MAS from 5-min TT, then back-calculated from VO2max,
+  // then average speed of a distance TT. Returns {val, src} or null.
+  if (ld.mas != null)        return { val: ld.mas,      src: '5-min time trial' };
+  if (ld.vo2max != null)     return { val: +((ld.vo2max/3.5)/3.6).toFixed(2), src: 'estimated from VO\u2082max' };
+  if (ld.tt_speed != null)   return { val: ld.tt_speed, src: 'distance TT average speed' };
+  return null;
+}
+
+function classifySRR(srr) {
+  if (srr >= 1.90) return {
+    label:'Speed', col:'#dc2626', bg:'#fef2f2',
+    desc:'Fast-twitch dominant with high power output, but fatigues quickly.',
+    rx:'Prioritise short, intense intervals with full recovery. Protect against high-volume aerobic work that blunts speed qualities.'
+  };
+  if (srr >= 1.70) return {
+    label:'Hybrid', col:'#1a56db', bg:'#eff6ff',
+    desc:'Balanced fibre composition with versatile training tolerance.',
+    rx:'Responsive to both short and long interval formats. Rotate stimulus types across the block rather than specialising.'
+  };
+  return {
+    label:'Endurance', col:'#16a34a', bg:'#f0fdf4',
+    desc:'Slow-twitch dominant with high volume tolerance.',
+    rx:'Focus on longer intervals and sustained efforts. Ensure maximal velocity exposure is retained so top-end speed does not erode.'
+  };
+}
+
+function renderASR() {
+  const a = athleteMap[selectedId];
+  const el = document.getElementById('asrContent');
+  if (!a || !el) return;
+  if (!a.sessions.length) { el.innerHTML='<p style="color:var(--text-muted)">No sessions recorded.</p>'; return; }
+
+  const ld  = buildLatestAcrossSessions(a.sessions);
+  const mas = resolveMAS(ld);
+  const mss = ld.max_vel;
+
+  if (!mas || mss == null) {
+    const missing = [];
+    if (!mas)        missing.push('an aerobic test (5-min TT, distance TT, Yo-Yo, or beep test)');
+    if (mss == null) missing.push('max velocity (20m fly)');
+    el.innerHTML = `<div style="padding:28px 20px;text-align:center;background:var(--surface-alt);border:1px solid var(--border);border-radius:8px">
+      <h3 style="font-size:15px;font-weight:600;color:var(--text-secondary);margin-bottom:8px">Not enough data</h3>
+      <p style="font-size:13px;color:var(--text-muted);max-width:420px;margin:0 auto;line-height:1.6">
+        Anaerobic Speed Reserve needs both a maximal aerobic speed and a maximal sprint speed.<br><br>
+        Missing: <strong>${missing.join(' and ')}</strong>.</p></div>`;
+    return;
+  }
+
+  const MAS = mas.val, MSS = mss;
+  const ASR = +(MSS - MAS).toFixed(2);
+  const SRR = +(MSS / MAS).toFixed(2);
+  const cls = classifySRR(SRR);
+  const kmh = v => (v*3.6).toFixed(1);
+
+  // ── Bar geometry ──
+  const W=640, H=210, ML=20, MR=20, BY=74, BH=52;
+  const CW=W-ML-MR;
+  const scaleMax = MSS*1.08;
+  const px = v => ML + (v/scaleMax)*CW;
+  const masW = px(MAS)-ML, asrW = px(MSS)-px(MAS);
+
+  let s=`<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:640px;font-family:-apple-system,BlinkMacSystemFont,sans-serif">`;
+  // Track
+  s+=`<rect x="${ML}" y="${BY}" width="${CW}" height="${BH}" fill="#f1f3f5" rx="4"/>`;
+  // MAS segment
+  s+=`<rect x="${ML}" y="${BY}" width="${masW}" height="${BH}" fill="#1a56db" rx="4"/>`;
+  s+=`<rect x="${ML+masW-6}" y="${BY}" width="6" height="${BH}" fill="#1a56db"/>`;
+  // ASR segment
+  s+=`<rect x="${px(MAS)}" y="${BY}" width="${asrW}" height="${BH}" fill="#f59e0b" opacity="0.9"/>`;
+  s+=`<rect x="${px(MAS)}" y="${BY}" width="6" height="${BH}" fill="#f59e0b"/>`;
+
+  // In-bar labels
+  if (masW > 90) {
+    s+=`<text x="${ML+masW/2}" y="${BY+21}" font-size="10.5" font-weight="700" fill="#fff" text-anchor="middle">MAS (aerobic)</text>`;
+    s+=`<text x="${ML+masW/2}" y="${BY+38}" font-size="13" font-weight="700" fill="#fff" text-anchor="middle">${MAS} m/s</text>`;
+  }
+  if (asrW > 80) {
+    s+=`<text x="${px(MAS)+asrW/2}" y="${BY+21}" font-size="10.5" font-weight="700" fill="#7c4a03" text-anchor="middle">ASR (anaerobic)</text>`;
+    s+=`<text x="${px(MAS)+asrW/2}" y="${BY+38}" font-size="13" font-weight="700" fill="#7c4a03" text-anchor="middle">${ASR} m/s</text>`;
+  }
+
+  // Boundary markers
+  s+=`<line x1="${px(MAS)}" y1="${BY-10}" x2="${px(MAS)}" y2="${BY+BH+10}" stroke="#1a56db" stroke-width="1.5" stroke-dasharray="3,2"/>`;
+  s+=`<line x1="${px(MSS)}" y1="${BY-10}" x2="${px(MSS)}" y2="${BY+BH+10}" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="3,2"/>`;
+
+  // Top labels
+  s+=`<text x="${ML}" y="${BY-16}" font-size="10" fill="#94a3b8">0</text>`;
+  s+=`<text x="${px(MAS)}" y="${BY-16}" font-size="10.5" font-weight="700" fill="#1a56db" text-anchor="middle">MAS ${MAS}</text>`;
+  s+=`<text x="${px(MSS)}" y="${BY-16}" font-size="10.5" font-weight="700" fill="#d97706" text-anchor="${px(MSS)>W-60?'end':'middle'}">MSS ${MSS}</text>`;
+
+  // Bottom axis in km/h
+  s+=`<text x="${ML}" y="${BY+BH+26}" font-size="9.5" fill="#94a3b8">0 km/h</text>`;
+  s+=`<text x="${px(MAS)}" y="${BY+BH+26}" font-size="9.5" fill="#7a8290" text-anchor="middle">${kmh(MAS)} km/h</text>`;
+  s+=`<text x="${px(MSS)}" y="${BY+BH+26}" font-size="9.5" fill="#7a8290" text-anchor="${px(MSS)>W-60?'end':'middle'}">${kmh(MSS)} km/h</text>`;
+  s+=`<text x="${ML+CW/2}" y="${H-6}" font-size="10" fill="#94a3b8" text-anchor="middle">Anaerobic Speed Reserve = the usable speed band above aerobic capacity</text>`;
+  s+='</svg>';
+
+  // ── Metric cards ──
+  const card = (lbl,val,unit,sub,col) => `
+    <div style="flex:1;min-width:120px;border:1px solid var(--border);border-left:3px solid ${col};border-radius:8px;padding:11px 13px;background:var(--surface)">
+      <div style="font-size:9px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:4px">${lbl}</div>
+      <div style="font-size:19px;font-weight:700;color:${col};line-height:1.1">${val}<span style="font-size:11px;font-weight:400;color:var(--text-muted);margin-left:3px">${unit}</span></div>
+      ${sub?`<div style="font-size:9.5px;color:var(--text-muted);margin-top:3px">${sub}</div>`:''}
+    </div>`;
+
+  // ── SRR scale bar ──
+  const srrMin=1.4, srrMax=2.3;
+  const srrPct = Math.max(0,Math.min(100, ((SRR-srrMin)/(srrMax-srrMin))*100));
+  const bandPct = v => ((v-srrMin)/(srrMax-srrMin))*100;
+  const srrBar = `
+    <div style="margin-top:6px">
+      <div style="position:relative;height:26px;border-radius:5px;overflow:hidden;display:flex;border:1px solid var(--border)">
+        <div style="width:${bandPct(1.70)}%;background:#dcfce7"></div>
+        <div style="width:${bandPct(1.90)-bandPct(1.70)}%;background:#dbeafe"></div>
+        <div style="width:${100-bandPct(1.90)}%;background:#fee2e2"></div>
+      </div>
+      <div style="position:relative;height:0">
+        <div style="position:absolute;left:${srrPct}%;top:-30px;transform:translateX(-50%);width:3px;height:34px;background:#0d1117;border-radius:2px"></div>
+        <div style="position:absolute;left:${srrPct}%;top:8px;transform:translateX(-50%);font-size:11px;font-weight:700;color:#0d1117;white-space:nowrap">${SRR}</div>
+      </div>
+      <div style="display:flex;font-size:9.5px;color:var(--text-muted);margin-top:26px">
+        <div style="width:${bandPct(1.70)}%;text-align:center;color:#16a34a;font-weight:600">Endurance &lt;1.70</div>
+        <div style="width:${bandPct(1.90)-bandPct(1.70)}%;text-align:center;color:#1a56db;font-weight:600">Hybrid 1.70–1.90</div>
+        <div style="width:${100-bandPct(1.90)}%;text-align:center;color:#dc2626;font-weight:600">Speed ≥1.90</div>
+      </div>
+    </div>`;
+
+  el.innerHTML = `
+    <div style="display:flex;flex-direction:column;gap:16px">
+
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+        <div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.07em">Profile</div>
+        <div style="display:inline-flex;align-items:center;gap:7px;background:${cls.bg};border:1px solid ${cls.col};border-radius:20px;padding:5px 14px">
+          <span style="width:9px;height:9px;border-radius:50%;background:${cls.col};display:inline-block"></span>
+          <span style="font-size:14px;font-weight:700;color:${cls.col}">${cls.label}</span>
+        </div>
+        <span style="font-size:12px;color:var(--text-secondary)">${cls.desc}</span>
+      </div>
+
+      <div>${s}</div>
+
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        ${card('MAS','${MAS}'.replace('${MAS}',MAS),'m/s',`${kmh(MAS)} km/h · ${mas.src}`,'#1a56db')}
+        ${card('MSS',MSS,'m/s',`${kmh(MSS)} km/h · 20m fly`,'#d97706')}
+        ${card('ASR',ASR,'m/s',`${kmh(ASR)} km/h reserve`,'#7c3aed')}
+        ${card('SRR',SRR,'',`MSS ÷ MAS`,cls.col)}
+      </div>
+
+      <div>
+        <div style="font-size:9.5px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px">Speed Reserve Ratio</div>
+        ${srrBar}
+      </div>
+
+      <div style="background:${cls.bg};border:1px solid ${cls.col}33;border-left:3px solid ${cls.col};border-radius:0 8px 8px 0;padding:12px 15px">
+        <div style="font-size:9.5px;font-weight:700;color:${cls.col};text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px">Training implication</div>
+        <div style="font-size:12.5px;line-height:1.65;color:var(--text-primary)">${cls.rx}</div>
+      </div>
+
+      <p style="font-size:10.5px;color:var(--text-muted);line-height:1.6;margin-top:2px">
+        SRR classification is sensitive to how MAS is determined — a 5-min time trial typically yields a higher MAS
+        than an incremental protocol, which lowers SRR. MAS here was taken from <strong>${mas.src}</strong>.
+        Compare athletes only when the same aerobic test was used.
+      </p>
+    </div>`;
 }
 
 loadData();
