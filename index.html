@@ -175,7 +175,7 @@
     </div>
     <div class="sb-search"><input id="sq" type="text" placeholder="Search athlete…" oninput="filterAthletes(this.value)"></div>
     <div class="alist" id="alist"><div style="padding:16px;font-size:12px;color:#7a8290;text-align:center">Connect Google Sheet to load athletes</div></div>
-    <div class="settings-bar"><span id="sheetStatus">No sheet connected</span><span style="font-size:9px;color:#c8ccd2;margin:0 6px" title="Build version">BUILD 23</span><button class="btn-sm" onclick="showConfig()">⚙ Settings</button></div>
+    <div class="settings-bar"><span id="sheetStatus">No sheet connected</span><span style="font-size:9px;color:#c8ccd2;margin:0 6px" title="Build version">BUILD 24</span><button class="btn-sm" onclick="showConfig()">⚙ Settings</button></div>
   </aside>
   <main class="main" id="main"></main>
 </div>
@@ -1361,10 +1361,23 @@ function generatePrintReport() {
   // Temporarily show hidden tabs so Chart.js and the quadrant SVG can render
   const trendsEl   = document.querySelector('.tc[data-t="trends"]');
   const quadrantEl = document.querySelector('.tc[data-t="quadrant"]');
+  const radarEl    = document.querySelector('.tc[data-t="radar"]');
   const origT = trendsEl?.style.display;
   const origQ = quadrantEl?.style.display;
+  const origR = radarEl?.style.display;
+  const origRadarMode = radarMode;
   if (trendsEl)   trendsEl.style.display   = 'block';
   if (quadrantEl) quadrantEl.style.display = 'block';
+  if (radarEl)    radarEl.style.display    = 'block';
+  // Render the radar in "all tests" mode for the printout; fall back to domains
+  // if the athlete doesn't have enough scored metrics for a detailed spider.
+  radarMode = 'tests';
+  renderRadar();
+  if (!(document.getElementById('radarContent')?.innerHTML || '').includes('<svg')) {
+    radarMode = 'domains';
+    renderRadar();
+  }
+  const radarModeUsed = radarMode;
   drawCharts();
   drawQuadrant(currentXAxis, currentYAxis);
 
@@ -1384,6 +1397,16 @@ function generatePrintReport() {
       }
     });
 
+    // ── Capture radar SVG ───────────────────────────────────────────────────
+    const rWrap = document.getElementById('radarContent');
+    const rHtml = rWrap?.innerHTML || '';
+    let radarSVG = '';
+    if (rHtml.includes('<svg')) {
+      const st = rHtml.indexOf('<svg');
+      const en = rHtml.indexOf('</svg>', st);
+      if (en > st) radarSVG = rHtml.slice(st, en + 6);
+    }
+
     // ── Capture quadrant SVG ────────────────────────────────────────────────
     const qContainer = document.getElementById('quadrantContainer');
     const quadrantSVG = (qContainer?.innerHTML || '').includes('<svg') ? qContainer.innerHTML : '';
@@ -1391,13 +1414,15 @@ function generatePrintReport() {
     // Restore tabs to original state
     if (trendsEl)   trendsEl.style.display   = origT   || '';
     if (quadrantEl) quadrantEl.style.display = origQ   || '';
+    if (radarEl)    radarEl.style.display    = origR   || '';
+    radarMode = origRadarMode; renderRadar();
 
     // ── Build the print report ──────────────────────────────────────────────
-    _buildAndOpenPrintReport(a, chartImages, quadrantSVG);
+    _buildAndOpenPrintReport(a, chartImages, quadrantSVG, radarSVG, radarModeUsed);
   }, 350);
 }
 
-function _buildAndOpenPrintReport(a, chartImages, quadrantSVG) {
+function _buildAndOpenPrintReport(a, chartImages, quadrantSVG, radarSVG, radarModeUsed) {
   const ld    = buildLatestAcrossSessions(a.sessions);
   // prevVal(key): find most recent previous session with a value for this key
   const prevVal = k => { for(let i=1;i<a.sessions.length;i++){ if(a.sessions[i][k]!=null) return a.sessions[i][k]; } return null; };
@@ -1573,6 +1598,22 @@ function _buildAndOpenPrintReport(a, chartImages, quadrantSVG) {
       <p style="font-size:9px;color:#aaa;text-align:center;margin-top:6px">Dividers at normative midpoint · Gray dots = other athletes (anonymous)</p>
     </div>` : '';
 
+  // ── Athletic profile spider — only if an SVG was captured ──
+  const radarHtml = (radarSVG && radarSVG.includes('<svg')) ? `
+    <div style="page-break-before:always"></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;padding-bottom:10px;border-bottom:2px solid #111;margin-bottom:14px">
+      ${logoSrc?`<img src="${logoSrc}" style="height:22px;width:auto" alt="FootballFit">`:''}
+      <div style="font-size:14px;font-weight:700;color:#111">${a.name} — Athletic Profile</div>
+      <div style="font-size:10px;color:#aaa">${today}</div>
+    </div>
+    <div style="text-align:center;page-break-inside:avoid">
+      <div style="max-width:430px;margin:0 auto">${radarSVG}</div>
+      <p style="font-size:9px;color:#aaa;margin-top:4px">
+        ${radarModeUsed==='tests' ? 'One axis per recorded test' : 'Performance domains'} ·
+        Dashed ring = professional benchmark · Rings 1–4 = benchmark score
+      </p>
+    </div>` : '';
+
   // ── Speed Reserve — only rendered when both MAS and MSS are available ──
   const _mas = resolveMAS(ld);
   const _mss = ld.max_vel;
@@ -1691,6 +1732,7 @@ function _buildAndOpenPrintReport(a, chartImages, quadrantSVG) {
   ${section('Strength — Lifts (×BW)',strM)}
   ${section('Speed (Vuemotion)',spdM)}
 
+  ${radarHtml}
   ${chartsHtml}
   ${quadrantHtml}
   ${speedReserveHtml}
