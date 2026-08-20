@@ -175,7 +175,7 @@
     </div>
     <div class="sb-search"><input id="sq" type="text" placeholder="Search athlete…" oninput="filterAthletes(this.value)"></div>
     <div class="alist" id="alist"><div style="padding:16px;font-size:12px;color:#7a8290;text-align:center">Connect Google Sheet to load athletes</div></div>
-    <div class="settings-bar"><span id="sheetStatus">No sheet connected</span><span style="font-size:9px;color:#c8ccd2;margin:0 6px" title="Build version">BUILD 24</span><button class="btn-sm" onclick="showConfig()">⚙ Settings</button></div>
+    <div class="settings-bar"><span id="sheetStatus">No sheet connected</span><span style="font-size:9px;color:#c8ccd2;margin:0 6px" title="Build version">BUILD 25</span><button class="btn-sm" onclick="showConfig()">⚙ Settings</button></div>
   </aside>
   <main class="main" id="main"></main>
 </div>
@@ -228,7 +228,7 @@ const NORMS = {
   // >0.80 = needs strength work; <0.60 = needs plyometric work
   dsi:           { min:0.60, max:0.80, u:'DSI',       lb:false, label:'DSI',                    cat:'jump',  note:'Requires force plate', source:'Thomas, Dos\'Santos & Jones 2017' },
   // ── Aerobic ───────────────────────────────────────────────────────────────
-  mas:           { min:5.0,  max:6.2,  u:'m/s',       lb:false, label:'MAS',          cat:'aero', source:'Buchheit & Laursen 2013' },
+  mas:           { min:4.5,  max:5.0,  u:'m/s',       lb:false, label:'MAS',          cat:'aero', source:'Elite benchmarks: professional soccer 4.5–5.0 m/s, rugby 4.5–4.8 m/s' },
   vo2max:        { min:58,   max:68,   u:'ml/kg/min', lb:false, label:'Est. VO₂ max',            cat:'aero', source:'Cardamone et al. 2025 (Serie A ~61.5 ml/kg/min); Buchheit' },
   // ── Strength ──────────────────────────────────────────────────────────────
   sq_1rm_bw:     { min:1.5,  max:2.0,  u:'×BW',       lb:false, label:'Back squat',             cat:'strength', source:'Comfort et al. 2019 (professional football)' },
@@ -408,6 +408,24 @@ function deriveSession(row, bw_kg, age_yr, height_cm) {
     else                 corr = 1.12;
     d.mas = +(d.tt_speed * corr).toFixed(2);
     d.mas_src = `${d.tt_dist}m TT` + (corr !== 1.00 ? ` (${tmin.toFixed(1)}min, ×${corr})` : ` (${tmin.toFixed(1)}min)`);
+  }
+  // Bronco (1200m shuttle, 30 direction changes): apply World Rugby's 0.7s per
+  // change-of-direction correction to get an equivalent straight-line 1200m time,
+  // then treat it like any other distance TT.
+  if (d.mas == null && d.bronco != null) {
+    const BRONCO_DIST = 1200, BRONCO_TURNS = 30, TURN_COST = 0.7;
+    const corrT = d.bronco - (BRONCO_TURNS * TURN_COST);
+    if (corrT > 60) {
+      const tmin = corrT / 60;
+      let corr;
+      if      (tmin < 3)   corr = 0.92;
+      else if (tmin < 4)   corr = 0.96;
+      else if (tmin <= 8)  corr = 1.00;
+      else if (tmin <= 12) corr = 1.04;
+      else                 corr = 1.08;
+      d.mas = +((BRONCO_DIST / corrT) * corr).toFixed(2);
+      d.mas_src = `Bronco ${fmtTime(d.bronco)} (turn-corrected)`;
+    }
   }
   // Yo-Yo / beep only: back-calculate MAS from estimated VO2max as a last resort
   if (d.mas == null && d.vo2max != null) {
