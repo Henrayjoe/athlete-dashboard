@@ -175,7 +175,7 @@
     </div>
     <div class="sb-search"><input id="sq" type="text" placeholder="Search athlete…" oninput="filterAthletes(this.value)"></div>
     <div class="alist" id="alist"><div style="padding:16px;font-size:12px;color:#7a8290;text-align:center">Connect Google Sheet to load athletes</div></div>
-    <div class="settings-bar"><span id="sheetStatus">No sheet connected</span><span style="font-size:9px;color:#c8ccd2;margin:0 6px" title="Build version">BUILD 19</span><button class="btn-sm" onclick="showConfig()">⚙ Settings</button></div>
+    <div class="settings-bar"><span id="sheetStatus">No sheet connected</span><span style="font-size:9px;color:#c8ccd2;margin:0 6px" title="Build version">BUILD 20</span><button class="btn-sm" onclick="showConfig()">⚙ Settings</button></div>
   </aside>
   <main class="main" id="main"></main>
 </div>
@@ -228,7 +228,7 @@ const NORMS = {
   // >0.80 = needs strength work; <0.60 = needs plyometric work
   dsi:           { min:0.60, max:0.80, u:'DSI',       lb:false, label:'DSI',                    cat:'jump',  note:'Requires force plate', source:'Thomas, Dos\'Santos & Jones 2017' },
   // ── Aerobic ───────────────────────────────────────────────────────────────
-  mas:           { min:5.0,  max:6.2,  u:'m/s',       lb:false, label:'MAS (5-min TT)',          cat:'aero', source:'Buchheit & Laursen 2013' },
+  mas:           { min:5.0,  max:6.2,  u:'m/s',       lb:false, label:'MAS',          cat:'aero', source:'Buchheit & Laursen 2013' },
   vo2max:        { min:58,   max:68,   u:'ml/kg/min', lb:false, label:'Est. VO₂ max',            cat:'aero', source:'Cardamone et al. 2025 (Serie A ~61.5 ml/kg/min); Buchheit' },
   // ── Strength ──────────────────────────────────────────────────────────────
   sq_1rm_bw:     { min:1.5,  max:2.0,  u:'×BW',       lb:false, label:'Back squat',             cat:'strength', source:'Comfort et al. 2019 (professional football)' },
@@ -392,6 +392,28 @@ function deriveSession(row, bw_kg, age_yr, height_cm) {
   d.bronco       = pf(row.bronco_time_s);
   // Best available VO2max — 5-min TT first priority, then others
   d.vo2max = d.mas_vo2max || d.tt_vo2max || d.yoyo_vo2max || d.beep_vo2max || pf(row.vo2max);
+  // ── MAS resolution ──────────────────────────────────────────────────────
+  // A maximal TT of ~4-8 min has an average speed that approximates MAS directly.
+  // Outside that window a duration correction is applied: efforts shorter than ~4 min
+  // are run above MAS, efforts longer than ~8 min below it.
+  d.mas_src = d.mas ? '5-min TT' : null;
+  if (d.mas == null && d.tt_speed != null && d.tt_time != null) {
+    const tmin = d.tt_time / 60;
+    let corr;
+    if      (tmin < 3)   corr = 0.92;
+    else if (tmin < 4)   corr = 0.96;
+    else if (tmin <= 8)  corr = 1.00;   // avg speed ≈ MAS
+    else if (tmin <= 12) corr = 1.04;
+    else if (tmin <= 20) corr = 1.08;
+    else                 corr = 1.12;
+    d.mas = +(d.tt_speed * corr).toFixed(2);
+    d.mas_src = `${d.tt_dist}m TT` + (corr !== 1.00 ? ` (${tmin.toFixed(1)}min, ×${corr})` : ` (${tmin.toFixed(1)}min)`);
+  }
+  // Yo-Yo / beep only: back-calculate MAS from estimated VO2max as a last resort
+  if (d.mas == null && d.vo2max != null) {
+    d.mas = +(((d.vo2max/3.5)/3.6)).toFixed(2);
+    d.mas_src = 'estimated from VO\u2082max';
+  }
   // Strength — Epley → BW ratio (uses session bodyweight)
   const sq1rm   = epley(row.sq_kg, row.sq_reps);
   const tb1rm   = epley(row.tb_kg, row.tb_reps);
@@ -474,6 +496,8 @@ function latestVal(sessions, key) {
 function buildLatestAcrossSessions(sessions) {
   const out = {};
   Object.keys(NORMS).forEach(k => { out[k] = latestVal(sessions, k); });
+  // carry the MAS source label from whichever session supplied the MAS value
+  for (const s of sessions) { if (s.mas != null) { out.mas_src = s.mas_src; break; } }
   return out;
 }
 
@@ -754,11 +778,11 @@ function renderMain(){
             <div class="sec-heading">Aerobic fitness</div>
             <table><thead><tr><th>Test</th><th>Result</th><th>Test result status</th><th>Normative range</th><th>vs previous</th></tr></thead><tbody>
               <tr>
-                <td class="lbl">MAS (5-min TT)</td>
-                <td><span class="rval">${d.mas??'—'}</span><span class="runit">m/s</span>${d.tt5min_dist?`<span class="rsub">(${d.tt5min_dist}m)</span>`:''}<span class="calc-badge">auto</span></td>
+                <td class="lbl">MAS</td>
+                <td><span class="rval">${d.mas??'—'}</span><span class="runit">m/s</span>${d.mas!=null?`<span class="rsub">${(d.mas*3.6).toFixed(1)} km/h</span>`:''}${d.mas_src?`<span class="rsub">from ${d.mas_src}</span>`:''}<span class="calc-badge">auto</span></td>
                 <td>${pill(bs(d.mas,'mas'))}</td>
-                <td style="font-size:11px;color:var(--text-muted)">${NORMS.mas.min}–${NORMS.mas.max} ${NORMS.mas.u}</td>
-                <td>${dHtml(d.mas,pv?.mas,false)}</td>
+                <td style="font-size:11px;color:var(--text-muted)">${NORMS.mas.min}–${NORMS.mas.max} ${NORMS.mas.u}<span class="norm-source">${NORMS.mas.source||''}</span></td>
+                <td>${dHtml(d.mas,prevVal('mas'),false)}</td>
               </tr>
               <tr>
                 <td class="lbl">Est. VO₂ max</td>
@@ -970,7 +994,7 @@ function drawCharts(){
     {id:'ch-eur',    title:'EUR (CMJ÷SJ)',             u:'ratio',nk:'eur',         ds:[ser('eur',CC[3])]},
     {id:'ch-mrsi',   title:'CMJ mRSI',                u:'m/s',  nk:'cmj_mrsi',    ds:[ser('cmj_mrsi',CC[0])]},
     {id:'ch-djrsi',  title:'DJ RSI',                  u:'m/s',  nk:'dj_rsi',      ds:[ser('dj_rsi',CC[4])]},
-    {id:'ch-mas',    title:'MAS — 5-min TT',          u:'m/s',  nk:'mas',         ds:[ser('mas',CC[3])]},
+    {id:'ch-mas',    title:'MAS',          u:'m/s',  nk:'mas',         ds:[ser('mas',CC[3])]},
     {id:'ch-squat', title:'Back squat (×BW)',    u:'×BW', nk:'sq_1rm_bw', ds:[ser('sq_1rm_bw',CC[4])]},
     {id:'ch-tb',    title:'Trap bar DL (×BW)',   u:'×BW', nk:'tb_1rm_bw', ds:[ser('tb_1rm_bw',CC[5])]},
     {id:'ch-bp',    title:'Bench press (×BW)',   u:'×BW', nk:'bp_1rm_bw', ds:[ser('bp_1rm_bw',CC[6])]},
@@ -1794,11 +1818,9 @@ function renderRadar() {
 // ASR = MSS - MAS ; SRR = MSS / MAS
 // Profile: Speed >=1.90 | Hybrid 1.70-1.90 | Endurance <1.70
 function resolveMAS(ld) {
-  // Priority: measured MAS from 5-min TT, then back-calculated from VO2max,
-  // then average speed of a distance TT. Returns {val, src} or null.
-  if (ld.mas != null)        return { val: ld.mas,      src: '5-min time trial' };
-  if (ld.vo2max != null)     return { val: +((ld.vo2max/3.5)/3.6).toFixed(2), src: 'estimated from VO\u2082max' };
-  if (ld.tt_speed != null)   return { val: ld.tt_speed, src: 'distance TT average speed' };
+  // d.mas is now resolved in deriveSession (5-min TT > distance TT > VO2max estimate)
+  // and carries its own source label.
+  if (ld.mas != null) return { val: ld.mas, src: ld.mas_src || 'aerobic test' };
   return null;
 }
 
