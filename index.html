@@ -175,7 +175,7 @@
     </div>
     <div class="sb-search"><input id="sq" type="text" placeholder="Search athlete…" oninput="filterAthletes(this.value)"></div>
     <div class="alist" id="alist"><div style="padding:16px;font-size:12px;color:#7a8290;text-align:center">Connect Google Sheet to load athletes</div></div>
-    <div class="settings-bar"><span id="sheetStatus">No sheet connected</span><span style="font-size:9px;color:#c8ccd2;margin:0 6px" title="Build version">BUILD 20</span><button class="btn-sm" onclick="showConfig()">⚙ Settings</button></div>
+    <div class="settings-bar"><span id="sheetStatus">No sheet connected</span><span style="font-size:9px;color:#c8ccd2;margin:0 6px" title="Build version">BUILD 21</span><button class="btn-sm" onclick="showConfig()">⚙ Settings</button></div>
   </aside>
   <main class="main" id="main"></main>
 </div>
@@ -1573,6 +1573,60 @@ function _buildAndOpenPrintReport(a, chartImages, quadrantSVG) {
       <p style="font-size:9px;color:#aaa;text-align:center;margin-top:6px">Dividers at normative midpoint · Gray dots = other athletes (anonymous)</p>
     </div>` : '';
 
+  // ── Speed Reserve — only rendered when both MAS and MSS are available ──
+  const _mas = resolveMAS(ld);
+  const _mss = ld.max_vel;
+  let speedReserveHtml = '';
+  if (_mas && _mss != null) {
+    const MAS=_mas.val, MSS=_mss;
+    const ASR=+(MSS-MAS).toFixed(2), SRR=+(MSS/MAS).toFixed(2);
+    const cls=classifySRR(SRR);
+    const kmh=v=>(v*3.6).toFixed(1);
+    const BW2=560, BML=15, BMR=15, BBY=52, BBH=44, BCW=BW2-BML-BMR;
+    const smax=MSS*1.08, spx=v=>BML+(v/smax)*BCW;
+    const mW=spx(MAS)-BML, aW=spx(MSS)-spx(MAS);
+    let bar=`<svg viewBox="0 0 ${BW2} 132" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:${BW2}px">`;
+    bar+=`<rect x="${BML}" y="${BBY}" width="${BCW}" height="${BBH}" fill="#f1f3f5" rx="4"/>`;
+    bar+=`<rect x="${BML}" y="${BBY}" width="${mW}" height="${BBH}" fill="#1a56db" rx="4"/>`;
+    bar+=`<rect x="${BML+mW-6}" y="${BBY}" width="6" height="${BBH}" fill="#1a56db"/>`;
+    bar+=`<rect x="${spx(MAS)}" y="${BBY}" width="${aW}" height="${BBH}" fill="#f59e0b"/>`;
+    if(mW>90){
+      bar+=`<text x="${BML+mW/2}" y="${BBY+18}" font-size="9.5" font-weight="700" fill="#fff" text-anchor="middle">MAS (aerobic)</text>`;
+      bar+=`<text x="${BML+mW/2}" y="${BBY+33}" font-size="12" font-weight="700" fill="#fff" text-anchor="middle">${MAS} m/s</text>`;}
+    if(aW>80){
+      bar+=`<text x="${spx(MAS)+aW/2}" y="${BBY+18}" font-size="9.5" font-weight="700" fill="#7c4a03" text-anchor="middle">ASR (anaerobic)</text>`;
+      bar+=`<text x="${spx(MAS)+aW/2}" y="${BBY+33}" font-size="12" font-weight="700" fill="#7c4a03" text-anchor="middle">${ASR} m/s</text>`;}
+    bar+=`<text x="${BML}" y="${BBY-12}" font-size="9" fill="#aaa">0</text>`;
+    bar+=`<text x="${spx(MAS)}" y="${BBY-12}" font-size="10" font-weight="700" fill="#1a56db" text-anchor="middle">MAS ${MAS}</text>`;
+    bar+=`<text x="${spx(MSS)}" y="${BBY-12}" font-size="10" font-weight="700" fill="#d97706" text-anchor="${spx(MSS)>BW2-55?'end':'middle'}">MSS ${MSS}</text>`;
+    bar+=`<text x="${spx(MAS)}" y="${BBY+BBH+22}" font-size="9" fill="#888" text-anchor="middle">${kmh(MAS)} km/h</text>`;
+    bar+=`<text x="${spx(MSS)}" y="${BBY+BBH+22}" font-size="9" fill="#888" text-anchor="${spx(MSS)>BW2-55?'end':'middle'}">${kmh(MSS)} km/h</text>`;
+    bar+='</svg>';
+    const pcard=(l,v,u)=>`<div style="flex:1;border:1px solid #e8e8e8;border-radius:6px;padding:8px 10px;text-align:center">
+      <div style="font-size:8.5px;font-weight:700;color:#999;text-transform:uppercase;letter-spacing:.06em">${l}</div>
+      <div style="font-size:15px;font-weight:700;color:#111;margin-top:2px">${v}<span style="font-size:9px;font-weight:400;color:#999;margin-left:2px">${u}</span></div></div>`;
+    speedReserveHtml = `
+    <div style="margin-top:22px;page-break-inside:avoid">
+      <div style="font-size:9px;font-weight:700;color:#7a8290;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;padding-bottom:4px;border-bottom:1px solid #ebebeb">Anaerobic Speed Reserve</div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+        <span style="font-size:8.5px;font-weight:700;color:#999;text-transform:uppercase;letter-spacing:.06em">Profile</span>
+        <span style="display:inline-flex;align-items:center;gap:5px;background:${cls.bg};border:1px solid ${cls.col};border-radius:14px;padding:3px 11px">
+          <span style="width:7px;height:7px;border-radius:50%;background:${cls.col};display:inline-block"></span>
+          <span style="font-size:12px;font-weight:700;color:${cls.col}">${cls.label}</span></span>
+        <span style="font-size:10.5px;color:#555">${cls.desc}</span>
+      </div>
+      <div style="text-align:center">${bar}</div>
+      <div style="display:flex;gap:7px;margin-top:8px">
+        ${pcard('MAS',MAS,'m/s')}${pcard('MSS',MSS,'m/s')}${pcard('ASR',ASR,'m/s')}${pcard('SRR',SRR,'')}
+      </div>
+      <div style="margin-top:9px;background:${cls.bg};border-left:3px solid ${cls.col};border-radius:0 5px 5px 0;padding:9px 12px">
+        <div style="font-size:8.5px;font-weight:700;color:${cls.col};text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px">Training implication</div>
+        <div style="font-size:10.5px;line-height:1.6;color:#222">${cls.rx}</div>
+      </div>
+      <p style="font-size:8.5px;color:#bbb;margin-top:6px">MAS from ${_mas.src}. SRR classification varies with aerobic test protocol.</p>
+    </div>`;
+  }
+
   // Feedback if generated
   const coachTxt  = document.getElementById('coachText')?.innerText?.trim();
   const athleteTxt= document.getElementById('athleteText')?.innerText?.trim();
@@ -1643,6 +1697,7 @@ function _buildAndOpenPrintReport(a, chartImages, quadrantSVG) {
 
   ${chartsHtml}
   ${quadrantHtml}
+  ${speedReserveHtml}
   ${feedbackHtml}
 
   <!-- Footer -->
