@@ -175,7 +175,7 @@
     </div>
     <div class="sb-search"><input id="sq" type="text" placeholder="Search athlete…" oninput="filterAthletes(this.value)"></div>
     <div class="alist" id="alist"><div style="padding:16px;font-size:12px;color:#7a8290;text-align:center">Connect Google Sheet to load athletes</div></div>
-    <div class="settings-bar"><span id="sheetStatus">No sheet connected</span><span style="font-size:9px;color:#c8ccd2;margin:0 6px" title="Build version">BUILD 25</span><button class="btn-sm" onclick="showConfig()">⚙ Settings</button></div>
+    <div class="settings-bar"><span id="sheetStatus">No sheet connected</span><span style="font-size:9px;color:#c8ccd2;margin:0 6px" title="Build version">BUILD 26</span><button class="btn-sm" onclick="showConfig()">⚙ Settings</button></div>
   </aside>
   <main class="main" id="main"></main>
 </div>
@@ -292,7 +292,7 @@ let currentYAxis = QUAD_PRESETS[0].y;
 
 
 const CAT_LABELS = { jump:'Jump / Power', aero:'Aerobic', strength:'Strength', speed:'Speed' };
-const SL = ['Priority Area','Below Benchmark','Near Benchmark','Meets Benchmark','Exceeds Benchmark'];
+const SL = ['Primary Focus','Building','Approaching Standard','At Standard','Above Standard'];
 const SC = ['p0','p1','p2','p3','p4'];
 const SD = ['#dc2626','#c2410c','#b45309','#1a56db','#16a34a'];
 const CC = ['#1a56db','#7c3aed','#0891b2','#16a34a','#dc2626','#c2410c','#6b7280'];
@@ -486,10 +486,10 @@ function dHtml(val, prev, lb) {
 }
 function catLabel(avg) {
   if (avg===null) return null;
-  if (avg>=3.5) return {l:'Strong Area',     c:'#16a34a'};
-  if (avg>=2.5) return {l:'On Track',        c:'#1a56db'};
-  if (avg>=1.5) return {l:'Developing Area', c:'#c2410c'};
-  return              {l:'Priority Focus',  c:'#dc2626'};
+  if (avg>=3.5) return {l:'Above Standard', c:'#16a34a'};
+  if (avg>=2.5) return {l:'At Standard',    c:'#1a56db'};
+  if (avg>=1.5) return {l:'Building',       c:'#c2410c'};
+  return              {l:'Primary Focus',  c:'#dc2626'};
 }
 function catCard(catKey, keys, d) {
   const scores = keys.map(k=>bs(d[k],k)).filter(s=>s!==null);
@@ -545,7 +545,7 @@ function mRow(nk, val, prevVal, subtext, isAuto) {
   const statusCell = n.noNorm
     ? `<span style="font-size:11px;color:var(--text-muted);font-style:italic">Track individually</span>`
     : flagged
-      ? `<span class="pill p0" style="background:#fef2f2"><span class="pill-dot" style="background:#dc2626"></span>Injury risk flag (&lt;${n.injuryFloor}%)</span>`
+      ? `<span class="pill p0" style="background:#fef2f2"><span class="pill-dot" style="background:#dc2626"></span>Below symmetry threshold (&lt;${n.injuryFloor}%)</span>`
       : pill(s);
   return `<tr>
     <td class="lbl">${n.label}</td>
@@ -1056,7 +1056,7 @@ function buildResultsForPrompt(a) {
   if (ld.slbj_L)  lines.push(`SL broad jump L: ${ld.slbj_L}cm (no validated norm)`);
   if (ld.slbj_R)  lines.push(`SL broad jump R: ${ld.slbj_R}cm (no validated norm)`);
   if (ld.slbj_LSI!=null) {
-    const flag = ld.slbj_LSI < 90 ? ' WARNING: INJURY RISK FLAG (<90%)' : '';
+    const flag = ld.slbj_LSI < 90 ? ' [below 90% symmetry threshold]' : '';
     const stat = bs(ld.slbj_LSI,'slbj_LSI')!==null ? SL[bs(ld.slbj_LSI,'slbj_LSI')] : '';
     lines.push(`SL broad jump LSI: ${ld.slbj_LSI}% — ${stat}${flag}${dText(ld.slbj_LSI, pv?.slbj_LSI, false)}`);
   }
@@ -1262,11 +1262,11 @@ function buildCoachNotes(a, f) {
   // ── Para 4: Priorities and flags ──
   let p4 = '';
   if (worst && catAvg[worst] !== null && catAvg[worst] < 2.5) {
-    p4 += `Priority training focus: ${CAT_LABELS[worst]} (${catLabel(catAvg[worst]).l}). ${CAT_COACH_REC[worst]}`;
+    p4 += `Primary development focus: ${CAT_LABELS[worst]} (${catLabel(catAvg[worst]).l}). ${CAT_COACH_REC[worst]}`;
   } else if (worst) {
     p4 += `No category is in critical deficit. Continue general programme progression with emphasis on maintaining ${CAT_LABELS[best]||'current strengths'} while driving adaptation in ${CAT_LABELS[worst]}.`;
   }
-  if (lsiFlag) p4 += ` LSI below 90% — limb asymmetry flag raised. Clinical review and targeted unilateral intervention are recommended before return-to-full-training progression.`;
+  if (lsiFlag) p4 += ` LSI below the 90% symmetry threshold. Targeted unilateral work is indicated, alongside clinical review before unrestricted progression.`;
   if (p4) paras.push(p4.trim());
 
   return paras.join('\n\n');
@@ -1331,13 +1331,13 @@ function buildAthleteMessage(a, f) {
   let p2 = '';
   if (concernCats.length > 0 || lsiFlag || regressed.length > 0) {
     if (worst && catAvg[worst] !== null && catAvg[worst] < 2.5) {
-      p2 = `The area that needs the most focus right now is your ${CAT_PLAIN[worst]}. It\'s not where we need it to be at this level, and it\'s the priority for the next block. `;
+      p2 = `The main opportunity right now is your ${CAT_PLAIN[worst]}. There\'s clear room to build here, and it\'s where we\'ll put the emphasis in the next block. `;
     }
     if (regressed.length > 0 && hasPrev) {
       p2 += `There are a couple of areas that have dipped slightly since your last session. Nothing to be alarmed about, but it\'s a signal that we may need to look at your recovery or training load. `;
     }
     if (lsiFlag) {
-      p2 += `There\'s also a noticeable difference in strength and power between your left and right leg right now. This is something we\'ll be targeting directly — leg imbalances can affect both your performance on the pitch and your injury risk, so it\'s important we address it.`;
+      p2 += `There\'s also a measurable difference between your left and right leg at the moment. We\'ll target that directly — evening it up supports both how you perform on the pitch and how well you hold up across a season.`;
     }
   }
   if (p2) paras.push(p2.trim());
@@ -1856,7 +1856,7 @@ function renderHistory() {
   });
 
   el.innerHTML = t + `</tbody></table>
-  <p style="font-size:10px;color:var(--text-muted);margin-top:8px">Oldest → newest · Values colour-coded: <span style="color:#16a34a">●</span> Exceeds <span style="color:#1a56db">●</span> Meets <span style="color:#b45309">●</span> Near <span style="color:#c2410c">●</span> Below <span style="color:#dc2626">●</span> Priority</p>`;
+  <p style="font-size:10px;color:var(--text-muted);margin-top:8px">Oldest → newest · Values colour-coded: <span style="color:#16a34a">●</span> Above Standard <span style="color:#1a56db">●</span> At Standard <span style="color:#b45309">●</span> Approaching <span style="color:#c2410c">●</span> Building <span style="color:#dc2626">●</span> Primary Focus</p>`;
 }
 
 // ─── ATHLETIC PROFILE RADAR ──────────────────────────────────────────────────
@@ -1956,10 +1956,33 @@ function renderRadar() {
   svg += `<rect x="${+bRef.x+5}" y="${+bRef.y-9}" width="74" height="15" rx="7.5" fill="#fff" stroke="rgba(26,86,219,0.3)"/>`;
   svg += `<text x="${+bRef.x+42}" y="${+bRef.y+1.5}" font-size="8.5" fill="#1a56db" font-weight="600" text-anchor="middle">Pro benchmark</text>`;
 
-  // Athlete polygon
+  // Athlete shape — drawn as segments so each pair of adjacent axes blends
+  // between their own status colours, making strengths readable from the shape itself.
   if (vals.length) {
     const fracs = axes.map(x => x.score!==null ? Math.max(x.score/4, 0.02) : 0.02);
-    svg += `<polygon points="${poly(fracs)}" fill="url(#radarFill)" stroke="${pCol}" stroke-width="2.6" stroke-linejoin="round" filter="url(#radarShadow)"/>`;
+
+    // Gradient defs, one per segment, blending neighbouring axis colours
+    let gdefs = '';
+    for (let i=0;i<N;i++){
+      const j=(i+1)%N;
+      const c1=scCol(axes[i].score), c2=scCol(axes[j].score);
+      const p1=pt(i,fracs[i]), p2=pt(j,fracs[j]);
+      gdefs += `<linearGradient id="seg${i}" gradientUnits="userSpaceOnUse"
+        x1="${p1.x}" y1="${p1.y}" x2="${p2.x}" y2="${p2.y}">
+        <stop offset="0%" stop-color="${c1}" stop-opacity="0.55"/>
+        <stop offset="100%" stop-color="${c2}" stop-opacity="0.55"/></linearGradient>`;
+    }
+    svg = svg.replace('</defs>', gdefs + '</defs>');
+
+    // Filled segments
+    for (let i=0;i<N;i++){
+      const j=(i+1)%N;
+      const p1=pt(i,fracs[i]), p2=pt(j,fracs[j]);
+      svg += `<path d="M${CX},${CY} L${p1.x},${p1.y} L${p2.x},${p2.y} Z" fill="url(#seg${i})" stroke="none"/>`;
+    }
+    // Outline over the top
+    svg += `<polygon points="${poly(fracs)}" fill="none" stroke="${pCol}" stroke-width="2.4" stroke-linejoin="round" stroke-opacity="0.85" filter="url(#radarShadow)"/>`;
+
     axes.forEach((x,i)=>{
       if (x.score===null) return;
       const p = pt(i, Math.max(x.score/4,0.02));
