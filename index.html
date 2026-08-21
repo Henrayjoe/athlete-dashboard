@@ -175,7 +175,7 @@
     </div>
     <div class="sb-search"><input id="sq" type="text" placeholder="Search athlete…" oninput="filterAthletes(this.value)"></div>
     <div class="alist" id="alist"><div style="padding:16px;font-size:12px;color:#7a8290;text-align:center">Connect Google Sheet to load athletes</div></div>
-    <div class="settings-bar"><span id="sheetStatus">No sheet connected</span><span style="font-size:9px;color:#c8ccd2;margin:0 6px" title="Build version">BUILD 28</span><button class="btn-sm" onclick="showConfig()">⚙ Settings</button></div>
+    <div class="settings-bar"><span id="sheetStatus">No sheet connected</span><span style="font-size:9px;color:#c8ccd2;margin:0 6px" title="Build version">BUILD 29</span><button class="btn-sm" onclick="showConfig()">⚙ Settings</button></div>
   </aside>
   <main class="main" id="main"></main>
 </div>
@@ -455,15 +455,22 @@ function deriveSession(row, bw_kg, age_yr, height_cm) {
   d.sprint20    = pf(row.sprint20_s);
   d.max_vel     = pf(row.max_vel_ms);
   // ── Motor preference (VueMotion) — z-scores per leg, per run type ──
-  // ct_ft = contact/flight ratio (plotted horizontally, matching VueMotion)
-  // sl_sr = step length/step rate ratio (plotted vertically)
-  // Legacy mp_x / mp_y names still accepted so existing sheets keep working.
-  ['acc','mv'].forEach(pfx=>{
-    d[pfx+'_ct_ft_L']   = pf(row[pfx+'_ct_ft_L'] != null ? row[pfx+'_ct_ft_L'] : row[pfx+'_mp_x_L']);
-    d[pfx+'_ct_ft_R']   = pf(row[pfx+'_ct_ft_R'] != null ? row[pfx+'_ct_ft_R'] : row[pfx+'_mp_x_R']);
-    d[pfx+'_sl_sr_L']   = pf(row[pfx+'_sl_sr_L'] != null ? row[pfx+'_sl_sr_L'] : row[pfx+'_mp_y_L']);
-    d[pfx+'_sl_sr_R']   = pf(row[pfx+'_sl_sr_R'] != null ? row[pfx+'_sl_sr_R'] : row[pfx+'_mp_y_R']);
+  // ── Motor preference (VueMotion) — RAW values transcribed from the report ──
+  // Run types: 'acc' (Run Type: Acc) and 'fly' (Run Type: Fly / max velocity).
+  ['acc','fly'].forEach(pfx=>{
+    d[pfx+'_sl_L']      = pf(row[pfx+'_sl_L']);      // step length, m
+    d[pfx+'_sl_R']      = pf(row[pfx+'_sl_R']);
+    d[pfx+'_sf_L']      = pf(row[pfx+'_sf_L']);      // step frequency, Hz
+    d[pfx+'_sf_R']      = pf(row[pfx+'_sf_R']);
+    d[pfx+'_gct_L']     = pf(row[pfx+'_gct_L']);     // ground contact time, s
+    d[pfx+'_gct_R']     = pf(row[pfx+'_gct_R']);
+    d[pfx+'_ft_L']      = pf(row[pfx+'_ft_L']);      // flight time, s
+    d[pfx+'_ft_R']      = pf(row[pfx+'_ft_R']);
     d[pfx+'_max_speed'] = pf(row[pfx+'_max_speed']);
+  });
+  // Legacy 'mv_' prefix accepted as an alias for 'fly_'
+  ['sl_L','sl_R','sf_L','sf_R','gct_L','gct_R','ft_L','ft_R','max_speed'].forEach(k=>{
+    if (d['fly_'+k]==null && row['mv_'+k]!=null) d['fly_'+k] = pf(row['mv_'+k]);
   });
   d.test_date   = row.test_date;
   return d;
@@ -1633,22 +1640,22 @@ function _buildAndOpenPrintReport(a, chartImages, quadrantSVG, radarSVG, radarMo
   // ── Motor preference — quadrant only, RR figures deliberately excluded ──
   let mpHtml = '';
   {
-    const mpTry = ['acc','mv'].map(px=>({px, d:mpData(a.sessions,px)})).filter(o=>o.d);
+    const mpTry = ['acc','fly'].map(px=>({px, d:mpData(a.sessions,px)})).filter(o=>o.d);
     if (mpTry.length) {
       mpHtml = mpTry.map(({px,d})=>{
         const q = MP_QUADRANTS[mpQuadrantKey(d.x,d.y)];
         const band = mpSpeedBand(d.maxSpeed);
-        const runLbl = px==='acc' ? 'Acceleration' : 'Max velocity';
-        const W=430,H=410,CX=W/2,CY=200,R=145,LIM=3.5;
+        const runLbl = px==='acc' ? 'Acceleration' : 'Fly (max velocity)';
+        const W=430,H=410,CX=W/2,CY=200,R=145,LIM=45;
         const sx=v=>CX+(v/LIM)*R, sy=v=>CY-(v/LIM)*R;
         let g=`<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:${W}px">`;
-        [0.5,1.5,2.5].forEach(sd=>{const h=(sd/LIM)*R;
+        [10,20,30].forEach(sd=>{const h=(sd/LIM)*R;
           g+=`<rect x="${CX-h}" y="${CY-h}" width="${h*2}" height="${h*2}" fill="none" stroke="rgba(15,23,42,0.16)" stroke-width="1" stroke-dasharray="4,3"/>`;});
         g+=`<line x1="${CX-R}" y1="${CY}" x2="${CX+R}" y2="${CY}" stroke="#334155" stroke-width="1.1"/>`;
         g+=`<line x1="${CX}" y1="${CY-R}" x2="${CX}" y2="${CY+R}" stroke="#334155" stroke-width="1.1"/>`;
-        for(let v=-3;v<=3;v++){ if(v===0)continue;
+        [-30,-20,-10,10,20,30].forEach(v=>{
           g+=`<line x1="${sx(v)}" y1="${CY-3}" x2="${sx(v)}" y2="${CY+3}" stroke="#94a3b8" stroke-width="1"/>`;
-          g+=`<line x1="${CX-3}" y1="${sy(v)}" x2="${CX+3}" y2="${sy(v)}" stroke="#94a3b8" stroke-width="1"/>`;}
+          g+=`<line x1="${CX-3}" y1="${sy(v)}" x2="${CX+3}" y2="${sy(v)}" stroke="#94a3b8" stroke-width="1"/>`;});
         const qk2=mpQuadrantKey(d.x,d.y);
         [['Bounders',CX-R+3,CY-R+12,'start','bounders'],['Striders',CX+R-3,CY-R+12,'end','striders'],
          ['Bouncers',CX-R+3,CY+R-6,'start','bouncers'],['Spinners',CX+R-3,CY+R-6,'end','spinners']]
@@ -1674,8 +1681,8 @@ function _buildAndOpenPrintReport(a, chartImages, quadrantSVG, radarSVG, radarMo
           <div style="display:flex;gap:16px;font-size:9px;color:#888;justify-content:center;margin-top:3px">
             <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#2563eb;margin-right:3px"></span>Left</span>
             <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#ec4899;margin-right:3px"></span>Right</span>
-            <span>L2 norm ${d.l2}${d.asym!=null?' · asymmetry '+d.asym:''}</span>
-            <span>Rings = 0.5 / 1.5 / 2.5 SD</span>
+            <span>Preference strength ${d.l2}%${d.asym!=null?' · asymmetry '+d.asym+'%':''}</span>
+            <span>Rings = 10 / 20 / 30% from norm</span>
           </div>
         </div>`;
       }).join('');
@@ -2288,7 +2295,7 @@ function renderASR() {
 // Framework: Wild, J.J. & Bezodis, N.E. — sprint acceleration technique and lower
 // limb injury epidemiology in professional male Rugby Union (seven-season analysis).
 // Axes are cohort z-scores: x = ground contact vs flight time, y = step length vs step rate.
-let mpRunType = 'acc'; // 'acc' | 'mv'
+let mpRunType = 'acc'; // 'acc' | 'fly'
 
 const MP_QUADRANTS = {
   bounders: { name:'Bounders', sub:'Long step length / long flight time',
@@ -2306,6 +2313,15 @@ function mpQuadrantKey(x, y) {
   return x < 0 ? 'bouncers' : 'spinners';
 }
 
+// ── Population reference norms ──────────────────────────────────────────────
+// 'fly' values are back-calculated from a VueMotion 20m Fly report's "vs Norms %"
+// column. 'acc' values are PROVISIONAL — replace them from an acceleration report
+// when one is available. Editing these two blocks re-baselines every athlete.
+const MP_NORMS = {
+  fly: { sl:1.99, sf:3.95, gct:0.126, ft:0.105, provisional:false },
+  acc: { sl:1.75, sf:4.30, gct:0.145, ft:0.085, provisional:true  },
+};
+
 function mpSpeedBand(v) {
   if (v == null)   return { col:'#94a3b8', label:'no speed recorded' };
   if (v < 7.2)     return { col:'#dc2626', label:'below 7.2 m/s' };
@@ -2320,22 +2336,47 @@ function setMpRunType(t, btn) {
   renderMotorPref();
 }
 
+// Percentage deviation of a ratio from its population norm
+function mpPct(val, norm) { return (norm && val!=null) ? +(((val-norm)/norm)*100).toFixed(1) : null; }
+
 function mpData(sessions, pfx) {
-  const g = k => latestVal(sessions, pfx+k);
-  // x = contact/flight (horizontal) · y = step length/step rate (vertical)
-  const xL=g('_ct_ft_L'), xR=g('_ct_ft_R'), yL=g('_sl_sr_L'), yR=g('_sl_sr_R');
-  if ([xL,xR,yL,yR].every(v=>v==null)) return null;
-  const avgX = (xL!=null&&xR!=null) ? (xL+xR)/2 : (xL!=null?xL:xR);
-  const avgY = (yL!=null&&yR!=null) ? (yL+yR)/2 : (yL!=null?yL:yR);
-  if (avgX==null || avgY==null) return null;
+  const g = k => latestVal(sessions, pfx+'_'+k);
+  const N = MP_NORMS[pfx]; if (!N) return null;
+
+  const raw = { slL:g('sl_L'), slR:g('sl_R'), sfL:g('sf_L'), sfR:g('sf_R'),
+                gctL:g('gct_L'), gctR:g('gct_R'), ftL:g('ft_L'), ftR:g('ft_R') };
+  if (Object.values(raw).every(v=>v==null)) return null;
+
+  const ctftNorm = N.gct / N.ft;    // contact ÷ flight at population norm
+  const slsrNorm = N.sl  / N.sf;    // step length ÷ step rate at population norm
+
+  // Per-leg ratios → % deviation from norm
+  const legX = (gct,ft) => (gct!=null&&ft) ? mpPct(gct/ft, ctftNorm) : null;
+  const legY = (sl,sf)  => (sl!=null&&sf)  ? mpPct(sl/sf,  slsrNorm) : null;
+  const xL=legX(raw.gctL,raw.ftL), xR=legX(raw.gctR,raw.ftR);
+  const yL=legY(raw.slL,raw.sfL),  yR=legY(raw.slR,raw.sfR);
+
+  // Session average — from averaged raw values where both legs exist
+  const avg=(a,b)=>(a!=null&&b!=null)?(a+b)/2:(a!=null?a:b);
+  const gctA=avg(raw.gctL,raw.gctR), ftA=avg(raw.ftL,raw.ftR);
+  const slA =avg(raw.slL,raw.slR),   sfA=avg(raw.sfL,raw.sfR);
+  const x = (gctA!=null&&ftA) ? mpPct(gctA/ftA, ctftNorm) : null;
+  const y = (slA!=null&&sfA)  ? mpPct(slA/sfA,  slsrNorm) : null;
+  if (x==null || y==null) return null;
+
   const asym = (xL!=null&&xR!=null&&yL!=null&&yR!=null)
-    ? +Math.sqrt(Math.pow(xL-xR,2)+Math.pow(yL-yR,2)).toFixed(2) : null;
+    ? +Math.sqrt(Math.pow(xL-xR,2)+Math.pow(yL-yR,2)).toFixed(1) : null;
+
   let date=null;
-  for (const s of sessions){ if (s[pfx+'_ct_ft_L']!=null||s[pfx+'_ct_ft_R']!=null){ date=s.test_date; break; } }
-  return { xL,xR,yL,yR,
-    x:+avgX.toFixed(2), y:+avgY.toFixed(2),
-    l2:+Math.sqrt(avgX*avgX+avgY*avgY).toFixed(3),
-    asym, maxSpeed:g('_max_speed'), date };
+  for (const s of sessions){ if (s[pfx+'_gct_L']!=null||s[pfx+'_gct_R']!=null){ date=s.test_date; break; } }
+
+  return { xL,xR,yL,yR, x, y,
+    l2:+Math.sqrt(x*x+y*y).toFixed(1), asym,
+    maxSpeed:g('max_speed'), date, raw,
+    ctft:(gctA!=null&&ftA)?+(gctA/ftA).toFixed(3):null,
+    slsr:(slA!=null&&sfA)?+(slA/sfA).toFixed(3):null,
+    ctftNorm:+ctftNorm.toFixed(3), slsrNorm:+slsrNorm.toFixed(3),
+    provisional:N.provisional };
 }
 
 function renderMotorPref() {
@@ -2343,15 +2384,15 @@ function renderMotorPref() {
   const el = document.getElementById('mpContent');
   if (!a || !el) return;
 
-  const pfx = mpRunType === 'acc' ? 'acc' : 'mv';
-  const runLabel = mpRunType === 'acc' ? 'Acceleration' : 'Max velocity';
+  const pfx = mpRunType === 'acc' ? 'acc' : 'fly';
+  const runLabel = mpRunType === 'acc' ? 'Acceleration' : 'Fly (max velocity)';
   const d = mpData(a.sessions, pfx);
 
   const toggle = `
     <div class="quad-ctrl-row" style="justify-content:center">
       <span class="control-label">Run type</span>
       <button class="axis-btn mp-run-btn${mpRunType==='acc'?' active':''}" onclick="setMpRunType('acc',this)">Acceleration</button>
-      <button class="axis-btn mp-run-btn${mpRunType==='mv'?' active':''}"  onclick="setMpRunType('mv',this)">Max velocity</button>
+      <button class="axis-btn mp-run-btn${mpRunType==='fly'?' active':''}" onclick="setMpRunType('fly',this)">Fly (max velocity)</button>
     </div>`;
 
   if (!d) {
@@ -2359,9 +2400,11 @@ function renderMotorPref() {
       <div style="padding:28px 20px;text-align:center;background:var(--surface-alt);border:1px solid var(--border);border-radius:8px;max-width:460px">
         <h3 style="font-size:15px;font-weight:600;color:var(--text-secondary);margin-bottom:8px">No ${runLabel.toLowerCase()} profile recorded</h3>
         <p style="font-size:13px;color:var(--text-muted);line-height:1.6">
-          Add <strong>${pfx}_ct_ft_L</strong> / <strong>${pfx}_ct_ft_R</strong>
-          (contact ÷ flight time) and <strong>${pfx}_sl_sr_L</strong> / <strong>${pfx}_sl_sr_R</strong>
-          (step length ÷ step rate) from the VueMotion Motor Preference report.</p></div></div>`;
+          Transcribe these straight from the VueMotion report for this run type:<br>
+          <strong>${pfx}_sl_L / ${pfx}_sl_R</strong> (step length) ·
+          <strong>${pfx}_sf_L / ${pfx}_sf_R</strong> (step frequency) ·
+          <strong>${pfx}_gct_L / ${pfx}_gct_R</strong> (ground contact) ·
+          <strong>${pfx}_ft_L / ${pfx}_ft_R</strong> (flight time)</p></div></div>`;
     return;
   }
 
@@ -2370,13 +2413,13 @@ function renderMotorPref() {
   const band = mpSpeedBand(d.maxSpeed);
 
   // ── Quadrant SVG ────────────────────────────────────────────────────────
-  const W=520, H=500, CX=W/2, CY=245, R=175, LIM=3.5;
+  const W=520, H=500, CX=W/2, CY=245, R=175, LIM=45; // axis in % deviation from norm
   const sx = v => CX + (v/LIM)*R;
   const sy = v => CY - (v/LIM)*R;
 
   let s=`<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:520px;font-family:-apple-system,BlinkMacSystemFont,sans-serif">`;
   // SD rings
-  [0.5,1.5,2.5].forEach(sd=>{
+  [10,20,30].forEach(sd=>{
     const half=(sd/LIM)*R;
     s+=`<rect x="${CX-half}" y="${CY-half}" width="${half*2}" height="${half*2}" fill="none" stroke="rgba(15,23,42,0.18)" stroke-width="1" stroke-dasharray="4,3"/>`;
   });
@@ -2384,12 +2427,12 @@ function renderMotorPref() {
   s+=`<line x1="${CX-R}" y1="${CY}" x2="${CX+R}" y2="${CY}" stroke="#334155" stroke-width="1.2"/>`;
   s+=`<line x1="${CX}" y1="${CY-R}" x2="${CX}" y2="${CY+R}" stroke="#334155" stroke-width="1.2"/>`;
   // Ticks
-  for(let v=-3;v<=3;v++){ if(v===0) continue;
+  [-40,-30,-20,-10,10,20,30,40].forEach(v=>{
     s+=`<line x1="${sx(v)}" y1="${CY-3}" x2="${sx(v)}" y2="${CY+3}" stroke="#94a3b8" stroke-width="1"/>`;
-    s+=`<text x="${sx(v)}" y="${CY+13}" font-size="7.5" fill="#94a3b8" text-anchor="middle">${v}</text>`;
+    s+=`<text x="${sx(v)}" y="${CY+13}" font-size="7" fill="#94a3b8" text-anchor="middle">${v>0?'+':''}${v}</text>`;
     s+=`<line x1="${CX-3}" y1="${sy(v)}" x2="${CX+3}" y2="${sy(v)}" stroke="#94a3b8" stroke-width="1"/>`;
-    s+=`<text x="${CX-7}" y="${sy(v)+2.5}" font-size="7.5" fill="#94a3b8" text-anchor="end">${v}</text>`;
-  }
+    s+=`<text x="${CX-7}" y="${sy(v)+2.5}" font-size="7" fill="#94a3b8" text-anchor="end">${v>0?'+':''}${v}</text>`;
+  });
   // Quadrant labels
   const qlab=[
     ['Bounders','long step length / long flight time', CX-R+4, CY-R+14, 'start', qk==='bounders'],
@@ -2425,12 +2468,12 @@ function renderMotorPref() {
     b+=`<text x="${BML}" y="12" font-size="10.5" font-weight="700" fill="#334155">${leftLbl}</text>`;
     b+=`<text x="${BW-BML}" y="12" font-size="10.5" font-weight="700" fill="#334155" text-anchor="end">${rightLbl}</text>`;
     b+=`<line x1="${BML}" y1="${ByC}" x2="${BW-BML}" y2="${ByC}" stroke="#334155" stroke-width="1.2"/>`;
-    for(let v=-3;v<=3;v++){
+    [-40,-30,-20,-10,0,10,20,30,40].forEach(v=>{
       b+=`<line x1="${bx(v)}" y1="${ByC-4}" x2="${bx(v)}" y2="${ByC+4}" stroke="#94a3b8" stroke-width="1"/>`;
-      b+=`<text x="${bx(v)}" y="${ByC+16}" font-size="7.5" fill="#94a3b8" text-anchor="middle">${v}</text>`;
-    }
+      b+=`<text x="${bx(v)}" y="${ByC+16}" font-size="7" fill="#94a3b8" text-anchor="middle">${v>0?'+':''}${v}</text>`;
+    });
     b+=`<circle cx="${bx(val)}" cy="${ByC}" r="11" fill="${band.col}" fill-opacity="0.55" stroke="${band.col}" stroke-width="1.5"/>`;
-    b+=`<text x="${bx(val)}" y="${ByC+3.5}" font-size="8.5" font-weight="700" fill="#0d1117" text-anchor="middle">${val>0?'+':''}${val}</text>`;
+    b+=`<text x="${bx(val)}" y="${ByC+3.5}" font-size="8" font-weight="700" fill="#0d1117" text-anchor="middle">${val>0?'+':''}${val}%</text>`;
     b+='</svg>';
     return b;
   };
@@ -2465,11 +2508,13 @@ function renderMotorPref() {
         <span><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#2563eb;margin-right:4px"></span>Left leg</span>
         <span><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#ec4899;margin-right:4px"></span>Right leg</span>
         <span><span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:${band.col};opacity:.5;margin-right:4px;vertical-align:middle"></span>Session average — ${band.label}</span>
-        <span style="color:#c3c9d1">Rings = 0.5 / 1.5 / 2.5 SD</span>
+        <span style="color:#c3c9d1">Rings = 10 / 20 / 30% from norm</span>
       </div>
       <div style="display:flex;gap:9px;flex-wrap:wrap;width:100%;max-width:520px">
-        ${card('L2 norm', d.l2, 'strength of preference')}
-        ${card('Asymmetry', d.asym!=null?d.asym:'—', 'L–R separation')}
+        ${card('Preference strength', d.l2+'%', 'distance from norm')}
+        ${card('Asymmetry', d.asym!=null?d.asym+'%':'—', 'L–R separation')}
+        ${card('Contact ÷ flight', d.ctft!=null?d.ctft:'—', `norm ${d.ctftNorm} · ${d.x>0?'+':''}${d.x}%`)}
+        ${card('Step len ÷ rate', d.slsr!=null?d.slsr:'—', `norm ${d.slsrNorm} · ${d.y>0?'+':''}${d.y}%`)}
         ${card('Max speed', d.maxSpeed!=null?d.maxSpeed+' m/s':'—', band.label)}
         ${card('Tested', d.date||'—', runLabel)}
       </div>
@@ -2482,6 +2527,7 @@ function renderMotorPref() {
           Injury association — ${q.name} · coach reference only</div>
         ${rrRows}
         <p style="font-size:9.5px;color:var(--text-muted);line-height:1.55;margin-top:7px">
+          ${d.provisional?'<strong style="color:#c2410c">Reference norms for this run type are provisional</strong> — replace MP_NORMS.acc once you have an acceleration report with a &quot;vs Norms %&quot; column.<br>':''}
           Relative risk vs other preference groups. * = statistically significant in the source study.
           Derived from professional male Rugby Union (Wild &amp; Bezodis, seven-season analysis) —
           transfer to football is an extrapolation, and these figures are not shown on athlete reports.</p>
