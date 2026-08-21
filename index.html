@@ -175,7 +175,7 @@
     </div>
     <div class="sb-search"><input id="sq" type="text" placeholder="Search athlete…" oninput="filterAthletes(this.value)"></div>
     <div class="alist" id="alist"><div style="padding:16px;font-size:12px;color:#7a8290;text-align:center">Connect Google Sheet to load athletes</div></div>
-    <div class="settings-bar"><span id="sheetStatus">No sheet connected</span><span style="font-size:9px;color:#c8ccd2;margin:0 6px" title="Build version">BUILD 26</span><button class="btn-sm" onclick="showConfig()">⚙ Settings</button></div>
+    <div class="settings-bar"><span id="sheetStatus">No sheet connected</span><span style="font-size:9px;color:#c8ccd2;margin:0 6px" title="Build version">BUILD 28</span><button class="btn-sm" onclick="showConfig()">⚙ Settings</button></div>
   </aside>
   <main class="main" id="main"></main>
 </div>
@@ -454,6 +454,17 @@ function deriveSession(row, bw_kg, age_yr, height_cm) {
   d.sprint10    = pf(row.sprint10_s);
   d.sprint20    = pf(row.sprint20_s);
   d.max_vel     = pf(row.max_vel_ms);
+  // ── Motor preference (VueMotion) — z-scores per leg, per run type ──
+  // ct_ft = contact/flight ratio (plotted horizontally, matching VueMotion)
+  // sl_sr = step length/step rate ratio (plotted vertically)
+  // Legacy mp_x / mp_y names still accepted so existing sheets keep working.
+  ['acc','mv'].forEach(pfx=>{
+    d[pfx+'_ct_ft_L']   = pf(row[pfx+'_ct_ft_L'] != null ? row[pfx+'_ct_ft_L'] : row[pfx+'_mp_x_L']);
+    d[pfx+'_ct_ft_R']   = pf(row[pfx+'_ct_ft_R'] != null ? row[pfx+'_ct_ft_R'] : row[pfx+'_mp_x_R']);
+    d[pfx+'_sl_sr_L']   = pf(row[pfx+'_sl_sr_L'] != null ? row[pfx+'_sl_sr_L'] : row[pfx+'_mp_y_L']);
+    d[pfx+'_sl_sr_R']   = pf(row[pfx+'_sl_sr_R'] != null ? row[pfx+'_sl_sr_R'] : row[pfx+'_mp_y_R']);
+    d[pfx+'_max_speed'] = pf(row[pfx+'_max_speed']);
+  });
   d.test_date   = row.test_date;
   return d;
 }
@@ -689,6 +700,7 @@ function switchTab(t){
   if(t==='history')  setTimeout(renderHistory,60);
   if(t==='radar')    setTimeout(renderRadar,60);
   if(t==='asr')      setTimeout(renderASR,60);
+  if(t==='motorpref')setTimeout(renderMotorPref,60);
 }
 
 // ─── MAIN RENDER ──────────────────────────────────────────────────────────────
@@ -757,6 +769,7 @@ function renderMain(){
         <div class="tab" data-t="quadrant" onclick="switchTab('quadrant')">Quadrants</div>
         <div class="tab" data-t="radar"    onclick="switchTab('radar')">Athletic Profile</div>
         <div class="tab" data-t="asr"      onclick="switchTab('asr')">Speed Reserve</div>
+        <div class="tab" data-t="motorpref" onclick="switchTab('motorpref')">Motor Preference</div>
         <div class="tab" data-t="history"  onclick="switchTab('history')">Test History</div>
         <div class="tab" data-t="feedback" onclick="switchTab('feedback')">Athlete Feedback</div>
       </div>
@@ -883,6 +896,7 @@ function renderMain(){
       </div>
       <div class="tc" data-t="radar"><div id="radarContent" style="padding:18px 20px;display:flex;flex-direction:column;align-items:center;gap:12px"></div></div>
       <div class="tc" data-t="asr"><div id="asrContent" style="padding:18px 20px"></div></div>
+      <div class="tc" data-t="motorpref"><div id="mpContent" style="padding:18px 20px"></div></div>
       <div class="tc" data-t="history"><div id="historyContent" style="overflow-x:auto;padding:18px 20px"></div></div>
       <div class="tc" data-t="feedback"><div id="feedbackContent"><div class="feedback-empty"><h3>Athlete Feedback</h3><p>Generate a personalised coach report and athlete message based on the latest test results.</p><button class="btn" onclick="generateFeedback()">Generate Feedback</button></div></div></div>
       <div class="tc" data-t="quadrant">
@@ -1616,6 +1630,58 @@ function _buildAndOpenPrintReport(a, chartImages, quadrantSVG, radarSVG, radarMo
       <p style="font-size:9px;color:#aaa;text-align:center;margin-top:6px">Dividers at normative midpoint · Gray dots = other athletes (anonymous)</p>
     </div>` : '';
 
+  // ── Motor preference — quadrant only, RR figures deliberately excluded ──
+  let mpHtml = '';
+  {
+    const mpTry = ['acc','mv'].map(px=>({px, d:mpData(a.sessions,px)})).filter(o=>o.d);
+    if (mpTry.length) {
+      mpHtml = mpTry.map(({px,d})=>{
+        const q = MP_QUADRANTS[mpQuadrantKey(d.x,d.y)];
+        const band = mpSpeedBand(d.maxSpeed);
+        const runLbl = px==='acc' ? 'Acceleration' : 'Max velocity';
+        const W=430,H=410,CX=W/2,CY=200,R=145,LIM=3.5;
+        const sx=v=>CX+(v/LIM)*R, sy=v=>CY-(v/LIM)*R;
+        let g=`<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:${W}px">`;
+        [0.5,1.5,2.5].forEach(sd=>{const h=(sd/LIM)*R;
+          g+=`<rect x="${CX-h}" y="${CY-h}" width="${h*2}" height="${h*2}" fill="none" stroke="rgba(15,23,42,0.16)" stroke-width="1" stroke-dasharray="4,3"/>`;});
+        g+=`<line x1="${CX-R}" y1="${CY}" x2="${CX+R}" y2="${CY}" stroke="#334155" stroke-width="1.1"/>`;
+        g+=`<line x1="${CX}" y1="${CY-R}" x2="${CX}" y2="${CY+R}" stroke="#334155" stroke-width="1.1"/>`;
+        for(let v=-3;v<=3;v++){ if(v===0)continue;
+          g+=`<line x1="${sx(v)}" y1="${CY-3}" x2="${sx(v)}" y2="${CY+3}" stroke="#94a3b8" stroke-width="1"/>`;
+          g+=`<line x1="${CX-3}" y1="${sy(v)}" x2="${CX+3}" y2="${sy(v)}" stroke="#94a3b8" stroke-width="1"/>`;}
+        const qk2=mpQuadrantKey(d.x,d.y);
+        [['Bounders',CX-R+3,CY-R+12,'start','bounders'],['Striders',CX+R-3,CY-R+12,'end','striders'],
+         ['Bouncers',CX-R+3,CY+R-6,'start','bouncers'],['Spinners',CX+R-3,CY+R-6,'end','spinners']]
+         .forEach(([t,x,y,an,key])=>{
+          g+=`<text x="${x}" y="${y}" font-size="10.5" font-weight="700" fill="${qk2===key?'#111':'#b6bcc4'}" text-anchor="${an}">${t}</text>`;});
+        g+=`<text x="${CX}" y="${CY-R-14}" font-size="8" fill="#777" text-anchor="middle">greater step length</text>`;
+        g+=`<text x="${CX}" y="${CY+R+20}" font-size="8" fill="#777" text-anchor="middle">greater step rate</text>`;
+        g+=`<text x="${CX-R-5}" y="${CY-6}" font-size="8" fill="#777" text-anchor="middle" transform="rotate(-90,${CX-R-5},${CY-6})">greater flight time</text>`;
+        g+=`<text x="${CX+R+7}" y="${CY-6}" font-size="8" fill="#777" text-anchor="middle" transform="rotate(90,${CX+R+7},${CY-6})">greater contact time</text>`;
+        g+=`<circle cx="${sx(d.x)}" cy="${sy(d.y)}" r="13" fill="${band.col}" fill-opacity="0.5" stroke="${band.col}" stroke-width="1.4"/>`;
+        if(d.xL!=null&&d.yL!=null) g+=`<circle cx="${sx(d.xL)}" cy="${sy(d.yL)}" r="5.5" fill="#2563eb" stroke="#fff" stroke-width="1.5"/>`;
+        if(d.xR!=null&&d.yR!=null) g+=`<circle cx="${sx(d.xR)}" cy="${sy(d.yR)}" r="5.5" fill="#ec4899" stroke="#fff" stroke-width="1.5"/>`;
+        g+='</svg>';
+        return `<div style="margin-top:16px;page-break-inside:avoid">
+          <div style="font-size:9px;font-weight:700;color:#7a8290;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;padding-bottom:4px;border-bottom:1px solid #ebebeb">Motor Preference — ${runLbl}</div>
+          <div style="display:flex;align-items:center;gap:9px;margin-bottom:6px">
+            <span style="display:inline-flex;align-items:center;gap:5px;background:#f8f8f8;border:1px solid #e0e0e0;border-radius:13px;padding:3px 11px">
+              <span style="width:7px;height:7px;border-radius:50%;background:${band.col};display:inline-block"></span>
+              <span style="font-size:12px;font-weight:700;color:#111">${q.name}</span></span>
+            <span style="font-size:10.5px;color:#555">${q.sub}</span>
+          </div>
+          <div style="text-align:center">${g}</div>
+          <div style="display:flex;gap:16px;font-size:9px;color:#888;justify-content:center;margin-top:3px">
+            <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#2563eb;margin-right:3px"></span>Left</span>
+            <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#ec4899;margin-right:3px"></span>Right</span>
+            <span>L2 norm ${d.l2}${d.asym!=null?' · asymmetry '+d.asym:''}</span>
+            <span>Rings = 0.5 / 1.5 / 2.5 SD</span>
+          </div>
+        </div>`;
+      }).join('');
+    }
+  }
+
   // ── Athletic profile spider — only if an SVG was captured ──
   const radarHtml = (radarSVG && radarSVG.includes('<svg')) ? `
     <div style="page-break-before:always"></div>
@@ -1751,6 +1817,7 @@ function _buildAndOpenPrintReport(a, chartImages, quadrantSVG, radarSVG, radarMo
   ${section('Speed (Vuemotion)',spdM)}
 
   ${radarHtml}
+  ${mpHtml}
   ${chartsHtml}
   ${quadrantHtml}
   ${speedReserveHtml}
@@ -2214,6 +2281,211 @@ function renderASR() {
         than an incremental protocol, which lowers SRR. MAS here was taken from <strong>${mas.src}</strong>.
         Compare athletes only when the same aerobic test was used.
       </p>
+    </div>`;
+}
+
+// ─── MOTOR PREFERENCE (VueMotion) ───────────────────────────────────────────
+// Framework: Wild, J.J. & Bezodis, N.E. — sprint acceleration technique and lower
+// limb injury epidemiology in professional male Rugby Union (seven-season analysis).
+// Axes are cohort z-scores: x = ground contact vs flight time, y = step length vs step rate.
+let mpRunType = 'acc'; // 'acc' | 'mv'
+
+const MP_QUADRANTS = {
+  bounders: { name:'Bounders', sub:'Long step length / long flight time',
+              rr:{ 'Hip/groin':0.34, 'Hamstring':0.70, 'Calf':2.53 }, flag:['Calf'] },
+  striders: { name:'Striders', sub:'Long step length / long contact time',
+              rr:{ 'Hip/groin':0.70, 'Hamstring':0.55, 'Calf':0.93 }, flag:[] },
+  bouncers: { name:'Bouncers', sub:'High step rate / short contact time',
+              rr:{ 'Hip/groin':2.12, 'Hamstring':0.61, 'Calf':0.86 }, flag:[] },
+  spinners: { name:'Spinners', sub:'High step rate / short flight time',
+              rr:{ 'Hip/groin':0.72, 'Hamstring':2.53, 'Calf':0.31 }, flag:['Hamstring'] },
+};
+
+function mpQuadrantKey(x, y) {
+  if (y >= 0) return x < 0 ? 'bounders' : 'striders';
+  return x < 0 ? 'bouncers' : 'spinners';
+}
+
+function mpSpeedBand(v) {
+  if (v == null)   return { col:'#94a3b8', label:'no speed recorded' };
+  if (v < 7.2)     return { col:'#dc2626', label:'below 7.2 m/s' };
+  if (v <= 8.09)   return { col:'#f59e0b', label:'around cohort average' };
+  return             { col:'#16a34a', label:'above 8.09 m/s' };
+}
+
+function setMpRunType(t, btn) {
+  mpRunType = t;
+  document.querySelectorAll('.mp-run-btn').forEach(b=>b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  renderMotorPref();
+}
+
+function mpData(sessions, pfx) {
+  const g = k => latestVal(sessions, pfx+k);
+  // x = contact/flight (horizontal) · y = step length/step rate (vertical)
+  const xL=g('_ct_ft_L'), xR=g('_ct_ft_R'), yL=g('_sl_sr_L'), yR=g('_sl_sr_R');
+  if ([xL,xR,yL,yR].every(v=>v==null)) return null;
+  const avgX = (xL!=null&&xR!=null) ? (xL+xR)/2 : (xL!=null?xL:xR);
+  const avgY = (yL!=null&&yR!=null) ? (yL+yR)/2 : (yL!=null?yL:yR);
+  if (avgX==null || avgY==null) return null;
+  const asym = (xL!=null&&xR!=null&&yL!=null&&yR!=null)
+    ? +Math.sqrt(Math.pow(xL-xR,2)+Math.pow(yL-yR,2)).toFixed(2) : null;
+  let date=null;
+  for (const s of sessions){ if (s[pfx+'_ct_ft_L']!=null||s[pfx+'_ct_ft_R']!=null){ date=s.test_date; break; } }
+  return { xL,xR,yL,yR,
+    x:+avgX.toFixed(2), y:+avgY.toFixed(2),
+    l2:+Math.sqrt(avgX*avgX+avgY*avgY).toFixed(3),
+    asym, maxSpeed:g('_max_speed'), date };
+}
+
+function renderMotorPref() {
+  const a = athleteMap[selectedId];
+  const el = document.getElementById('mpContent');
+  if (!a || !el) return;
+
+  const pfx = mpRunType === 'acc' ? 'acc' : 'mv';
+  const runLabel = mpRunType === 'acc' ? 'Acceleration' : 'Max velocity';
+  const d = mpData(a.sessions, pfx);
+
+  const toggle = `
+    <div class="quad-ctrl-row" style="justify-content:center">
+      <span class="control-label">Run type</span>
+      <button class="axis-btn mp-run-btn${mpRunType==='acc'?' active':''}" onclick="setMpRunType('acc',this)">Acceleration</button>
+      <button class="axis-btn mp-run-btn${mpRunType==='mv'?' active':''}"  onclick="setMpRunType('mv',this)">Max velocity</button>
+    </div>`;
+
+  if (!d) {
+    el.innerHTML = `<div style="display:flex;flex-direction:column;gap:14px;align-items:center">${toggle}
+      <div style="padding:28px 20px;text-align:center;background:var(--surface-alt);border:1px solid var(--border);border-radius:8px;max-width:460px">
+        <h3 style="font-size:15px;font-weight:600;color:var(--text-secondary);margin-bottom:8px">No ${runLabel.toLowerCase()} profile recorded</h3>
+        <p style="font-size:13px;color:var(--text-muted);line-height:1.6">
+          Add <strong>${pfx}_ct_ft_L</strong> / <strong>${pfx}_ct_ft_R</strong>
+          (contact ÷ flight time) and <strong>${pfx}_sl_sr_L</strong> / <strong>${pfx}_sl_sr_R</strong>
+          (step length ÷ step rate) from the VueMotion Motor Preference report.</p></div></div>`;
+    return;
+  }
+
+  const qk = mpQuadrantKey(d.x, d.y);
+  const q  = MP_QUADRANTS[qk];
+  const band = mpSpeedBand(d.maxSpeed);
+
+  // ── Quadrant SVG ────────────────────────────────────────────────────────
+  const W=520, H=500, CX=W/2, CY=245, R=175, LIM=3.5;
+  const sx = v => CX + (v/LIM)*R;
+  const sy = v => CY - (v/LIM)*R;
+
+  let s=`<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:520px;font-family:-apple-system,BlinkMacSystemFont,sans-serif">`;
+  // SD rings
+  [0.5,1.5,2.5].forEach(sd=>{
+    const half=(sd/LIM)*R;
+    s+=`<rect x="${CX-half}" y="${CY-half}" width="${half*2}" height="${half*2}" fill="none" stroke="rgba(15,23,42,0.18)" stroke-width="1" stroke-dasharray="4,3"/>`;
+  });
+  // Axes
+  s+=`<line x1="${CX-R}" y1="${CY}" x2="${CX+R}" y2="${CY}" stroke="#334155" stroke-width="1.2"/>`;
+  s+=`<line x1="${CX}" y1="${CY-R}" x2="${CX}" y2="${CY+R}" stroke="#334155" stroke-width="1.2"/>`;
+  // Ticks
+  for(let v=-3;v<=3;v++){ if(v===0) continue;
+    s+=`<line x1="${sx(v)}" y1="${CY-3}" x2="${sx(v)}" y2="${CY+3}" stroke="#94a3b8" stroke-width="1"/>`;
+    s+=`<text x="${sx(v)}" y="${CY+13}" font-size="7.5" fill="#94a3b8" text-anchor="middle">${v}</text>`;
+    s+=`<line x1="${CX-3}" y1="${sy(v)}" x2="${CX+3}" y2="${sy(v)}" stroke="#94a3b8" stroke-width="1"/>`;
+    s+=`<text x="${CX-7}" y="${sy(v)+2.5}" font-size="7.5" fill="#94a3b8" text-anchor="end">${v}</text>`;
+  }
+  // Quadrant labels
+  const qlab=[
+    ['Bounders','long step length / long flight time', CX-R+4, CY-R+14, 'start', qk==='bounders'],
+    ['Striders','long step length / long contact time', CX+R-4, CY-R+14, 'end',   qk==='striders'],
+    ['Bouncers','high step rate / short contact time',  CX-R+4, CY+R-8,  'start', qk==='bouncers'],
+    ['Spinners','high step rate / short flight time',   CX+R-4, CY+R-8,  'end',   qk==='spinners'],
+  ];
+  qlab.forEach(([t,sub,x,y,anch,isCur])=>{
+    s+=`<text x="${x}" y="${y}" font-size="12" font-weight="700" fill="${isCur?'#0d1117':'#94a3b8'}" text-anchor="${anch}">${t}</text>`;
+    s+=`<text x="${x}" y="${y+11}" font-size="7.5" fill="${isCur?'#64748b':'#c3c9d1'}" text-anchor="${anch}">${sub}</text>`;
+  });
+  // Axis descriptors
+  s+=`<text x="${CX}" y="${CY-R-20}" font-size="9" fill="#64748b" text-anchor="middle">greater step length relative to step rate</text>`;
+  s+=`<text x="${CX}" y="${CY+R+26}" font-size="9" fill="#64748b" text-anchor="middle">greater step rate relative to step length</text>`;
+  s+=`<text x="${CX-R-6}" y="${CY-8}" font-size="9" fill="#64748b" text-anchor="middle" transform="rotate(-90,${CX-R-6},${CY-8})">greater flight time rel. to contact</text>`;
+  s+=`<text x="${CX+R+8}" y="${CY-8}" font-size="9" fill="#64748b" text-anchor="middle" transform="rotate(90,${CX+R+8},${CY-8})">greater contact time rel. to flight</text>`;
+  // Session-average bubble
+  s+=`<circle cx="${sx(d.x)}" cy="${sy(d.y)}" r="15" fill="${band.col}" fill-opacity="0.5" stroke="${band.col}" stroke-width="1.5"/>`;
+  // Per-leg markers
+  if (d.xL!=null&&d.yL!=null)
+    s+=`<circle cx="${sx(d.xL)}" cy="${sy(d.yL)}" r="6" fill="#2563eb" stroke="#fff" stroke-width="1.6"/>`;
+  if (d.xR!=null&&d.yR!=null)
+    s+=`<circle cx="${sx(d.xR)}" cy="${sy(d.yR)}" r="6" fill="#ec4899" stroke="#fff" stroke-width="1.6"/>`;
+  if (d.xL!=null&&d.xR!=null&&d.yL!=null&&d.yR!=null)
+    s+=`<line x1="${sx(d.xL)}" y1="${sy(d.yL)}" x2="${sx(d.xR)}" y2="${sy(d.yR)}" stroke="#64748b" stroke-width="1" stroke-dasharray="2,2" opacity="0.6"/>`;
+  s+='</svg>';
+
+  // ── 1-D axis bars ───────────────────────────────────────────────────────
+  const bar = (leftLbl,rightLbl,val) => {
+    const BW=440, BH=60, BML=18, BCW=BW-BML*2, ByC=38;
+    const bx = v => BML + ((v+LIM)/(2*LIM))*BCW;
+    let b=`<svg viewBox="0 0 ${BW} ${BH}" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:${BW}px">`;
+    b+=`<text x="${BML}" y="12" font-size="10.5" font-weight="700" fill="#334155">${leftLbl}</text>`;
+    b+=`<text x="${BW-BML}" y="12" font-size="10.5" font-weight="700" fill="#334155" text-anchor="end">${rightLbl}</text>`;
+    b+=`<line x1="${BML}" y1="${ByC}" x2="${BW-BML}" y2="${ByC}" stroke="#334155" stroke-width="1.2"/>`;
+    for(let v=-3;v<=3;v++){
+      b+=`<line x1="${bx(v)}" y1="${ByC-4}" x2="${bx(v)}" y2="${ByC+4}" stroke="#94a3b8" stroke-width="1"/>`;
+      b+=`<text x="${bx(v)}" y="${ByC+16}" font-size="7.5" fill="#94a3b8" text-anchor="middle">${v}</text>`;
+    }
+    b+=`<circle cx="${bx(val)}" cy="${ByC}" r="11" fill="${band.col}" fill-opacity="0.55" stroke="${band.col}" stroke-width="1.5"/>`;
+    b+=`<text x="${bx(val)}" y="${ByC+3.5}" font-size="8.5" font-weight="700" fill="#0d1117" text-anchor="middle">${val>0?'+':''}${val}</text>`;
+    b+='</svg>';
+    return b;
+  };
+
+  // ── Injury relative risk — coach view only ──────────────────────────────
+  const rrRows = Object.entries(q.rr).map(([site,rr])=>{
+    const flagged = q.flag.includes(site);
+    const col = rr>=2 ? '#dc2626' : rr>=1.2 ? '#c2410c' : '#16a34a';
+    return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:5px">
+      <span style="flex:1;font-size:11px;color:var(--text-secondary)">${site}</span>
+      <span style="font-size:11.5px;font-weight:700;color:${col}">${rr.toFixed(2)}×${flagged?' *':''}</span>
+    </div>`;
+  }).join('');
+
+  const card=(l,v,sub)=>`<div style="flex:1;min-width:105px;border:1px solid var(--border);border-radius:8px;padding:10px 12px;background:var(--surface)">
+    <div style="font-size:9px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:3px">${l}</div>
+    <div style="font-size:17px;font-weight:700;color:var(--text-primary);line-height:1.1">${v}</div>
+    ${sub?`<div style="font-size:9.5px;color:var(--text-muted);margin-top:2px">${sub}</div>`:''}</div>`;
+
+  el.innerHTML = `
+    <div style="display:flex;flex-direction:column;gap:14px;align-items:center;width:100%">
+      ${toggle}
+      <div style="display:flex;align-items:center;gap:11px;flex-wrap:wrap;justify-content:center">
+        <span style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.07em">Preference</span>
+        <span style="display:inline-flex;align-items:center;gap:7px;background:var(--surface-alt);border:1px solid var(--border);border-radius:20px;padding:5px 14px">
+          <span style="width:9px;height:9px;border-radius:50%;background:${band.col};display:inline-block"></span>
+          <span style="font-size:14px;font-weight:700;color:var(--text-primary)">${q.name}</span></span>
+        <span style="font-size:12px;color:var(--text-secondary)">${q.sub}</span>
+      </div>
+      ${s}
+      <div style="display:flex;align-items:center;gap:14px;font-size:10.5px;color:var(--text-muted);flex-wrap:wrap;justify-content:center">
+        <span><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#2563eb;margin-right:4px"></span>Left leg</span>
+        <span><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#ec4899;margin-right:4px"></span>Right leg</span>
+        <span><span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:${band.col};opacity:.5;margin-right:4px;vertical-align:middle"></span>Session average — ${band.label}</span>
+        <span style="color:#c3c9d1">Rings = 0.5 / 1.5 / 2.5 SD</span>
+      </div>
+      <div style="display:flex;gap:9px;flex-wrap:wrap;width:100%;max-width:520px">
+        ${card('L2 norm', d.l2, 'strength of preference')}
+        ${card('Asymmetry', d.asym!=null?d.asym:'—', 'L–R separation')}
+        ${card('Max speed', d.maxSpeed!=null?d.maxSpeed+' m/s':'—', band.label)}
+        ${card('Tested', d.date||'—', runLabel)}
+      </div>
+      <div style="width:100%;max-width:440px;display:flex;flex-direction:column;gap:2px">
+        ${bar('flight time','ground contact time', d.x)}
+        ${bar('step frequency','step length', d.y)}
+      </div>
+      <div class="no-print" style="width:100%;max-width:520px;border:1px solid var(--border);border-left:3px solid #64748b;border-radius:0 8px 8px 0;padding:12px 15px;background:var(--surface-alt)">
+        <div style="font-size:9.5px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:7px">
+          Injury association — ${q.name} · coach reference only</div>
+        ${rrRows}
+        <p style="font-size:9.5px;color:var(--text-muted);line-height:1.55;margin-top:7px">
+          Relative risk vs other preference groups. * = statistically significant in the source study.
+          Derived from professional male Rugby Union (Wild &amp; Bezodis, seven-season analysis) —
+          transfer to football is an extrapolation, and these figures are not shown on athlete reports.</p>
+      </div>
     </div>`;
 }
 
