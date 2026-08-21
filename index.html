@@ -175,7 +175,7 @@
     </div>
     <div class="sb-search"><input id="sq" type="text" placeholder="Search athlete…" oninput="filterAthletes(this.value)"></div>
     <div class="alist" id="alist"><div style="padding:16px;font-size:12px;color:#7a8290;text-align:center">Connect Google Sheet to load athletes</div></div>
-    <div class="settings-bar"><span id="sheetStatus">No sheet connected</span><span style="font-size:9px;color:#c8ccd2;margin:0 6px" title="Build version">BUILD 31</span><button class="btn-sm" onclick="showConfig()">⚙ Settings</button></div>
+    <div class="settings-bar"><span id="sheetStatus">No sheet connected</span><span style="font-size:9px;color:#c8ccd2;margin:0 6px" title="Build version">BUILD 33</span><button class="btn-sm" onclick="showConfig()">⚙ Settings</button></div>
   </aside>
   <main class="main" id="main"></main>
 </div>
@@ -467,6 +467,14 @@ function deriveSession(row, bw_kg, age_yr, height_cm) {
     d[pfx+'_ft_L']      = pf(row[pfx+'_ft_L']);      // flight time, s
     d[pfx+'_ft_R']      = pf(row[pfx+'_ft_R']);
     d[pfx+'_max_speed'] = pf(row[pfx+'_max_speed']);
+    // Authoritative: z-score coordinates read straight off the VueMotion
+    // Motor Preference chart. These override anything computed from raw values.
+    d[pfx+'_mp_x']   = pf(row[pfx+'_mp_x']);
+    d[pfx+'_mp_y']   = pf(row[pfx+'_mp_y']);
+    d[pfx+'_mp_x_L'] = pf(row[pfx+'_mp_x_L']);
+    d[pfx+'_mp_x_R'] = pf(row[pfx+'_mp_x_R']);
+    d[pfx+'_mp_y_L'] = pf(row[pfx+'_mp_y_L']);
+    d[pfx+'_mp_y_R'] = pf(row[pfx+'_mp_y_R']);
   });
   // Legacy 'mv_' prefix accepted as an alias for 'fly_'
   ['sl_L','sl_R','sf_L','sf_R','gct_L','gct_R','ft_L','ft_R','max_speed'].forEach(k=>{
@@ -1647,12 +1655,13 @@ function _buildAndOpenPrintReport(a, chartImages, quadrantSVG, radarSVG, radarMo
         const band = mpSpeedBand(d.maxSpeed);
         const runLbl = px==='acc' ? 'Acceleration' : 'Fly (max velocity)';
         const W=430,H=410,CX=W/2,CY=200,R=145;
+        const pSD=d.unit==='SD';
         const pPts=[d.x,d.y,d.xL,d.xR,d.yL,d.yR].filter(v=>v!=null).map(Math.abs);
         const pMax=pPts.length?Math.max(...pPts):0;
-        const LIM=Math.max(45,Math.ceil((pMax*1.15)/10)*10);
-        const pStep=LIM<=45?10:LIM<=100?20:LIM<=200?50:100;
+        const LIM=pSD?Math.max(3.5,Math.ceil(pMax*1.15*2)/2):Math.max(45,Math.ceil((pMax*1.15)/10)*10);
+        const pStep=pSD?(LIM<=3.5?1:LIM<=7?2:5):(LIM<=45?10:LIM<=100?20:LIM<=200?50:100);
         const pTicks=[]; for(let v=-LIM+pStep; v<LIM; v+=pStep){ if(Math.abs(v)>0.01) pTicks.push(v); }
-        const pRings=[10,20,30].filter(r=>r<LIM);
+        const pRings=(pSD?[0.5,1.5,2.5]:[10,20,30]).filter(r=>r<LIM);
         const sx=v=>CX+(v/LIM)*R, sy=v=>CY-(v/LIM)*R;
         let g=`<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:${W}px">`;
         pRings.forEach(sd=>{const h=(sd/LIM)*R;
@@ -1687,8 +1696,8 @@ function _buildAndOpenPrintReport(a, chartImages, quadrantSVG, radarSVG, radarMo
           <div style="display:flex;gap:16px;font-size:9px;color:#888;justify-content:center;margin-top:3px">
             <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#2563eb;margin-right:3px"></span>Left</span>
             <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#ec4899;margin-right:3px"></span>Right</span>
-            <span>Preference strength ${d.l2}%${d.asym!=null?' · asymmetry '+d.asym+'%':''}</span>
-            <span>Rings = ${pRings.join(' / ')}% · axis ±${LIM}%</span>
+            <span>Preference strength ${d.l2}${pSD?'':'%'}${d.asym!=null?' · asymmetry '+d.asym+(pSD?'':'%'):''}</span>
+            <span>Rings = ${pRings.join(' / ')}${pSD?' SD':'%'} · axis ±${LIM}${pSD?'':'%'}</span>
           </div>
         </div>`;
       }).join('');
@@ -2332,6 +2341,39 @@ const MP_NORMS = {
   acc: { sl:1.3925, sf:4.3359, gct:0.1702, ft:0.0626, provisional:false },
 };
 
+
+// ── Cohort statistics from your own athletes ────────────────────────────────
+// Motor preference axes are z-scores, which need each metric's standard deviation.
+// VueMotion never prints those, so we derive them from every session in the sheet.
+// Reference group = your roster, not VueMotion's population.
+function mpCohortStats(pfx) {
+  const cols = { sl:[], sf:[], gct:[], ft:[] };
+  const avg = (a,b) => (a!=null&&b!=null) ? (a+b)/2 : (a!=null?a:b);
+  Object.values(athleteMap).forEach(a => {
+    (a.sessions||[]).forEach(s => {
+      const sl  = avg(s[pfx+'_sl_L'],  s[pfx+'_sl_R']);
+      const sf  = avg(s[pfx+'_sf_L'],  s[pfx+'_sf_R']);
+      const gct = avg(s[pfx+'_gct_L'], s[pfx+'_gct_R']);
+      const ft  = avg(s[pfx+'_ft_L'],  s[pfx+'_ft_R']);
+      if (sl!=null)  cols.sl.push(sl);
+      if (sf!=null)  cols.sf.push(sf);
+      if (gct!=null) cols.gct.push(gct);
+      if (ft!=null)  cols.ft.push(ft);
+    });
+  });
+  const stat = arr => {
+    const n = arr.length; if (n < 2) return null;
+    const m = arr.reduce((x,y)=>x+y,0)/n;
+    const sd = Math.sqrt(arr.reduce((acc,v)=>acc+Math.pow(v-m,2),0)/(n-1));
+    return { n, mean:m, sd };
+  };
+  const out = { sl:stat(cols.sl), sf:stat(cols.sf), gct:stat(cols.gct), ft:stat(cols.ft) };
+  const ok = ['sl','sf','gct','ft'].every(k => out[k] && out[k].sd > 0);
+  out.n = Math.min(...['sl','sf','gct','ft'].map(k => out[k] ? out[k].n : 0));
+  out.usable = ok && out.n >= 3;
+  return out;
+}
+
 function mpSpeedBand(v) {
   if (v == null)   return { col:'#94a3b8', label:'no speed recorded' };
   if (v < 7.2)     return { col:'#dc2626', label:'below 7.2 m/s' };
@@ -2353,9 +2395,55 @@ function mpData(sessions, pfx) {
   const g = k => latestVal(sessions, pfx+'_'+k);
   const N = MP_NORMS[pfx]; if (!N) return null;
 
+  // ── Preferred path: coordinates transcribed from the VueMotion chart ──
+  // These are true z-scores against VueMotion's cohort and are authoritative.
+  const vx=g('mp_x'), vy=g('mp_y');
+  const vxL=g('mp_x_L'), vxR=g('mp_x_R'), vyL=g('mp_y_L'), vyR=g('mp_y_R');
+  const haveLegs = [vxL,vxR,vyL,vyR].every(v=>v!=null);
+  if (vx!=null && vy!=null || haveLegs) {
+    const X = vx!=null ? vx : (vxL+vxR)/2;
+    const Y = vy!=null ? vy : (vyL+vyR)/2;
+    let dt=null;
+    for (const s of sessions){ if (s[pfx+'_mp_x']!=null||s[pfx+'_mp_x_L']!=null){ dt=s.test_date; break; } }
+    return { xL:vxL, xR:vxR, yL:vyL, yR:vyR, x:+X.toFixed(2), y:+Y.toFixed(2),
+      l2:+Math.sqrt(X*X+Y*Y).toFixed(2),
+      asym: haveLegs ? +Math.sqrt(Math.pow(vxL-vxR,2)+Math.pow(vyL-vyR,2)).toFixed(2) : null,
+      maxSpeed:g('max_speed'), date:dt, unit:'SD', source:'VueMotion chart',
+      ctft:null, slsr:null, ctftNorm:null, slsrNorm:null };
+  }
+
+
   const raw = { slL:g('sl_L'), slR:g('sl_R'), sfL:g('sf_L'), sfR:g('sf_R'),
                 gctL:g('gct_L'), gctR:g('gct_R'), ftL:g('ft_L'), ftR:g('ft_R') };
   if (Object.values(raw).every(v=>v==null)) return null;
+
+  // ── Second choice: z-scores against your own roster ──
+  const CS = mpCohortStats(pfx);
+  if (CS.usable) {
+    const z = (v,k) => (v==null) ? null : (v - CS[k].mean) / CS[k].sd;
+    const avg2 = (a,b) => (a!=null&&b!=null)?(a+b)/2:(a!=null?a:b);
+    const gA=avg2(g('gct_L'),g('gct_R')), fA=avg2(g('ft_L'),g('ft_R'));
+    const sA=avg2(g('sl_L'),g('sl_R')),   qA=avg2(g('sf_L'),g('sf_R'));
+    if (gA!=null && fA!=null && sA!=null && qA!=null) {
+      // x = contact vs flight · y = step length vs step rate
+      const X = z(gA,'gct') - z(fA,'ft');
+      const Y = z(sA,'sl')  - z(qA,'sf');
+      const legX = (gv,fv) => (gv!=null&&fv!=null) ? +(z(gv,'gct')-z(fv,'ft')).toFixed(2) : null;
+      const legY = (sv,qv) => (sv!=null&&qv!=null) ? +(z(sv,'sl') -z(qv,'sf')).toFixed(2) : null;
+      const zxL=legX(g('gct_L'),g('ft_L')), zxR=legX(g('gct_R'),g('ft_R'));
+      const zyL=legY(g('sl_L'),g('sf_L')),  zyR=legY(g('sl_R'),g('sf_R'));
+      let dt2=null;
+      for (const s of sessions){ if (s[pfx+'_gct_L']!=null||s[pfx+'_gct_R']!=null){ dt2=s.test_date; break; } }
+      return { xL:zxL, xR:zxR, yL:zyL, yR:zyR,
+        x:+X.toFixed(2), y:+Y.toFixed(2),
+        l2:+Math.sqrt(X*X+Y*Y).toFixed(2),
+        asym:(zxL!=null&&zxR!=null&&zyL!=null&&zyR!=null)
+          ? +Math.sqrt(Math.pow(zxL-zxR,2)+Math.pow(zyL-zyR,2)).toFixed(2) : null,
+        maxSpeed:g('max_speed'), date:dt2, unit:'SD',
+        source:`your roster · n=${CS.n} sessions`, cohortN:CS.n,
+        ctft:null, slsr:null, ctftNorm:null, slsrNorm:null };
+    }
+  }
 
   const ctftNorm = N.gct / N.ft;    // contact ÷ flight at population norm
   const slsrNorm = N.sl  / N.sf;    // step length ÷ step rate at population norm
@@ -2382,7 +2470,7 @@ function mpData(sessions, pfx) {
 
   return { xL,xR,yL,yR, x, y,
     l2:+Math.sqrt(x*x+y*y).toFixed(1), asym,
-    maxSpeed:g('max_speed'), date, raw,
+    maxSpeed:g('max_speed'), date, raw, unit:'%', source:'computed from raw values',
     ctft:(gctA!=null&&ftA)?+(gctA/ftA).toFixed(3):null,
     slsr:(slA!=null&&sfA)?+(slA/sfA).toFixed(3):null,
     ctftNorm:+ctftNorm.toFixed(3), slsrNorm:+slsrNorm.toFixed(3),
@@ -2410,11 +2498,15 @@ function renderMotorPref() {
       <div style="padding:28px 20px;text-align:center;background:var(--surface-alt);border:1px solid var(--border);border-radius:8px;max-width:460px">
         <h3 style="font-size:15px;font-weight:600;color:var(--text-secondary);margin-bottom:8px">No ${runLabel.toLowerCase()} profile recorded</h3>
         <p style="font-size:13px;color:var(--text-muted);line-height:1.6">
-          Transcribe these straight from the VueMotion report for this run type:<br>
+          Transcribe these raw values from the VueMotion report — the dashboard z-scores them
+          against your own roster automatically:<br>
           <strong>${pfx}_sl_L / ${pfx}_sl_R</strong> (step length) ·
           <strong>${pfx}_sf_L / ${pfx}_sf_R</strong> (step frequency) ·
           <strong>${pfx}_gct_L / ${pfx}_gct_R</strong> (ground contact) ·
-          <strong>${pfx}_ft_L / ${pfx}_ft_R</strong> (flight time)</p></div></div>`;
+          <strong>${pfx}_ft_L / ${pfx}_ft_R</strong> (flight time)<br><br>
+          <span style="font-size:11.5px">If you also have that athlete's Motor Preference chart, adding
+          <strong>${pfx}_mp_x</strong> and <strong>${pfx}_mp_y</strong> will match VueMotion exactly.</span>
+          </p></div></div>`;
     return;
   }
 
@@ -2425,12 +2517,16 @@ function renderMotorPref() {
   // ── Quadrant SVG ────────────────────────────────────────────────────────
   const W=520, H=500, CX=W/2, CY=245, R=175;
   // Axis auto-scales so no point can ever render outside the plot area.
+  const isSD = d.unit === 'SD';
   const mpPts = [d.x, d.y, d.xL, d.xR, d.yL, d.yR].filter(v=>v!=null).map(Math.abs);
   const mpMax = mpPts.length ? Math.max(...mpPts) : 0;
-  const LIM = Math.max(45, Math.ceil((mpMax*1.15)/10)*10); // % deviation from norm
-  const tickStep = LIM<=45 ? 10 : LIM<=100 ? 20 : LIM<=200 ? 50 : 100;
+  const LIM = isSD ? Math.max(3.5, Math.ceil(mpMax*1.15*2)/2)
+                   : Math.max(45,  Math.ceil((mpMax*1.15)/10)*10);
+  const tickStep = isSD ? (LIM<=3.5?1:LIM<=7?2:5)
+                        : (LIM<=45?10:LIM<=100?20:LIM<=200?50:100);
   const ticks = []; for(let v=-LIM+tickStep; v<LIM; v+=tickStep){ if(Math.abs(v)>0.01) ticks.push(v); }
-  const ringVals = [10,20,30].filter(r=>r<LIM);
+  const ringVals = (isSD ? [0.5,1.5,2.5] : [10,20,30]).filter(r=>r<LIM);
+  const U = isSD ? '' : '%';
   const sx = v => CX + (v/LIM)*R;
   const sy = v => CY - (v/LIM)*R;
 
@@ -2491,7 +2587,7 @@ function renderMotorPref() {
       b+=`<text x="${bx(v)}" y="${ByC+16}" font-size="7" fill="#94a3b8" text-anchor="middle">${v>0?'+':''}${v}</text>`;
     });
     b+=`<circle cx="${bx(val)}" cy="${ByC}" r="11" fill="${band.col}" fill-opacity="0.55" stroke="${band.col}" stroke-width="1.5"/>`;
-    b+=`<text x="${bx(val)}" y="${ByC+3.5}" font-size="8" font-weight="700" fill="#0d1117" text-anchor="middle">${val>0?'+':''}${val}%</text>`;
+    b+=`<text x="${bx(val)}" y="${ByC+3.5}" font-size="8" font-weight="700" fill="#0d1117" text-anchor="middle">${val>0?'+':''}${val}${U}</text>`;
     b+='</svg>';
     return b;
   };
@@ -2526,13 +2622,17 @@ function renderMotorPref() {
         <span><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#2563eb;margin-right:4px"></span>Left leg</span>
         <span><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#ec4899;margin-right:4px"></span>Right leg</span>
         <span><span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:${band.col};opacity:.5;margin-right:4px;vertical-align:middle"></span>Session average — ${band.label}</span>
-        <span style="color:#c3c9d1">Rings = ${ringVals.join(' / ')}% from norm · axis to ±${LIM}%</span>
+        <span style="color:#c3c9d1">Rings = ${ringVals.join(' / ')}${isSD?' SD':'% from norm'} · axis ±${LIM}${U}</span>
+        <span style="color:${d.source.indexOf('VueMotion')>=0?'#16a34a':isSD?'#1a56db':'#c2410c'};font-weight:600">${
+          d.source.indexOf('VueMotion')>=0 ? '✓ VueMotion chart values'
+          : isSD ? '◆ z-scores vs '+d.source
+          : '⚠ estimated from raw values'}</span>
       </div>
       <div style="display:flex;gap:9px;flex-wrap:wrap;width:100%;max-width:520px">
-        ${card('Preference strength', d.l2+'%', 'distance from norm')}
-        ${card('Asymmetry', d.asym!=null?d.asym+'%':'—', 'L–R separation')}
-        ${card('Contact ÷ flight', d.ctft!=null?d.ctft:'—', `norm ${d.ctftNorm} · ${d.x>0?'+':''}${d.x}%`)}
-        ${card('Step len ÷ rate', d.slsr!=null?d.slsr:'—', `norm ${d.slsrNorm} · ${d.y>0?'+':''}${d.y}%`)}
+        ${card('Preference strength', d.l2+U, isSD?'distance from cohort mean':'distance from norm')}
+        ${card('Asymmetry', d.asym!=null?d.asym+U:'—', 'L–R separation')}
+        ${d.ctft!=null?card('Contact ÷ flight', d.ctft, `norm ${d.ctftNorm} · ${d.x>0?'+':''}${d.x}%`):''}
+        ${d.slsr!=null?card('Step len ÷ rate', d.slsr, `norm ${d.slsrNorm} · ${d.y>0?'+':''}${d.y}%`):''}
         ${card('Max speed', d.maxSpeed!=null?d.maxSpeed+' m/s':'—', band.label)}
         ${card('Tested', d.date||'—', runLabel)}
       </div>
@@ -2545,10 +2645,18 @@ function renderMotorPref() {
           Injury association — ${q.name} · coach reference only</div>
         ${rrRows}
         <p style="font-size:9.5px;color:var(--text-muted);line-height:1.55;margin-top:7px">
-          <strong style="color:#c2410c">Reference group differs from VueMotion's Motor Preference chart.</strong>
-          This quadrant is computed against VueMotion's <em>population benchmark</em> (the "vs Norms %" column).
-          The Motor Preference report plots z-scores against the <em>athlete's cohort</em>, a narrower group,
-          so the two can place an athlete in different quadrants. Treat this as the population view.<br>
+          ${d.source.indexOf('VueMotion')>=0
+            ? 'Position taken directly from the VueMotion Motor Preference chart, so it matches that report exactly.'
+            : isSD
+            ? 'True z-scores, but computed against <strong>your own roster</strong> ('+d.cohortN+' sessions) rather than '
+              +'VueMotion\'s population. An athlete at zero is average <em>for your group</em>. '
+              +'Reliability improves as you add athletes. To pin an athlete to VueMotion exactly, add '
+              +'<strong>'+pfx+'_mp_x</strong> and <strong>'+pfx+'_mp_y</strong> from their chart.'
+            : '<strong style="color:#c2410c">Estimated position — may not match your VueMotion chart.</strong> '
+              +'Derived from raw values as % deviation from population norms. VueMotion plots z-scores '
+              +'(deviation ÷ standard deviation) against a narrower cohort, and because step frequency varies '
+              +'far less than step length, the two methods can disagree on which quadrant an athlete falls in. '
+              +'For an exact match, add <strong>'+pfx+'_mp_x</strong> and <strong>'+pfx+'_mp_y</strong> read off the chart.'}<br>
           Relative risk vs other preference groups. * = statistically significant in the source study.
           Derived from professional male Rugby Union (Wild &amp; Bezodis, seven-season analysis) —
           transfer to football is an extrapolation, and these figures are not shown on athlete reports.</p>
