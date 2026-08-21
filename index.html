@@ -175,7 +175,7 @@
     </div>
     <div class="sb-search"><input id="sq" type="text" placeholder="Search athlete…" oninput="filterAthletes(this.value)"></div>
     <div class="alist" id="alist"><div style="padding:16px;font-size:12px;color:#7a8290;text-align:center">Connect Google Sheet to load athletes</div></div>
-    <div class="settings-bar"><span id="sheetStatus">No sheet connected</span><span style="font-size:9px;color:#c8ccd2;margin:0 6px" title="Build version">BUILD 33</span><button class="btn-sm" onclick="showConfig()">⚙ Settings</button></div>
+    <div class="settings-bar"><span id="sheetStatus">No sheet connected</span><span style="font-size:9px;color:#c8ccd2;margin:0 6px" title="Build version">BUILD 34</span><button class="btn-sm" onclick="showConfig()">⚙ Settings</button></div>
   </aside>
   <main class="main" id="main"></main>
 </div>
@@ -2312,15 +2312,25 @@ function renderASR() {
 // Axes are cohort z-scores: x = ground contact vs flight time, y = step length vs step rate.
 let mpRunType = 'acc'; // 'acc' | 'fly'
 
+// Relative risks from Wild, Bezodis et al. — 85 professional male Rugby Union players,
+// 7 seasons, 63,786 player-hours, 123 non-contact lower-limb running injuries.
+// The study's own smallest-association thresholds were 1.85 (raised) and 0.38 (lowered);
+// values beyond those AND statistically significant are marked below.
+// Compass bearings are the study's original group names.
+const MP_RR_UPPER = 1.85, MP_RR_LOWER = 0.38;
 const MP_QUADRANTS = {
-  bounders: { name:'Bounders', sub:'Long step length / long flight time',
-              rr:{ 'Hip/groin':0.34, 'Hamstring':0.70, 'Calf':2.53 }, flag:['Calf'] },
-  striders: { name:'Striders', sub:'Long step length / long contact time',
-              rr:{ 'Hip/groin':0.70, 'Hamstring':0.55, 'Calf':0.93 }, flag:[] },
-  bouncers: { name:'Bouncers', sub:'High step rate / short contact time',
-              rr:{ 'Hip/groin':2.12, 'Hamstring':0.61, 'Calf':0.86 }, flag:[] },
-  spinners: { name:'Spinners', sub:'High step rate / short flight time',
-              rr:{ 'Hip/groin':0.72, 'Hamstring':2.53, 'Calf':0.31 }, flag:['Hamstring'] },
+  bounders: { name:'Bounders', bearing:'NW', sub:'Long step length / long flight time',
+              rr:{ 'Hip/groin':0.34, 'Hamstring':0.70, 'Calf':2.53 }, flag:['Calf'],
+              note:'Highest overall injury burden of the four strategies. Greater plantarflexor and Achilles loading — longer flight raises downward velocity at touchdown while shorter contact demands more force per unit time.' },
+  striders: { name:'Striders', bearing:'NE', sub:'Long step length / long contact time',
+              rr:{ 'Hip/groin':0.70, 'Hamstring':0.55, 'Calf':0.93 }, flag:[],
+              note:'Lowest risk profile across all three sites. Longer contact and shorter flight shift load toward the knee extensors rather than the plantarflexors.' },
+  bouncers: { name:'Bouncers', bearing:'SW', sub:'High step rate / short contact time',
+              rr:{ 'Hip/groin':2.12, 'Hamstring':0.61, 'Calf':0.86 }, flag:[],
+              note:'Highest share of hip/groin injuries (35%), though not statistically significant — confidence intervals overlapped. Rapid limb repositioning spikes hip flexor force late in stance.' },
+  spinners: { name:'Spinners', bearing:'SE', sub:'High step rate / short flight time',
+              rr:{ 'Hip/groin':0.72, 'Hamstring':2.53, 'Calf':0.31 }, flag:['Hamstring','Calf'],
+              note:'Half of all hamstring injuries in the study occurred in this group (0.84 vs 0.30 per 1000h). Higher step rate increases biceps femoris long-head demand in late swing. Notably, calf risk is 3.2× LOWER.' },
 };
 
 function mpQuadrantKey(x, y) {
@@ -2594,13 +2604,21 @@ function renderMotorPref() {
 
   // ── Injury relative risk — coach view only ──────────────────────────────
   const rrRows = Object.entries(q.rr).map(([site,rr])=>{
-    const flagged = q.flag.includes(site);
-    const col = rr>=2 ? '#dc2626' : rr>=1.2 ? '#c2410c' : '#16a34a';
-    return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:5px">
-      <span style="flex:1;font-size:11px;color:var(--text-secondary)">${site}</span>
-      <span style="font-size:11.5px;font-weight:700;color:${col}">${rr.toFixed(2)}×${flagged?' *':''}</span>
+    const sig = q.flag.includes(site);
+    const raised = rr >= MP_RR_UPPER, lowered = rr <= MP_RR_LOWER;
+    const col = raised ? '#dc2626' : lowered ? '#16a34a' : '#64748b';
+    const barW = Math.min(100, (rr/3)*100);
+    return `<div style="margin-bottom:7px">
+      <div style="display:flex;align-items:center;gap:8px">
+        <span style="flex:1;font-size:11px;color:var(--text-secondary)">${site}</span>
+        <span style="font-size:11.5px;font-weight:700;color:${col}">${rr.toFixed(2)}×${sig?' *':''}</span>
+      </div>
+      <div style="height:4px;background:#eef0f2;border-radius:2px;margin-top:2px;position:relative">
+        <div style="position:absolute;left:0;top:0;height:4px;border-radius:2px;width:${barW}%;background:${col}"></div>
+        <div style="position:absolute;left:33.3%;top:-2px;width:1px;height:8px;background:#c3c9d1" title="RR = 1.0"></div>
+      </div>
     </div>`;
-  }).join('');
+  }).join('') + `<p style="font-size:10px;color:var(--text-secondary);line-height:1.55;margin-top:8px;padding-top:7px;border-top:1px solid var(--border)">${q.note}</p>`;
 
   const card=(l,v,sub)=>`<div style="flex:1;min-width:105px;border:1px solid var(--border);border-radius:8px;padding:10px 12px;background:var(--surface)">
     <div style="font-size:9px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:3px">${l}</div>
@@ -2657,9 +2675,16 @@ function renderMotorPref() {
               +'(deviation ÷ standard deviation) against a narrower cohort, and because step frequency varies '
               +'far less than step length, the two methods can disagree on which quadrant an athlete falls in. '
               +'For an exact match, add <strong>'+pfx+'_mp_x</strong> and <strong>'+pfx+'_mp_y</strong> read off the chart.'}<br>
-          Relative risk vs other preference groups. * = statistically significant in the source study.
-          Derived from professional male Rugby Union (Wild &amp; Bezodis, seven-season analysis) —
-          transfer to football is an extrapolation, and these figures are not shown on athlete reports.</p>
+          Relative risk vs the other three strategies. <strong>*</strong> = statistically significant and beyond the
+          study's own smallest-association thresholds (${MP_RR_UPPER} raised / ${MP_RR_LOWER} lowered).
+          Tick on each bar marks RR&nbsp;=&nbsp;1.0.<br><br>
+          Source: Wild, Bezodis et al., <em>"Sprint acceleration technique is associated with lower-limb injury
+          epidemiology in professional male Rugby Union players: a seven-season analysis"</em> — 85 players,
+          63,786 player-hours, 123 non-contact lower-limb running injuries. Group is <strong>${q.bearing}</strong>
+          in the paper's compass notation.<br><br>
+          The authors note findings may be specific to that single club, and that acceleration strategy is
+          <em>one component of a multifactorial risk profile, not a direct cause of injury</em>. Applying it to
+          football is a further extrapolation. Not shown on athlete reports.</p>
       </div>
     </div>`;
 }
