@@ -175,7 +175,7 @@
     </div>
     <div class="sb-search"><input id="sq" type="text" placeholder="Search athlete…" oninput="filterAthletes(this.value)"></div>
     <div class="alist" id="alist"><div style="padding:16px;font-size:12px;color:#7a8290;text-align:center">Connect Google Sheet to load athletes</div></div>
-    <div class="settings-bar"><span id="sheetStatus">No sheet connected</span><span style="font-size:9px;color:#c8ccd2;margin:0 6px" title="Build version">BUILD 34</span><button class="btn-sm" onclick="showConfig()">⚙ Settings</button></div>
+    <div class="settings-bar"><span id="sheetStatus">No sheet connected</span><span style="font-size:9px;color:#c8ccd2;margin:0 6px" title="Build version">BUILD 37</span><button class="btn-sm" onclick="showConfig()">⚙ Settings</button></div>
   </aside>
   <main class="main" id="main"></main>
 </div>
@@ -644,7 +644,7 @@ async function loadData() {
       } else {
         computedAge = parseFloat(a.age) || null;
       }
-      athleteMap[a.id]={...a, age:computedAge, sessions:[]};
+      athleteMap[a.id]={...a, age:computedAge, leg_length_cm:a.leg_length_cm, sessions:[]};
     });
     results.forEach(r=>{
       if(athleteMap[r.athlete_id]) athleteMap[r.athlete_id].sessions.push(deriveSession(r,athleteMap[r.athlete_id].weight_kg,athleteMap[r.athlete_id].age,athleteMap[r.athlete_id].height_cm));
@@ -1648,7 +1648,7 @@ function _buildAndOpenPrintReport(a, chartImages, quadrantSVG, radarSVG, radarMo
   // ── Motor preference — quadrant only, RR figures deliberately excluded ──
   let mpHtml = '';
   {
-    const mpTry = ['acc','fly'].map(px=>({px, d:mpData(a.sessions,px)})).filter(o=>o.d);
+    const mpTry = ['acc','fly'].map(px=>({px, d:mpData(a.sessions,px,a)})).filter(o=>o.d);
     if (mpTry.length) {
       mpHtml = mpTry.map(({px,d})=>{
         const q = MP_QUADRANTS[mpQuadrantKey(d.x,d.y)];
@@ -2311,6 +2311,68 @@ function renderASR() {
 // limb injury epidemiology in professional male Rugby Union (seven-season analysis).
 // Axes are cohort z-scores: x = ground contact vs flight time, y = step length vs step rate.
 let mpRunType = 'acc'; // 'acc' | 'fly'
+let mpReference = 'study'; // 'study' | 'roster'
+
+// ── Wild & Bezodis (2026) reference values ──────────────────────────────────
+// Reconstructed by pooling the four group tables in Figure 1 (n=85, 63,786 hr).
+// Validated: pooled n = 85 exactly; all four centroids fall in their stated quadrant.
+// Ratios are dimensionless (Hof 1996 normalisation).
+const MP_STUDY = {
+  slsr: { mean:1.1162, sd:0.1075 },   // step length / step rate
+  ctft: { mean:2.3169, sd:0.3874 },   // contact time / flight time
+  groups: {
+    bounders:{ n:25, exp:22460, sl:1.57, sr:1.29, slsr:1.22, ct:0.517, ft:0.260, ctft:2.00, burden:65.0 },
+    striders:{ n:16, exp:13311, sl:1.53, sr:1.30, slsr:1.18, ct:0.560, ft:0.212, ctft:2.65, burden:30.9 },
+    bouncers:{ n:18, exp:10283, sl:1.45, sr:1.40, slsr:1.04, ct:0.476, ft:0.242, ctft:1.98, burden:22.9 },
+    spinners:{ n:26, exp:17909, sl:1.42, sr:1.39, slsr:1.03, ct:0.527, ft:0.199, ctft:2.65, burden:52.1 },
+  }
+};
+const G_ACCEL = 9.81;
+// Leg length: measured value preferred; 0.53 x height is a rough fallback.
+// The SL/SR axis scales with leg length^1.5, so this matters a great deal.
+const LEG_LENGTH_RATIO_DEFAULT = 0.53;
+
+// Solve for the leg-length ratio implied by an athlete who has BOTH raw values and a
+// VueMotion chart position. Applying that ratio to everyone absorbs whatever leg-length
+// definition VueMotion uses, so estimated athletes line up with the charted one.
+function mpCalibratedRatio() {
+  const cfg = getConfig();
+  if (cfg.legRatio) return { r:+cfg.legRatio, source:'set manually' };
+  for (const a of Object.values(athleteMap)) {
+    const h = pf(a.height_cm); if (!h) continue;
+    for (const pfx of ['acc','fly']) {
+      const gv = k => latestVal(a.sessions, pfx+'_'+k);
+      const chartY = gv('mp_y') != null ? gv('mp_y')
+                   : (gv('mp_y_L')!=null && gv('mp_y_R')!=null ? (gv('mp_y_L')+gv('mp_y_R'))/2 : null);
+      if (chartY == null) continue;
+      const avg=(x,y)=>(x!=null&&y!=null)?(x+y)/2:(x!=null?x:y);
+      const sA=avg(gv('sl_L'),gv('sl_R')), qA=avg(gv('sf_L'),gv('sf_R'));
+      if (sA==null || !qA) continue;
+      const targetRatio = MP_STUDY.slsr.mean + chartY*MP_STUDY.slsr.sd;
+      if (targetRatio <= 0) continue;
+      const l0 = Math.pow((sA*Math.sqrt(G_ACCEL))/(qA*targetRatio), 2/3);
+      const r = l0/(h/100);
+      if (r > 0.40 && r < 0.70) return { r:+r.toFixed(3), source:`calibrated from ${a.name}`, from:a.name };
+    }
+  }
+  return null;
+}
+
+function mpLegLength(a) {
+  const measured = pf(a?.leg_length_cm);
+  if (measured) return { m: measured/100, estimated:false, ratio:null, calib:null };
+  const h = pf(a?.height_cm); if (!h) return null;
+  const cal = mpCalibratedRatio();
+  const r = cal ? cal.r : LEG_LENGTH_RATIO_DEFAULT;
+  return { m:(h*r)/100, estimated:true, ratio:r, calib:cal };
+}
+
+function setMpReference(r, btn) {
+  mpReference = r;
+  document.querySelectorAll('.mp-ref-btn').forEach(b=>b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  renderMotorPref();
+}
 
 // Relative risks from Wild, Bezodis et al. — 85 professional male Rugby Union players,
 // 7 seasons, 63,786 player-hours, 123 non-contact lower-limb running injuries.
@@ -2326,7 +2388,7 @@ const MP_QUADRANTS = {
               rr:{ 'Hip/groin':0.70, 'Hamstring':0.55, 'Calf':0.93 }, flag:[],
               note:'Lowest risk profile across all three sites. Longer contact and shorter flight shift load toward the knee extensors rather than the plantarflexors.' },
   bouncers: { name:'Bouncers', bearing:'SW', sub:'High step rate / short contact time',
-              rr:{ 'Hip/groin':2.12, 'Hamstring':0.61, 'Calf':0.86 }, flag:[],
+              rr:{ 'Hip/groin':2.12, 'Hamstring':0.51, 'Calf':0.86 }, flag:[],
               note:'Highest share of hip/groin injuries (35%), though not statistically significant — confidence intervals overlapped. Rapid limb repositioning spikes hip flexor force late in stance.' },
   spinners: { name:'Spinners', bearing:'SE', sub:'High step rate / short flight time',
               rr:{ 'Hip/groin':0.72, 'Hamstring':2.53, 'Calf':0.31 }, flag:['Hamstring','Calf'],
@@ -2401,7 +2463,7 @@ function setMpRunType(t, btn) {
 // Percentage deviation of a ratio from its population norm
 function mpPct(val, norm) { return (norm && val!=null) ? +(((val-norm)/norm)*100).toFixed(1) : null; }
 
-function mpData(sessions, pfx) {
+function mpData(sessions, pfx, athlete) {
   const g = k => latestVal(sessions, pfx+'_'+k);
   const N = MP_NORMS[pfx]; if (!N) return null;
 
@@ -2427,9 +2489,44 @@ function mpData(sessions, pfx) {
                 gctL:g('gct_L'), gctR:g('gct_R'), ftL:g('ft_L'), ftR:g('ft_R') };
   if (Object.values(raw).every(v=>v==null)) return null;
 
+  // ── Study reference: Wild & Bezodis pooled z-scores ──
+  if (mpReference === 'study') {
+    const avgS = (a,b) => (a!=null&&b!=null)?(a+b)/2:(a!=null?a:b);
+    const gA=avgS(g('gct_L'),g('gct_R')), fA=avgS(g('ft_L'),g('ft_R'));
+    const sA=avgS(g('sl_L'),g('sl_R')),   qA=avgS(g('sf_L'),g('sf_R'));
+    const LL = mpLegLength(athlete);
+    if (gA!=null && fA && sA!=null && qA && LL) {
+      // CT/FT is unaffected by Hof normalisation — the leg-length term cancels.
+      const ctftR = gA/fA;
+      // SL/SR does NOT cancel: SL*sqrt(g) / (SR * l0^1.5)
+      const slsrR = (sA*Math.sqrt(G_ACCEL)) / (qA * Math.pow(LL.m,1.5));
+      const zx = (ctftR - MP_STUDY.ctft.mean)/MP_STUDY.ctft.sd;
+      const zy = (slsrR - MP_STUDY.slsr.mean)/MP_STUDY.slsr.sd;
+      const legZ = (gv,fv,sv,qv) => {
+        if(gv==null||!fv||sv==null||!qv) return [null,null];
+        return [ +(((gv/fv)-MP_STUDY.ctft.mean)/MP_STUDY.ctft.sd).toFixed(2),
+                 +((((sv*Math.sqrt(G_ACCEL))/(qv*Math.pow(LL.m,1.5)))-MP_STUDY.slsr.mean)/MP_STUDY.slsr.sd).toFixed(2) ];
+      };
+      const [sxL,syL] = legZ(g('gct_L'),g('ft_L'),g('sl_L'),g('sf_L'));
+      const [sxR,syR] = legZ(g('gct_R'),g('ft_R'),g('sl_R'),g('sf_R'));
+      let dtS=null;
+      for (const s of sessions){ if (s[pfx+'_gct_L']!=null||s[pfx+'_gct_R']!=null){ dtS=s.test_date; break; } }
+      return { xL:sxL, xR:sxR, yL:syL, yR:syR,
+        x:+zx.toFixed(2), y:+zy.toFixed(2),
+        l2:+Math.sqrt(zx*zx+zy*zy).toFixed(2),
+        asym:(sxL!=null&&sxR!=null&&syL!=null&&syR!=null)
+          ? +Math.sqrt(Math.pow(sxL-sxR,2)+Math.pow(syL-syR,2)).toFixed(2) : null,
+        maxSpeed:g('max_speed'), date:dtS, unit:'SD',
+        source:'Wild & Bezodis study reference',
+        ctft:+ctftR.toFixed(3), slsr:+slsrR.toFixed(3),
+        ctftNorm:MP_STUDY.ctft.mean, slsrNorm:MP_STUDY.slsr.mean,
+        legLen:LL.m, legEstimated:LL.estimated, legRatio:LL.ratio, legCalib:LL.calib };
+    }
+  }
+
   // ── Second choice: z-scores against your own roster ──
   const CS = mpCohortStats(pfx);
-  if (CS.usable) {
+  if (mpReference === 'roster' && CS.usable) {
     const z = (v,k) => (v==null) ? null : (v - CS[k].mean) / CS[k].sd;
     const avg2 = (a,b) => (a!=null&&b!=null)?(a+b)/2:(a!=null?a:b);
     const gA=avg2(g('gct_L'),g('gct_R')), fA=avg2(g('ft_L'),g('ft_R'));
@@ -2494,9 +2591,14 @@ function renderMotorPref() {
 
   const pfx = mpRunType === 'acc' ? 'acc' : 'fly';
   const runLabel = mpRunType === 'acc' ? 'Acceleration' : 'Fly (max velocity)';
-  const d = mpData(a.sessions, pfx);
+  const d = mpData(a.sessions, pfx, a);
 
   const toggle = `
+    <div class="quad-ctrl-row" style="justify-content:center">
+      <span class="control-label">Reference</span>
+      <button class="axis-btn mp-ref-btn${mpReference==='study'?' active':''}" onclick="setMpReference('study',this)">Study (n=85 pro rugby)</button>
+      <button class="axis-btn mp-ref-btn${mpReference==='roster'?' active':''}" onclick="setMpReference('roster',this)">My roster</button>
+    </div>
     <div class="quad-ctrl-row" style="justify-content:center">
       <span class="control-label">Run type</span>
       <button class="axis-btn mp-run-btn${mpRunType==='acc'?' active':''}" onclick="setMpRunType('acc',this)">Acceleration</button>
@@ -2572,6 +2674,17 @@ function renderMotorPref() {
   s+=`<text x="${CX}" y="${CY+R+26}" font-size="9" fill="#64748b" text-anchor="middle">greater step rate relative to step length</text>`;
   s+=`<text x="${CX-R-6}" y="${CY-8}" font-size="9" fill="#64748b" text-anchor="middle" transform="rotate(-90,${CX-R-6},${CY-8})">greater flight time rel. to contact</text>`;
   s+=`<text x="${CX+R+8}" y="${CY-8}" font-size="9" fill="#64748b" text-anchor="middle" transform="rotate(90,${CX+R+8},${CY-8})">greater contact time rel. to flight</text>`;
+  // Study group centroids, shown faintly for context when using the study reference
+  if (d.source.indexOf('Wild')>=0) {
+    Object.entries(MP_STUDY.groups).forEach(([key,gr])=>{
+      const gz = { x:(gr.ctft-MP_STUDY.ctft.mean)/MP_STUDY.ctft.sd,
+                   y:(gr.slsr-MP_STUDY.slsr.mean)/MP_STUDY.slsr.sd };
+      if (Math.abs(gz.x)>LIM||Math.abs(gz.y)>LIM) return;
+      s+=`<circle cx="${sx(gz.x)}" cy="${sy(gz.y)}" r="7" fill="none" stroke="#94a3b8" stroke-width="1.2" stroke-dasharray="2,2" opacity="0.75"/>`;
+      s+=`<text x="${sx(gz.x)}" y="${sy(gz.y)+2.5}" font-size="6.5" fill="#94a3b8" text-anchor="middle">${key.slice(0,2).toUpperCase()}</text>`;
+    });
+  }
+
   // Session-average bubble
   s+=`<circle cx="${sx(d.x)}" cy="${sy(d.y)}" r="15" fill="${band.col}" fill-opacity="0.5" stroke="${band.col}" stroke-width="1.5"/>`;
   // Per-leg markers
@@ -2641,16 +2754,20 @@ function renderMotorPref() {
         <span><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#ec4899;margin-right:4px"></span>Right leg</span>
         <span><span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:${band.col};opacity:.5;margin-right:4px;vertical-align:middle"></span>Session average — ${band.label}</span>
         <span style="color:#c3c9d1">Rings = ${ringVals.join(' / ')}${isSD?' SD':'% from norm'} · axis ±${LIM}${U}</span>
-        <span style="color:${d.source.indexOf('VueMotion')>=0?'#16a34a':isSD?'#1a56db':'#c2410c'};font-weight:600">${
+        ${d.source.indexOf('Wild')>=0?'<span style="color:#c3c9d1">Dashed circles = study group centroids</span>':''}
+        <span style="color:${d.source.indexOf('VueMotion')>=0?'#16a34a':(isSD&&!d.legEstimated)?'#1a56db':'#c2410c'};font-weight:600">${
           d.source.indexOf('VueMotion')>=0 ? '✓ VueMotion chart values'
+          : d.source.indexOf('Wild')>=0 ? (d.legEstimated
+              ? '<span style="color:#c2410c">⚠ leg length estimated'+(d.legCalib?' (calibrated)':'')+'</span>'
+              : '◆ z-scores vs Wild &amp; Bezodis (n=85)')
           : isSD ? '◆ z-scores vs '+d.source
           : '⚠ estimated from raw values'}</span>
       </div>
       <div style="display:flex;gap:9px;flex-wrap:wrap;width:100%;max-width:520px">
         ${card('Preference strength', d.l2+U, isSD?'distance from cohort mean':'distance from norm')}
         ${card('Asymmetry', d.asym!=null?d.asym+U:'—', 'L–R separation')}
-        ${d.ctft!=null?card('Contact ÷ flight', d.ctft, `norm ${d.ctftNorm} · ${d.x>0?'+':''}${d.x}%`):''}
-        ${d.slsr!=null?card('Step len ÷ rate', d.slsr, `norm ${d.slsrNorm} · ${d.y>0?'+':''}${d.y}%`):''}
+        ${d.ctft!=null?card('Contact ÷ flight', d.ctft, `ref ${d.ctftNorm} · ${d.x>0?'+':''}${d.x}${U||' SD'}`):''}
+        ${d.slsr!=null?card('Step len ÷ rate', d.slsr, `ref ${d.slsrNorm} · ${d.y>0?'+':''}${d.y}${U||' SD'}`):''}
         ${card('Max speed', d.maxSpeed!=null?d.maxSpeed+' m/s':'—', band.label)}
         ${card('Tested', d.date||'—', runLabel)}
       </div>
@@ -2665,6 +2782,25 @@ function renderMotorPref() {
         <p style="font-size:9.5px;color:var(--text-muted);line-height:1.55;margin-top:7px">
           ${d.source.indexOf('VueMotion')>=0
             ? 'Position taken directly from the VueMotion Motor Preference chart, so it matches that report exactly.'
+            : d.source.indexOf('Wild')>=0
+            ? 'Z-scored against the published reference: SL/SR '+MP_STUDY.slsr.mean+' ± '+MP_STUDY.slsr.sd
+              +', CT/FT '+MP_STUDY.ctft.mean+' ± '+MP_STUDY.ctft.sd+' (pooled from Fig. 1, n=85). '
+              +'Ratios are Hof-normalised. Contact ÷ flight needs no leg length — it cancels — but '
+              +'step length ÷ step rate scales with leg length<sup>1.5</sup>.'
+              + (d.legEstimated
+                 ? (d.legCalib
+                    ? ' <strong style="color:#c2410c">Leg length estimated, not measured</strong> — '
+                      +d.legRatio+' × height ('+(d.legLen*100).toFixed(1)+' cm), '+d.legCalib.source+', '
+                      +'i.e. the ratio that makes that athlete\'s computed position match their VueMotion chart. '
+                      +'Better than a textbook ratio, but this axis scales with leg length<sup>1.5</sup> and body '
+                      +'proportions vary between athletes. Measure greater trochanter to floor and add '
+                      +'<strong>leg_length_cm</strong> to the Athletes tab for an exact position.'
+                    : ' <strong style="color:#c2410c">Leg length estimated at '+d.legRatio+' × height ('
+                      +(d.legLen*100).toFixed(1)+' cm) — uncalibrated.</strong> This axis scales with leg '
+                      +'length<sup>1.5</sup>, so a 9 cm error can move an athlete across the boundary. Either measure it '
+                      +'(<strong>leg_length_cm</strong>, Athletes tab) or add <strong>'+pfx+'_mp_x</strong> / '
+                      +'<strong>'+pfx+'_mp_y</strong> for one athlete so the ratio can be calibrated for everyone.')
+                 : ' Leg length measured: '+(d.legLen*100).toFixed(1)+' cm.')
             : isSD
             ? 'True z-scores, but computed against <strong>your own roster</strong> ('+d.cohortN+' sessions) rather than '
               +'VueMotion\'s population. An athlete at zero is average <em>for your group</em>. '
