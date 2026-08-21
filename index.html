@@ -175,7 +175,7 @@
     </div>
     <div class="sb-search"><input id="sq" type="text" placeholder="Search athlete…" oninput="filterAthletes(this.value)"></div>
     <div class="alist" id="alist"><div style="padding:16px;font-size:12px;color:#7a8290;text-align:center">Connect Google Sheet to load athletes</div></div>
-    <div class="settings-bar"><span id="sheetStatus">No sheet connected</span><span style="font-size:9px;color:#c8ccd2;margin:0 6px" title="Build version">BUILD 29</span><button class="btn-sm" onclick="showConfig()">⚙ Settings</button></div>
+    <div class="settings-bar"><span id="sheetStatus">No sheet connected</span><span style="font-size:9px;color:#c8ccd2;margin:0 6px" title="Build version">BUILD 31</span><button class="btn-sm" onclick="showConfig()">⚙ Settings</button></div>
   </aside>
   <main class="main" id="main"></main>
 </div>
@@ -1646,14 +1646,20 @@ function _buildAndOpenPrintReport(a, chartImages, quadrantSVG, radarSVG, radarMo
         const q = MP_QUADRANTS[mpQuadrantKey(d.x,d.y)];
         const band = mpSpeedBand(d.maxSpeed);
         const runLbl = px==='acc' ? 'Acceleration' : 'Fly (max velocity)';
-        const W=430,H=410,CX=W/2,CY=200,R=145,LIM=45;
+        const W=430,H=410,CX=W/2,CY=200,R=145;
+        const pPts=[d.x,d.y,d.xL,d.xR,d.yL,d.yR].filter(v=>v!=null).map(Math.abs);
+        const pMax=pPts.length?Math.max(...pPts):0;
+        const LIM=Math.max(45,Math.ceil((pMax*1.15)/10)*10);
+        const pStep=LIM<=45?10:LIM<=100?20:LIM<=200?50:100;
+        const pTicks=[]; for(let v=-LIM+pStep; v<LIM; v+=pStep){ if(Math.abs(v)>0.01) pTicks.push(v); }
+        const pRings=[10,20,30].filter(r=>r<LIM);
         const sx=v=>CX+(v/LIM)*R, sy=v=>CY-(v/LIM)*R;
         let g=`<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:${W}px">`;
-        [10,20,30].forEach(sd=>{const h=(sd/LIM)*R;
+        pRings.forEach(sd=>{const h=(sd/LIM)*R;
           g+=`<rect x="${CX-h}" y="${CY-h}" width="${h*2}" height="${h*2}" fill="none" stroke="rgba(15,23,42,0.16)" stroke-width="1" stroke-dasharray="4,3"/>`;});
         g+=`<line x1="${CX-R}" y1="${CY}" x2="${CX+R}" y2="${CY}" stroke="#334155" stroke-width="1.1"/>`;
         g+=`<line x1="${CX}" y1="${CY-R}" x2="${CX}" y2="${CY+R}" stroke="#334155" stroke-width="1.1"/>`;
-        [-30,-20,-10,10,20,30].forEach(v=>{
+        pTicks.forEach(v=>{
           g+=`<line x1="${sx(v)}" y1="${CY-3}" x2="${sx(v)}" y2="${CY+3}" stroke="#94a3b8" stroke-width="1"/>`;
           g+=`<line x1="${CX-3}" y1="${sy(v)}" x2="${CX+3}" y2="${sy(v)}" stroke="#94a3b8" stroke-width="1"/>`;});
         const qk2=mpQuadrantKey(d.x,d.y);
@@ -1682,7 +1688,7 @@ function _buildAndOpenPrintReport(a, chartImages, quadrantSVG, radarSVG, radarMo
             <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#2563eb;margin-right:3px"></span>Left</span>
             <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#ec4899;margin-right:3px"></span>Right</span>
             <span>Preference strength ${d.l2}%${d.asym!=null?' · asymmetry '+d.asym+'%':''}</span>
-            <span>Rings = 10 / 20 / 30% from norm</span>
+            <span>Rings = ${pRings.join(' / ')}% · axis ±${LIM}%</span>
           </div>
         </div>`;
       }).join('');
@@ -2317,9 +2323,13 @@ function mpQuadrantKey(x, y) {
 // 'fly' values are back-calculated from a VueMotion 20m Fly report's "vs Norms %"
 // column. 'acc' values are PROVISIONAL — replace them from an acceleration report
 // when one is available. Editing these two blocks re-baselines every athlete.
+// Both sets back-calculated from real VueMotion "Progress Over Time" reports and
+// verified against every per-leg figure to within 0.1%.
+// NOTE: ground contact time is scored INVERTED by VueMotion (shorter = better %),
+// which is accounted for in the derivation below.
 const MP_NORMS = {
-  fly: { sl:1.99, sf:3.95, gct:0.126, ft:0.105, provisional:false },
-  acc: { sl:1.75, sf:4.30, gct:0.145, ft:0.085, provisional:true  },
+  fly: { sl:1.9932, sf:3.9463, gct:0.1525, ft:0.1047, provisional:false },
+  acc: { sl:1.3925, sf:4.3359, gct:0.1702, ft:0.0626, provisional:false },
 };
 
 function mpSpeedBand(v) {
@@ -2413,13 +2423,20 @@ function renderMotorPref() {
   const band = mpSpeedBand(d.maxSpeed);
 
   // ── Quadrant SVG ────────────────────────────────────────────────────────
-  const W=520, H=500, CX=W/2, CY=245, R=175, LIM=45; // axis in % deviation from norm
+  const W=520, H=500, CX=W/2, CY=245, R=175;
+  // Axis auto-scales so no point can ever render outside the plot area.
+  const mpPts = [d.x, d.y, d.xL, d.xR, d.yL, d.yR].filter(v=>v!=null).map(Math.abs);
+  const mpMax = mpPts.length ? Math.max(...mpPts) : 0;
+  const LIM = Math.max(45, Math.ceil((mpMax*1.15)/10)*10); // % deviation from norm
+  const tickStep = LIM<=45 ? 10 : LIM<=100 ? 20 : LIM<=200 ? 50 : 100;
+  const ticks = []; for(let v=-LIM+tickStep; v<LIM; v+=tickStep){ if(Math.abs(v)>0.01) ticks.push(v); }
+  const ringVals = [10,20,30].filter(r=>r<LIM);
   const sx = v => CX + (v/LIM)*R;
   const sy = v => CY - (v/LIM)*R;
 
   let s=`<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:520px;font-family:-apple-system,BlinkMacSystemFont,sans-serif">`;
   // SD rings
-  [10,20,30].forEach(sd=>{
+  ringVals.forEach(sd=>{
     const half=(sd/LIM)*R;
     s+=`<rect x="${CX-half}" y="${CY-half}" width="${half*2}" height="${half*2}" fill="none" stroke="rgba(15,23,42,0.18)" stroke-width="1" stroke-dasharray="4,3"/>`;
   });
@@ -2427,7 +2444,7 @@ function renderMotorPref() {
   s+=`<line x1="${CX-R}" y1="${CY}" x2="${CX+R}" y2="${CY}" stroke="#334155" stroke-width="1.2"/>`;
   s+=`<line x1="${CX}" y1="${CY-R}" x2="${CX}" y2="${CY+R}" stroke="#334155" stroke-width="1.2"/>`;
   // Ticks
-  [-40,-30,-20,-10,10,20,30,40].forEach(v=>{
+  ticks.forEach(v=>{
     s+=`<line x1="${sx(v)}" y1="${CY-3}" x2="${sx(v)}" y2="${CY+3}" stroke="#94a3b8" stroke-width="1"/>`;
     s+=`<text x="${sx(v)}" y="${CY+13}" font-size="7" fill="#94a3b8" text-anchor="middle">${v>0?'+':''}${v}</text>`;
     s+=`<line x1="${CX-3}" y1="${sy(v)}" x2="${CX+3}" y2="${sy(v)}" stroke="#94a3b8" stroke-width="1"/>`;
@@ -2463,12 +2480,13 @@ function renderMotorPref() {
   // ── 1-D axis bars ───────────────────────────────────────────────────────
   const bar = (leftLbl,rightLbl,val) => {
     const BW=440, BH=60, BML=18, BCW=BW-BML*2, ByC=38;
+    const bTicks=[]; for(let v=-LIM; v<=LIM; v+=tickStep) bTicks.push(v);
     const bx = v => BML + ((v+LIM)/(2*LIM))*BCW;
     let b=`<svg viewBox="0 0 ${BW} ${BH}" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:${BW}px">`;
     b+=`<text x="${BML}" y="12" font-size="10.5" font-weight="700" fill="#334155">${leftLbl}</text>`;
     b+=`<text x="${BW-BML}" y="12" font-size="10.5" font-weight="700" fill="#334155" text-anchor="end">${rightLbl}</text>`;
     b+=`<line x1="${BML}" y1="${ByC}" x2="${BW-BML}" y2="${ByC}" stroke="#334155" stroke-width="1.2"/>`;
-    [-40,-30,-20,-10,0,10,20,30,40].forEach(v=>{
+    bTicks.forEach(v=>{
       b+=`<line x1="${bx(v)}" y1="${ByC-4}" x2="${bx(v)}" y2="${ByC+4}" stroke="#94a3b8" stroke-width="1"/>`;
       b+=`<text x="${bx(v)}" y="${ByC+16}" font-size="7" fill="#94a3b8" text-anchor="middle">${v>0?'+':''}${v}</text>`;
     });
@@ -2508,7 +2526,7 @@ function renderMotorPref() {
         <span><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#2563eb;margin-right:4px"></span>Left leg</span>
         <span><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#ec4899;margin-right:4px"></span>Right leg</span>
         <span><span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:${band.col};opacity:.5;margin-right:4px;vertical-align:middle"></span>Session average — ${band.label}</span>
-        <span style="color:#c3c9d1">Rings = 10 / 20 / 30% from norm</span>
+        <span style="color:#c3c9d1">Rings = ${ringVals.join(' / ')}% from norm · axis to ±${LIM}%</span>
       </div>
       <div style="display:flex;gap:9px;flex-wrap:wrap;width:100%;max-width:520px">
         ${card('Preference strength', d.l2+'%', 'distance from norm')}
@@ -2527,7 +2545,10 @@ function renderMotorPref() {
           Injury association — ${q.name} · coach reference only</div>
         ${rrRows}
         <p style="font-size:9.5px;color:var(--text-muted);line-height:1.55;margin-top:7px">
-          ${d.provisional?'<strong style="color:#c2410c">Reference norms for this run type are provisional</strong> — replace MP_NORMS.acc once you have an acceleration report with a &quot;vs Norms %&quot; column.<br>':''}
+          <strong style="color:#c2410c">Reference group differs from VueMotion's Motor Preference chart.</strong>
+          This quadrant is computed against VueMotion's <em>population benchmark</em> (the "vs Norms %" column).
+          The Motor Preference report plots z-scores against the <em>athlete's cohort</em>, a narrower group,
+          so the two can place an athlete in different quadrants. Treat this as the population view.<br>
           Relative risk vs other preference groups. * = statistically significant in the source study.
           Derived from professional male Rugby Union (Wild &amp; Bezodis, seven-season analysis) —
           transfer to football is an extrapolation, and these figures are not shown on athlete reports.</p>
