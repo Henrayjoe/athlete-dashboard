@@ -186,7 +186,7 @@
     </div>
     <div class="sb-search"><input id="sq" type="text" placeholder="Search athlete…" oninput="filterAthletes(this.value)"></div>
     <div class="alist" id="alist"><div style="padding:16px;font-size:12px;color:#7a8290;text-align:center">Connect Google Sheet to load athletes</div></div>
-    <div class="settings-bar"><span id="sheetStatus">No sheet connected</span><span style="font-size:9px;color:#c8ccd2;margin:0 6px" title="Build version">BUILD 39</span><button class="btn-sm" onclick="showConfig()">⚙ Settings</button></div>
+    <div class="settings-bar"><span id="sheetStatus">No sheet connected</span><span style="font-size:9px;color:#c8ccd2;margin:0 6px" title="Build version">BUILD 40</span><button class="btn-sm" onclick="showConfig()">⚙ Settings</button></div>
   </aside>
   <main class="main" id="main"></main>
 </div>
@@ -1790,6 +1790,16 @@ function _buildAndOpenPrintReport(a, chartImages, quadrantSVG, radarSVG, radarMo
       <div style="display:flex;gap:7px;margin-top:8px">
         ${pcard('MAS',MAS,'m/s')}${pcard('MSS',MSS,'m/s')}${pcard('ASR',ASR,'m/s')}${pcard('SRR',SRR,'')}
       </div>
+      ${(()=>{ const z=mssZoneSvg(selectedId); return z ? `
+        <div style="margin-top:14px;page-break-inside:avoid">
+          <div style="font-size:9px;font-weight:700;color:#7a8290;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px">MAS vs MSS profile zones</div>
+          <div style="text-align:center;max-width:520px;margin:0 auto">${z}</div>
+          <div style="display:flex;gap:14px;font-size:9px;color:#888;justify-content:center;margin-top:3px">
+            <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${cls.col};margin-right:3px"></span>${a.name}</span>
+            <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#cbd5e1;border:1px solid #94a3b8;margin-right:3px"></span>Other athletes (anonymous)</span>
+            <span>Diagonals are fixed SRR ratios</span>
+          </div>
+        </div>` : ''; })()}
       <p style="font-size:8.5px;color:#bbb;margin-top:6px">MAS from ${_mas.src}. SRR classification varies with aerobic test protocol.</p>
     </div>`;
   }
