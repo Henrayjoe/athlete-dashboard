@@ -186,7 +186,7 @@
     </div>
     <div class="sb-search"><input id="sq" type="text" placeholder="Search athlete…" oninput="filterAthletes(this.value)"></div>
     <div class="alist" id="alist"><div style="padding:16px;font-size:12px;color:#7a8290;text-align:center">Connect Google Sheet to load athletes</div></div>
-    <div class="settings-bar"><span id="sheetStatus">No sheet connected</span><span style="font-size:9px;color:#c8ccd2;margin:0 6px" title="Build version">BUILD 38</span><button class="btn-sm" onclick="showConfig()">⚙ Settings</button></div>
+    <div class="settings-bar"><span id="sheetStatus">No sheet connected</span><span style="font-size:9px;color:#c8ccd2;margin:0 6px" title="Build version">BUILD 39</span><button class="btn-sm" onclick="showConfig()">⚙ Settings</button></div>
   </aside>
   <main class="main" id="main"></main>
 </div>
@@ -2214,6 +2214,109 @@ function classifySRR(srr) {
   };
 }
 
+// ── MAS vs MSS profile zones ────────────────────────────────────────────────
+// SRR = MSS/MAS, so each classification boundary is a straight line through the
+// origin: MSS = 1.90*MAS (Speed) and MSS = 1.70*MAS (Hybrid). Zones are drawn by
+// clipping the plot rectangle against each half-plane, then layering.
+function mssZoneSvg(selId) {
+  // Gather every athlete that has both values
+  const pts = [];
+  Object.values(athleteMap).forEach(a => {
+    if (!a.sessions || !a.sessions.length) return;
+    const ld = buildLatestAcrossSessions(a.sessions);
+    const m = resolveMAS(ld), s = ld.max_vel;
+    if (!m || s == null) return;
+    pts.push({ id:a.id, name:a.name, mas:m.val, mss:s,
+               ini:a.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase(),
+               isCur:a.id===selId });
+  });
+  if (!pts.some(p=>p.isCur)) return '';
+
+  const W=620,H=420,ML=54,MR=22,MT=20,MB=50;
+  const CW=W-ML-MR, CH=H-MT-MB;
+
+  const masVals=pts.map(p=>p.mas), mssVals=pts.map(p=>p.mss);
+  const pad=(lo,hi,min)=>{ let r=hi-lo; if(r<min){const c=(lo+hi)/2; lo=c-min/2; hi=c+min/2; r=min;} 
+                           return [lo-r*0.18, hi+r*0.18]; };
+  let [xMin,xMax]=pad(Math.min(...masVals),Math.max(...masVals),1.2);
+  let [yMin,yMax]=pad(Math.min(...mssVals),Math.max(...mssVals),1.8);
+  xMin=Math.max(0.5,xMin); yMin=Math.max(1,yMin);
+
+  const sx=v=>ML+(v-xMin)/(xMax-xMin)*CW;
+  const sy=v=>MT+CH-(v-yMin)/(yMax-yMin)*CH;
+
+  // Clip a polygon to the half-plane  y - k*x >= 0  (Sutherland–Hodgman)
+  const clipAbove=(poly,k)=>{
+    const f=p=>p.y-k*p.x, out=[];
+    for(let i=0;i<poly.length;i++){
+      const a=poly[i], b=poly[(i+1)%poly.length], fa=f(a), fb=f(b);
+      if(fa>=0) out.push(a);
+      if((fa>=0)!==(fb>=0)){
+        const t=fa/(fa-fb);
+        out.push({x:a.x+t*(b.x-a.x), y:a.y+t*(b.y-a.y)});
+      }
+    }
+    return out;
+  };
+  const rect=[{x:xMin,y:yMin},{x:xMax,y:yMin},{x:xMax,y:yMax},{x:xMin,y:yMax}];
+  const toPath=poly=>poly.length?poly.map(p=>`${sx(p.x).toFixed(1)},${sy(p.y).toFixed(1)}`).join(' '):'';
+
+  let s=`<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:${W}px;font-family:-apple-system,BlinkMacSystemFont,sans-serif">`;
+  // Layer: whole rect = Endurance, then Hybrid above 1.70, then Speed above 1.90
+  s+=`<rect x="${ML}" y="${MT}" width="${CW}" height="${CH}" fill="#f0fdf4"/>`;
+  const hyb=clipAbove(rect,1.70), spd=clipAbove(rect,1.90);
+  if(hyb.length) s+=`<polygon points="${toPath(hyb)}" fill="#eff6ff"/>`;
+  if(spd.length) s+=`<polygon points="${toPath(spd)}" fill="#fef2f2"/>`;
+
+  // Boundary lines
+  [[1.90,'#dc2626','Speed ≥ 1.90'],[1.70,'#1a56db','Hybrid ≥ 1.70']].forEach(([k,col,lbl])=>{
+    const ptsOn=[];
+    [[xMin,k*xMin],[xMax,k*xMax],[yMin/k,yMin],[yMax/k,yMax]].forEach(([px,py])=>{
+      if(px>=xMin-1e-9&&px<=xMax+1e-9&&py>=yMin-1e-9&&py<=yMax+1e-9) ptsOn.push([px,py]);
+    });
+    if(ptsOn.length<2) return;
+    ptsOn.sort((a,b)=>a[0]-b[0]);
+    const [p1,p2]=[ptsOn[0],ptsOn[ptsOn.length-1]];
+    s+=`<line x1="${sx(p1[0])}" y1="${sy(p1[1])}" x2="${sx(p2[0])}" y2="${sy(p2[1])}" stroke="${col}" stroke-width="1.6" stroke-dasharray="6,4"/>`;
+    s+=`<rect x="${sx(p1[0])+3}" y="${sy(p1[1])-15}" width="${lbl.length*5.9+10}" height="15" rx="3" fill="${col}" opacity="0.92"/>`;
+    s+=`<text x="${sx(p1[0])+8}" y="${sy(p1[1])-4}" font-size="9.5" font-weight="600" fill="#fff">${lbl}</text>`;
+  });
+
+  // Zone names in the corners they occupy
+  s+=`<text x="${ML+8}" y="${MT+16}" font-size="10.5" font-weight="700" fill="#dc2626" opacity="0.75">Speed</text>`;
+  s+=`<text x="${W-MR-8}" y="${MT+CH-8}" font-size="10.5" font-weight="700" fill="#16a34a" opacity="0.75" text-anchor="end">Endurance</text>`;
+
+  // Grid + axes
+  const tick=(lo,hi)=>{const r=hi-lo;const st=r<=2?0.5:r<=5?1:2;const out=[];
+    for(let v=Math.ceil(lo/st)*st; v<=hi+1e-9; v+=st) out.push(+v.toFixed(2)); return out;};
+  tick(xMin,xMax).forEach(v=>{
+    s+=`<line x1="${sx(v)}" y1="${MT}" x2="${sx(v)}" y2="${MT+CH}" stroke="rgba(15,23,42,0.06)" stroke-width="1"/>`;
+    s+=`<text x="${sx(v)}" y="${MT+CH+16}" font-size="9.5" fill="#7a8290" text-anchor="middle">${v}</text>`;});
+  tick(yMin,yMax).forEach(v=>{
+    s+=`<line x1="${ML}" y1="${sy(v)}" x2="${ML+CW}" y2="${sy(v)}" stroke="rgba(15,23,42,0.06)" stroke-width="1"/>`;
+    s+=`<text x="${ML-7}" y="${sy(v)+3}" font-size="9.5" fill="#7a8290" text-anchor="end">${v}</text>`;});
+  s+=`<rect x="${ML}" y="${MT}" width="${CW}" height="${CH}" fill="none" stroke="#e4e6ea" stroke-width="1"/>`;
+  s+=`<text x="${ML+CW/2}" y="${H-8}" font-size="11" fill="#444c56" font-weight="500" text-anchor="middle">MAS (m/s)</text>`;
+  s+=`<text x="13" y="${MT+CH/2}" font-size="11" fill="#444c56" font-weight="500" text-anchor="middle" transform="rotate(-90,13,${MT+CH/2})">MSS (m/s)</text>`;
+
+  // Other athletes, anonymous
+  pts.filter(p=>!p.isCur).forEach(p=>{
+    s+=`<circle cx="${sx(p.mas)}" cy="${sy(p.mss)}" r="6.5" fill="#cbd5e1" stroke="#94a3b8" stroke-width="1" opacity="0.7"/>`;
+  });
+  // Selected athlete
+  const cur=pts.find(p=>p.isCur);
+  const cls=classifySRR(+(cur.mss/cur.mas).toFixed(2));
+  s+=`<circle cx="${sx(cur.mas)}" cy="${sy(cur.mss)}" r="12" fill="${cls.col}" stroke="#fff" stroke-width="2.5"/>`;
+  s+=`<text x="${sx(cur.mas)}" y="${sy(cur.mss)+4}" font-size="9" font-weight="700" fill="#fff" text-anchor="middle">${cur.ini}</text>`;
+  const lx=sx(cur.mas)+16>W-MR-95?sx(cur.mas)-16:sx(cur.mas)+16;
+  const la=sx(cur.mas)+16>W-MR-95?'end':'start';
+  const ly=sy(cur.mss)-10<MT+18?sy(cur.mss)+22:sy(cur.mss)-10;
+  s+=`<text x="${lx}" y="${ly}" font-size="11" font-weight="600" fill="#0d1117" text-anchor="${la}">${cur.name}</text>`;
+  s+=`<text x="${lx}" y="${ly+13}" font-size="10" fill="#7a8290" text-anchor="${la}">SRR ${(cur.mss/cur.mas).toFixed(2)} · ${cls.label}</text>`;
+  s+='</svg>';
+  return s;
+}
+
 function renderASR() {
   const a = athleteMap[selectedId];
   const el = document.getElementById('asrContent');
@@ -2322,6 +2425,16 @@ function renderASR() {
         <div style="font-size:9.5px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px">Speed Reserve Ratio</div>
         ${srrBar}
       </div>
+      ${(()=>{ const z=mssZoneSvg(selectedId); return z ? `
+      <div>
+        <div style="font-size:9.5px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px">MAS vs MSS profile zones</div>
+        <div style="text-align:center">${z}</div>
+        <div style="display:flex;align-items:center;gap:14px;font-size:10.5px;color:var(--text-muted);flex-wrap:wrap;justify-content:center;margin-top:4px">
+          <span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${cls.col};margin-right:4px;vertical-align:middle"></span>${a.name}</span>
+          <span><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#cbd5e1;border:1px solid #94a3b8;margin-right:4px;vertical-align:middle"></span>Other athletes (anonymous)</span>
+          <span style="color:#c3c9d1">Diagonals are fixed SRR ratios — zones widen as speeds rise</span>
+        </div>
+      </div>` : ''; })()}
       <p style="font-size:10.5px;color:var(--text-muted);line-height:1.6;margin-top:2px">
         SRR classification is sensitive to how MAS is determined — a 5-min time trial typically yields a higher MAS
         than an incremental protocol, which lowers SRR. MAS here was taken from <strong>${mas.src}</strong>.
