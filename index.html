@@ -186,7 +186,7 @@
     </div>
     <div class="sb-search"><input id="sq" type="text" placeholder="Search athlete…" oninput="filterAthletes(this.value)"></div>
     <div class="alist" id="alist"><div style="padding:16px;font-size:12px;color:#7a8290;text-align:center">Connect Google Sheet to load athletes</div></div>
-    <div class="settings-bar"><span id="sheetStatus">No sheet connected</span><span style="font-size:9px;color:#c8ccd2;margin:0 6px" title="Build version">BUILD 40</span><button class="btn-sm" onclick="showConfig()">⚙ Settings</button></div>
+    <div class="settings-bar"><span id="sheetStatus">No sheet connected</span><span style="font-size:9px;color:#c8ccd2;margin:0 6px" title="Build version">BUILD 41</span><button class="btn-sm" onclick="showConfig()">⚙ Settings</button></div>
   </aside>
   <main class="main" id="main"></main>
 </div>
@@ -256,8 +256,8 @@ const NORMS = {
   // Yo-Yo IR2: total distance in metres (Castagna et al. 2006 professional football data)
   yoyo_ir2:     { min:640,  max:1200, u:'m',   lb:false, label:'Yo-Yo IR2',  cat:'aero', note:'Castagna et al. 2006', source:'Castagna et al. 2006; professional football' },
   // ── Speed ─────────────────────────────────────────────────────────────────
-  sprint10:      { min:1.65, max:1.80, u:'s',         lb:true,  label:'10m sprint',             cat:'speed', source:'Haugen et al. 2019' },
-  sprint20:      { min:2.85, max:3.05, u:'s',         lb:true,  label:'20m sprint',             cat:'speed', source:'Haugen et al. 2019' },
+  sprint10:      { min:1.65, max:1.80, u:'s',         lb:true,  label:'10m sprint',             cat:'speed', tiers:[0.05,0.12], source:'Haugen et al. 2019' },
+  sprint20:      { min:2.85, max:3.05, u:'s',         lb:true,  label:'20m sprint',             cat:'speed', tiers:[0.05,0.12], source:'Haugen et al. 2019' },
   // Match-derived peak speed: pro average ~31-32 km/h (8.6-8.9 m/s); EPL all-time fastest ~37.4 km/h (10.4 m/s, Van de Ven).
   // 8.3-9.5 m/s covers typical professional range; >9.5 m/s is genuinely elite outlier territory.
   max_vel:       { min:8.3,  max:9.5,  u:'m/s',       lb:false, label:'Max velocity (20m fly)', cat:'speed', source:'LaLiga match-speed data; EPL fastest-ever ~10.4 m/s' },
@@ -496,14 +496,18 @@ function deriveSession(row, bw_kg, age_yr, height_cm) {
 }
 
 // ─── BENCHMARK SCORING ───────────────────────────────────────────────────────
+// Tier bands are measured OUTWARD from the boundary an athlete falls short of:
+//   higher-is-better -> below n.min ;  lower-is-better -> above n.max
+// A norm can override the default 10% / 20% via  tiers:[near, far].
 function bs(v, nk) {
   const n = NORMS[nk]; if (!n || v==null || n.noNorm) return null;
+  const [t1,t2] = n.tiers || [0.10, 0.20];
   if (n.lb) {
     if (v<=n.min) return 4; if (v<=n.max) return 3;
-    if (v<=n.min*1.10) return 2; if (v<=n.min*1.20) return 1; return 0;
+    if (v<=n.max*(1+t1)) return 2; if (v<=n.max*(1+t2)) return 1; return 0;
   } else {
     if (v>=n.max) return 4; if (v>=n.min) return 3;
-    if (v>=n.min*0.90) return 2; if (v>=n.min*0.80) return 1; return 0;
+    if (v>=n.min*(1-t1)) return 2; if (v>=n.min*(1-t2)) return 1; return 0;
   }
 }
 function injuryFlag(v, nk) {
