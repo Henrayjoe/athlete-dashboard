@@ -186,7 +186,7 @@
     </div>
     <div class="sb-search"><input id="sq" type="text" placeholder="Search athlete…" oninput="filterAthletes(this.value)"></div>
     <div class="alist" id="alist"><div style="padding:16px;font-size:12px;color:#7a8290;text-align:center">Connect Google Sheet to load athletes</div></div>
-    <div class="settings-bar"><span id="sheetStatus">No sheet connected</span><span style="font-size:9px;color:#c8ccd2;margin:0 6px" title="Build version">BUILD 42</span><button class="btn-sm" onclick="showConfig()">⚙ Settings</button></div>
+    <div class="settings-bar"><span id="sheetStatus">No sheet connected</span><span style="font-size:9px;color:#c8ccd2;margin:0 6px" title="Build version">BUILD 43</span><button class="btn-sm" onclick="showConfig()">⚙ Settings</button></div>
   </aside>
   <main class="main" id="main"></main>
 </div>
@@ -2067,13 +2067,11 @@ function renderRadar() {
   </defs>`;
 
   // Rings
-  [1,2,3,4].forEach(sc => {
-    const f = sc/4, bench = sc===3;
-    svg += `<polygon points="${poly(Array(N).fill(f))}"
+  // Benchmark ring is drawn later so the athlete's fill cannot paint over it
+  [1,2,4].forEach(sc => {
+    svg += `<polygon points="${poly(Array(N).fill(sc/4))}"
       fill="${sc===4?'#fbfcfd':'none'}"
-      stroke="${bench?'rgba(26,86,219,0.42)':'rgba(15,23,42,0.075)'}"
-      stroke-width="${bench?1.6:1}"${bench?' stroke-dasharray="6,4"':''}
-      stroke-linejoin="round"/>`;
+      stroke="rgba(15,23,42,0.075)" stroke-width="1" stroke-linejoin="round"/>`;
   });
 
   // Spokes
@@ -2081,11 +2079,6 @@ function renderRadar() {
     const t = pt(i,1);
     svg += `<line x1="${CX}" y1="${CY}" x2="${t.x}" y2="${t.y}" stroke="rgba(15,23,42,0.09)" stroke-width="1"/>`;
   }
-
-  // Benchmark tag
-  const bRef = pt(0, 0.75);
-  svg += `<rect x="${+bRef.x+5}" y="${+bRef.y-9}" width="74" height="15" rx="7.5" fill="#fff" stroke="rgba(26,86,219,0.3)"/>`;
-  svg += `<text x="${+bRef.x+42}" y="${+bRef.y+1.5}" font-size="8.5" fill="#1a56db" font-weight="600" text-anchor="middle">Pro benchmark</text>`;
 
   // Athlete shape — drawn as segments so each pair of adjacent axes blends
   // between their own status colours, making strengths readable from the shape itself.
@@ -2121,6 +2114,14 @@ function renderRadar() {
       svg += `<circle cx="${p.x}" cy="${p.y}" r="2"   fill="${scCol(x.score)}"/>`;
     });
   }
+
+  // Benchmark ring — on top of the athlete fill so it stays legible
+  svg += `<polygon points="${poly(Array(N).fill(0.75))}" fill="none"
+    stroke="#1a56db" stroke-opacity="0.75" stroke-width="1.8"
+    stroke-dasharray="7,4" stroke-linejoin="round"/>`;
+  const bRef = pt(0, 0.75);
+  svg += `<rect x="${+bRef.x+5}" y="${+bRef.y-9}" width="76" height="15" rx="7.5" fill="#fff" stroke="#1a56db" stroke-opacity="0.5"/>`;
+  svg += `<text x="${+bRef.x+43}" y="${+bRef.y+1.5}" font-size="8.5" fill="#1a56db" font-weight="700" text-anchor="middle">Pro benchmark</text>`;
 
   // Axis labels
   axes.forEach((x,i)=>{
