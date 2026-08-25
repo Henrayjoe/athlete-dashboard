@@ -13,8 +13,8 @@
     --accent:#1a56db; --accent-light:#ebf0fd;
     --c-exceeds-bg:#f0fdf4; --c-exceeds-text:#14532d;
     --c-meets-bg:#eff6ff;   --c-meets-text:#1e3a5f;
-    --c-near-bg:#fffbeb;    --c-near-text:#78350f;
-    --c-below-bg:#fff7ed;   --c-below-text:#7c2d12;
+    --c-near-bg:#fefce8;    --c-near-text:#854d0e;
+    --c-below-bg:#fff7ed;   --c-below-text:#9a3412;
     --c-priority-bg:#fef2f2;--c-priority-text:#7f1d1d;
     --radius:8px; --radius-lg:12px;
   }
@@ -186,7 +186,7 @@
     </div>
     <div class="sb-search"><input id="sq" type="text" placeholder="Search athlete…" oninput="filterAthletes(this.value)"></div>
     <div class="alist" id="alist"><div style="padding:16px;font-size:12px;color:#7a8290;text-align:center">Connect Google Sheet to load athletes</div></div>
-    <div class="settings-bar"><span id="sheetStatus">No sheet connected</span><span style="font-size:9px;color:#c8ccd2;margin:0 6px" title="Build version">BUILD 41</span><button class="btn-sm" onclick="showConfig()">⚙ Settings</button></div>
+    <div class="settings-bar"><span id="sheetStatus">No sheet connected</span><span style="font-size:9px;color:#c8ccd2;margin:0 6px" title="Build version">BUILD 42</span><button class="btn-sm" onclick="showConfig()">⚙ Settings</button></div>
   </aside>
   <main class="main" id="main"></main>
 </div>
@@ -305,7 +305,11 @@ let currentYAxis = QUAD_PRESETS[0].y;
 const CAT_LABELS = { jump:'Jump / Power', aero:'Aerobic', strength:'Strength', speed:'Speed' };
 const SL = ['Primary Focus','Building','Approaching Standard','At Standard','Above Standard'];
 const SC = ['p0','p1','p2','p3','p4'];
-const SD = ['#dc2626','#c2410c','#b45309','#1a56db','#16a34a'];
+// Five-tier colour scale, index 0 (worst) -> 4 (best).
+// Deliberately separated in hue so adjacent tiers never read as the same colour:
+// red -> orange -> amber -> blue -> green.
+const SCORE_COLS = ['#dc2626','#ea580c','#ca8a04','#1a56db','#16a34a'];
+const SD = SCORE_COLS;
 const CC = ['#1a56db','#7c3aed','#0891b2','#16a34a','#dc2626','#c2410c','#6b7280'];
 
 // ─── CALCULATIONS ─────────────────────────────────────────────────────────────
@@ -527,10 +531,10 @@ function dHtml(val, prev, lb) {
 }
 function catLabel(avg) {
   if (avg===null) return null;
-  if (avg>=3.5) return {l:'Above Standard', c:'#16a34a'};
-  if (avg>=2.5) return {l:'At Standard',    c:'#1a56db'};
-  if (avg>=1.5) return {l:'Building',       c:'#c2410c'};
-  return              {l:'Primary Focus',  c:'#dc2626'};
+  if (avg>=3.5) return {l:'Above Standard', c:SCORE_COLS[4]};
+  if (avg>=2.5) return {l:'At Standard',    c:SCORE_COLS[3]};
+  if (avg>=1.5) return {l:'Building',       c:SCORE_COLS[1]};
+  return              {l:'Primary Focus',  c:SCORE_COLS[0]};
 }
 function catCard(catKey, keys, d) {
   const scores = keys.map(k=>bs(d[k],k)).filter(s=>s!==null);
@@ -544,7 +548,7 @@ function sidebarCol(d) {
   const scores = Object.keys(NORMS).map(k=>bs(d[k],k)).filter(s=>s!==null);
   if (!scores.length) return '#7a8290';
   const avg = scores.reduce((a,b)=>a+b,0)/scores.length;
-  return avg>=3.5?'#16a34a':avg>=2.5?'#1a56db':avg>=1.5?'#c2410c':'#dc2626';
+  return SCORE_COLS[Math.max(0,Math.min(4,Math.round(avg)))];
 }
 // Get most recently tested value for a key across all sessions (sessions sorted newest-first)
 function latestVal(sessions, key) {
@@ -1553,7 +1557,7 @@ function _buildAndOpenPrintReport(a, chartImages, quadrantSVG, radarSVG, radarMo
 
   function badge(score, noNorm) {
     if (noNorm||score===null) return '<span style="color:#aaa;font-size:10px;font-style:italic">No validated norm</span>';
-    const cols=['#dc2626','#c2410c','#b45309','#1a56db','#16a34a'];
+    const cols=SCORE_COLS;
     return `<span style="color:${cols[score]};font-weight:700;font-size:10.5px">● ${SL[score]}</span>`;
   }
 
@@ -1948,7 +1952,7 @@ function renderHistory() {
   const scoreColor = (key, val) => {
     if (val==null) return '';
     const s = bs(val, key); if (s===null) return '';
-    return ['#dc2626','#c2410c','#b45309','#1a56db','#16a34a'][s];
+    return SCORE_COLS[s];
   };
 
   const fmtCell = (key, val) => {
@@ -1983,7 +1987,7 @@ function renderHistory() {
   });
 
   el.innerHTML = t + `</tbody></table>
-  <p style="font-size:10px;color:var(--text-muted);margin-top:8px">Oldest → newest · Values colour-coded: <span style="color:#16a34a">●</span> Above Standard <span style="color:#1a56db">●</span> At Standard <span style="color:#b45309">●</span> Approaching <span style="color:#c2410c">●</span> Building <span style="color:#dc2626">●</span> Primary Focus</p>`;
+  <p style="font-size:10px;color:var(--text-muted);margin-top:8px">Oldest → newest · Values colour-coded: <span style="color:#16a34a">●</span> Above Standard <span style="color:#1a56db">●</span> At Standard <span style="color:#ca8a04">●</span> Approaching <span style="color:#ea580c">●</span> Building <span style="color:#dc2626">●</span> Primary Focus</p>`;
 }
 
 // ─── ATHLETIC PROFILE RADAR ──────────────────────────────────────────────────
@@ -2012,7 +2016,7 @@ function renderRadar() {
 
   const ld = buildLatestAcrossSessions(a.sessions);
   const scCol = s => s===null ? '#c3c9d1'
-    : s>=3.5 ? '#16a34a' : s>=2.5 ? '#1a56db' : s>=1.5 ? '#c2410c' : '#dc2626';
+    : SCORE_COLS[Math.max(0,Math.min(4,Math.round(s)))];
 
   // ── Build axis set for the chosen mode ──────────────────────────────────
   let axes; // [{label, short, score, detail}]
