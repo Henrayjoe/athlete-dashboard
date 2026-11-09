@@ -460,7 +460,7 @@
     .runhdr img, .runhdr .plogo img{ height:13px !important; width:auto !important;
       display:block; filter:brightness(0) invert(1) }
 
-    .ppage .plogo img, .ppage .plogo img{ height:17px !important; width:auto !important;
+    .ppage .plogo img, .ppage .plogo img, .pflow .plogo img{ height:17px !important; width:auto !important;
       filter:brightness(0) invert(1) !important }
     .ppage .ffoot .plogo img{ height:13px !important }
     .ppage .topbar{ padding-bottom:9mm; border-bottom:1px solid rgba(255,255,255,.14) }
@@ -474,35 +474,34 @@
     .ppage .ringBox svg{ width:220px } .ppage .rcap{ font-size:8px }
     .ppage .hnote{ margin-top:14px; padding:12px 14px } .ppage .hnote p{ font-size:12px }
 
-    .ppage .sec{ margin-top:0; border-radius:0; padding:10mm 0 10mm; box-shadow:none;
-                 break-inside:auto }
-    .ppage .sec .h2, .ppage .sec .h2{ font-size:22px; margin-top:9px }
-    .ppage .ebrow svg, .ppage .ebrow svg{ width:19px; height:19px }
-    .ppage .eb, .ppage .eb{ font-size:8.5px; letter-spacing:.24em }
-    .ppage .lead, .ppage .lead{ font-size:13px; margin-top:8px; max-width:none }
-    .ppage .hlgrid, .ppage .hcgrid, .ppage .hlgrid, .ppage .hcgrid{ grid-template-columns:repeat(3,minmax(0,1fr)) !important;
+
+    .ppage .sec .h2, .pflow .sec .h2, .ppage .sec .h2, .pflow .sec .h2{ font-size:22px; margin-top:9px }
+    .ppage .ebrow svg, .ppage .ebrow svg, .pflow .ebrow svg{ width:19px; height:19px }
+    .ppage .eb, .ppage .eb, .pflow .eb{ font-size:8.5px; letter-spacing:.24em }
+    .ppage .lead, .ppage .lead, .pflow .lead{ font-size:13px; margin-top:8px; max-width:none }
+    .ppage .hlgrid, .ppage .hcgrid, .ppage .hlgrid, .ppage .hcgrid, .pflow .hlgrid, .pflow .hcgrid{ grid-template-columns:repeat(3,minmax(0,1fr)) !important;
                                     gap:14px; margin-top:18px }
-    .ppage .big, .ppage .hcard .hval, .ppage .itile .ival, .ppage .big, .ppage .hcard .hval, .ppage .itile .ival{ font-size:30px; margin-top:7px }
-    .ppage .hcard p.hdesc, .ppage .hcard p.hdesc{ font-size:10.5px; margin-top:7px }
-    .ppage .hcard .hfoot, .ppage .hcard .hfoot{ font-size:8px; padding-top:7px }
-    .ppage .brk, .ppage .chart-wrap, .ppage .itile, .ppage .brk, .ppage .chart-wrap, .ppage .itile{ padding:14px 18px }
-    .ppage .chart-grid, .ppage .chart-grid{ grid-template-columns:repeat(2,minmax(0,1fr)) !important; gap:14px; margin-top:16px }
-    .ppage .chart-title, .ppage .chart-title{ font-size:8px; letter-spacing:.22em; margin-bottom:8px }
-    .ppage .split, .ppage .split{ grid-template-columns:minmax(0,1fr) !important; gap:16px; margin-top:16px }
-    .ppage .trend, .ppage .trend{ position:static }
-    .ppage .rhead, .ppage .rhead{ grid-template-columns:150px minmax(0,1fr) 32px; gap:14px; font-size:8px; margin-top:14px }
-    .ppage .row, .ppage .row{ grid-template-columns:150px minmax(0,1fr) 32px; gap:14px; padding:8px 0 }
-    .ppage .row .lbl, .ppage .row .lbl{ font-size:9px; letter-spacing:.18em }
+    .ppage .big, .ppage .hcard .hval, .ppage .itile .ival, .ppage .big, .ppage .hcard .hval, .ppage .itile .ival, .pflow .big, .pflow .hcard .hval, .pflow .itile .ival{ font-size:30px; margin-top:7px }
+    .ppage .hcard p.hdesc, .ppage .hcard p.hdesc, .pflow .hcard p.hdesc{ font-size:10.5px; margin-top:7px }
+    .ppage .hcard .hfoot, .ppage .hcard .hfoot, .pflow .hcard .hfoot{ font-size:8px; padding-top:7px }
+    .ppage .brk, .ppage .chart-wrap, .ppage .itile, .ppage .brk, .ppage .chart-wrap, .ppage .itile, .pflow .brk, .pflow .chart-wrap, .pflow .itile{ padding:14px 18px }
+    .ppage .chart-grid, .ppage .chart-grid, .pflow .chart-grid{ grid-template-columns:repeat(2,minmax(0,1fr)) !important; gap:14px; margin-top:16px }
+    .ppage .chart-title, .ppage .chart-title, .pflow .chart-title{ font-size:8px; letter-spacing:.22em; margin-bottom:8px }
+    .ppage .split, .ppage .split, .pflow .split{ grid-template-columns:minmax(0,1fr) !important; gap:16px; margin-top:16px }
+    .ppage .trend, .ppage .trend, .pflow .trend{ position:static }
+    .ppage .rhead, .ppage .rhead, .pflow .rhead{ grid-template-columns:150px minmax(0,1fr) 32px; gap:14px; font-size:8px; margin-top:14px }
+    .ppage .row, .ppage .row, .pflow .row{ grid-template-columns:150px minmax(0,1fr) 32px; gap:14px; padding:8px 0 }
+    .ppage .row .lbl, .ppage .row .lbl, .pflow .row .lbl{ font-size:9px; letter-spacing:.18em }
     .ppage .row .lbl small, .ppage .row .lbl small{ font-size:8.5px }
-    .ppage .bar, .ppage .bar{ height:20px } .ppage .bar .rv{ font-size:11px }
-    .ppage .bar .cx, .ppage .bar .cx{ font-size:8px } .ppage .cbadge{ width:24px; height:24px; font-size:8px }
-    .ppage .ghead, .ppage .ghead{ font-size:8.5px; padding:16px 0 2px }
-    .ppage .callout, .ppage .callout{ margin-top:18px; padding:13px 16px } .ppage .callout div{ font-size:12px }
-    .ppage .ppanel, .ppage .ppanel{ margin-top:20px; padding-top:18px }
+    .ppage .bar, .ppage .bar, .pflow .bar{ height:20px } .ppage .bar .rv{ font-size:11px }
+    .ppage .bar .cx, .ppage .bar .cx, .pflow .bar .cx{ font-size:8px } .ppage .cbadge, .pflow .cbadge{ width:24px; height:24px; font-size:8px }
+    .ppage .ghead, .ppage .ghead, .pflow .ghead{ font-size:8.5px; padding:16px 0 2px }
+    .ppage .callout, .ppage .callout, .pflow .callout{ margin-top:18px; padding:13px 16px } .ppage .callout div{ font-size:12px }
+    .ppage .ppanel, .ppage .ppanel, .pflow .ppanel{ margin-top:20px; padding-top:18px }
     .ppage .ppanel h3, .ppage .ppanel h3{ font-size:19px }
     .ppage .ppanel .pdesc, .ppage .ppanel .pdesc{ font-size:12px; margin-top:8px }
-    .ppage .pgrid, .ppage .pgrid{ grid-template-columns:minmax(0,1fr) 210px; gap:18px; margin-top:16px }
-    .ppage table, .ppage table{ font-size:9px } .ppage thead th, .ppage thead th{ font-size:7.5px }
+    .ppage .pgrid, .ppage .pgrid, .pflow .pgrid{ grid-template-columns:minmax(0,1fr) 210px; gap:18px; margin-top:16px }
+    .ppage table, .ppage table, .pflow table{ font-size:9px } .ppage thead th, .ppage thead th, .pflow thead th{ font-size:7.5px }
     .ppage .ffoot{ padding:10mm 0 0 }
 
     .row, .hcard, .hl, .chart-wrap, .ppanel, .itile, .callout, .brk,
@@ -630,7 +629,7 @@
 
 <section class="drawer no-print" id="drawer" hidden>
   <div class="wrap">
-    <div class="eb">Data &amp; settings · <span id="buildTag">Build 53</span></div>
+    <div class="eb">Data &amp; settings · <span id="buildTag">Build 54</span></div>
     <h2 class="h2">Connect your Google Sheet</h2>
     <p class="lead">Two published tabs, <b>Athletes</b> and <b>Results</b> — exactly as they are set up now. In Google Sheets: File → Share → Publish to web, pick the tab, choose CSV, paste the link here. Nothing in your sheet needs to move.</p>
     <div class="dgrid">
@@ -1737,7 +1736,7 @@ function renderMain(){
     const bits = [];
     if (tops.length) bits.push(`<b>${tops.map(m=>NORMS[m.k].label).join('</b>, <b>')}</b> ${tops.length>1?'are':'is'} above the professional range`);
     if (gaps.length) bits.push(`<b>${gaps.map(m=>NORMS[m.k].label).join('</b>, <b>')}</b> ${gaps.length>1?'are':'is'} the clearest gap to close`);
-    if (!bits.length) bits.push('Everything in this group sits inside the professional range.');
+    if (!bits.length) return callout('Everything in this group sits inside the professional range.');
     return callout(bits.join('. ') + '.');
   }
   const powerCallout = setCallout(HIGHLIGHT_SETS[0].keys);
@@ -2471,13 +2470,13 @@ function generateFeedback() {
 // Grouped into page-sized blocks. Each .ppage is at least one A4 sheet tall so
 // the dark ground bleeds to the trim, and grows past it rather than clipping
 // when an athlete has a long battery.
-const PRINT_PAGES = [
-  ['s-power','s-speed'],
-  ['s-results'],
-  ['s-radar','s-runs'],
-  ['s-trends'],
-  ['s-asr','s-history','s-key'],
-];
+// One continuous flow after the cover, so the sheets keep overlapping. Order
+// only; pages fall where they fall and no section is cut (see PRINT_TALL).
+const PRINT_ORDER = ['s-power','s-speed','s-results','s-radar','s-runs',
+                     's-trends','s-asr','s-history','s-key'];
+// Sections taller than a sheet cannot avoid a break, so they break between
+// their own rows or cards instead of being refused outright.
+const PRINT_TALL = ['s-results','s-trends','s-history'];
 // Which print toggle, if any, governs each section.
 const PRINT_GATE = { 's-radar':'radar', 's-trends':'charts', 's-quadrant':'quadrant',
                      's-motorpref':'motorpref', 's-asr':'speedres', 's-feedback':'feedback' };
@@ -2521,7 +2520,9 @@ function buildPrintPages(){
     if (el.classList.contains('coachonly')) return '';          // never printed
     const gate = PRINT_GATE[k];
     if (gate && prefs[gate] === false) return '';
-    return snapshotSection(el);
+    let html = snapshotSection(el);
+    if (PRINT_TALL.includes(k)) html = html.replace('class="sec', 'class="tall sec');
+    return html;
   };
 
   const foot = `<div class="runfoot"><div class="wrap">${logo}
@@ -2534,11 +2535,8 @@ function buildPrintPages(){
       </div></header>
     </div>`;
 
-  const pages = PRINT_PAGES
-    .map(keys => keys.map(sectionHtml).join(''))
-    .filter(Boolean);
-  return cover + pages.map((h,i) =>
-    `<div class="ppage">${h}${i===pages.length-1 ? foot : ''}</div>`).join('');
+  const flow = PRINT_ORDER.map(sectionHtml).filter(Boolean).join('');
+  return cover + `<div class="pflow">${flow}${foot}</div>`;
 }
 
 function generatePrintReport(){
