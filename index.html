@@ -66,7 +66,9 @@
   .topbar{ display:flex; justify-content:space-between; align-items:center; gap:12px;
            flex-wrap:wrap; padding-bottom:20px; border-bottom:1px solid var(--rule) }
   .brandmark{ display:flex; align-items:center; gap:14px }
-  .brandmark img{ height:21px; width:auto; display:block; filter:brightness(0) invert(1) }
+  .brandmark img, .plogo img{ height:21px; width:auto; display:block;
+    filter:brightness(0) invert(1) }
+  .plogo{ display:inline-flex; align-items:center; flex:0 0 auto }
   .brandmark .bsub{ display:none }
   .ctrls{ display:flex; gap:8px; flex-wrap:wrap; align-items:center }
   .hsel,.hbtn{ background:transparent; border:1px solid var(--rule); color:var(--ink);
@@ -131,7 +133,12 @@
 
   /* ── tiles ─────────────────────────────────────────────────────────────── */
   .hlgrid, .hcgrid{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:22px; margin-top:28px }
-  .hl, .hcard{ display:flex; flex-direction:column; gap:6px; min-width:0; background:transparent; border:0 }
+  .hl, .hcard{ position:relative; display:flex; flex-direction:column; gap:6px; min-width:0;
+    background:transparent; border:0; padding:20px 22px }
+  .hl::before,.hl::after,.hcard::before,.hcard::after{ content:""; position:absolute; top:0; bottom:0;
+    width:9px; border:1px solid var(--sv-br); pointer-events:none }
+  .hl::before,.hcard::before{ left:0;  border-right:0 }
+  .hl::after, .hcard::after { right:0; border-left:0 }
   .big, .hcard .hval{ font-size:44px; font-weight:200; letter-spacing:-.02em;
         font-variant-numeric:tabular-nums; line-height:1; margin-top:10px; color:var(--ink) }
   .big small, .hcard .hval small{ font-size:13px; color:var(--muted); margin-left:6px;
@@ -345,7 +352,8 @@
   .ffoot .wrap{ max-width:1180px; display:flex; justify-content:space-between; align-items:center;
                 gap:10px; flex-wrap:wrap; font-size:10.5px; letter-spacing:.2em;
                 text-transform:uppercase; color:var(--dim) }
-  .ffoot img{ height:14px; width:auto; display:block; filter:brightness(0) invert(1) }
+  .ffoot img, .ffoot .plogo img{ height:14px; width:auto; display:block;
+    filter:brightness(0) invert(1) }
   .ffoot span{ font-size:10.5px; letter-spacing:.2em; text-transform:uppercase; color:var(--dim) }
 
   /* ── print menu ────────────────────────────────────────────────────────── */
@@ -432,7 +440,10 @@
   @page{ size:A4; margin:0 }
   @media print{
     *{ -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important }
-    html,body{ background:#2A2A2A !important; margin:0 }
+    /* the UA dark canvas (color-scheme:dark) paints behind the body, so the
+       page edges come out near-black unless it is switched off for print */
+    html{ background:#2A2A2A !important }
+    body{ background:#2A2A2A !important; margin:0 }
     body.pall #main, body.pall .secnav, body.pall > .hero, body.pall .drawer,
     .no-print, .ctrls{ display:none !important }
     body.pall #printAll{ display:block !important }
@@ -446,9 +457,15 @@
     .runhdr{ background:#2A2A2A; padding:10mm 0 6mm }
     .runhdr .wrap{ display:flex; justify-content:space-between; align-items:center; gap:12px;
                    font-size:8.5px; letter-spacing:.22em; text-transform:uppercase; color:#A6A39D }
-    .runhdr img{ height:13px; width:auto; display:block; filter:brightness(0) invert(1) }
+    .runhdr img, .runhdr .plogo img{ height:13px !important; width:auto !important;
+      display:block; filter:brightness(0) invert(1) }
 
-    .ppage .hero .wrap{ padding-top:12mm; padding-bottom:22mm }
+    .ppage .plogo img, .ppage .plogo img{ height:17px !important; width:auto !important;
+      filter:brightness(0) invert(1) !important }
+    .ppage .ffoot .plogo img{ height:13px !important }
+    .ppage .topbar{ padding-bottom:9mm; border-bottom:1px solid rgba(255,255,255,.14) }
+    .ppage.cover .hero{ width:100% }
+    .ppage .hero .wrap{ padding-top:11mm; padding-bottom:11mm }
     .ppage .hero h1{ font-size:38px; margin-top:10px }
     .ppage .hero .sub{ font-size:13px; margin-top:10px; line-height:1.5 }
     .ppage .heroGrid{ grid-template-columns:minmax(0,1fr) 220px !important; gap:18px; margin-top:18px }
@@ -457,34 +474,35 @@
     .ppage .ringBox svg{ width:220px } .ppage .rcap{ font-size:8px }
     .ppage .hnote{ margin-top:14px; padding:12px 14px } .ppage .hnote p{ font-size:12px }
 
-    .ppage .sec{ margin-top:-18px; border-radius:20px 20px 0 0; padding:24px 0 26px;
-                 box-shadow:0 -8px 18px rgba(0,0,0,.25); break-inside:auto }
-    .ppage .sec .h2{ font-size:22px; margin-top:9px }
-    .ppage .ebrow svg{ width:19px; height:19px }
-    .ppage .eb{ font-size:8.5px; letter-spacing:.24em }
-    .ppage .lead{ font-size:13px; margin-top:8px; max-width:none }
-    .ppage .hlgrid, .ppage .hcgrid{ grid-template-columns:repeat(3,minmax(0,1fr)) !important;
+    .ppage .sec{ margin-top:0; border-radius:0; padding:10mm 0 10mm; box-shadow:none;
+                 break-inside:auto }
+    .ppage .sec .h2, .ppage .sec .h2{ font-size:22px; margin-top:9px }
+    .ppage .ebrow svg, .ppage .ebrow svg{ width:19px; height:19px }
+    .ppage .eb, .ppage .eb{ font-size:8.5px; letter-spacing:.24em }
+    .ppage .lead, .ppage .lead{ font-size:13px; margin-top:8px; max-width:none }
+    .ppage .hlgrid, .ppage .hcgrid, .ppage .hlgrid, .ppage .hcgrid{ grid-template-columns:repeat(3,minmax(0,1fr)) !important;
                                     gap:14px; margin-top:18px }
-    .ppage .big, .ppage .hcard .hval, .ppage .itile .ival{ font-size:30px; margin-top:7px }
-    .ppage .hcard p.hdesc{ font-size:10.5px; margin-top:7px }
-    .ppage .hcard .hfoot{ font-size:8px; padding-top:7px }
-    .ppage .brk, .ppage .chart-wrap, .ppage .itile{ padding:14px 18px }
-    .ppage .chart-grid{ grid-template-columns:repeat(2,minmax(0,1fr)) !important; gap:14px; margin-top:16px }
-    .ppage .chart-title{ font-size:8px; letter-spacing:.22em; margin-bottom:8px }
-    .ppage .split{ grid-template-columns:minmax(0,1fr) !important; gap:16px; margin-top:16px }
-    .ppage .trend{ position:static }
-    .ppage .rhead{ grid-template-columns:150px minmax(0,1fr) 32px; gap:14px; font-size:8px; margin-top:14px }
-    .ppage .row{ grid-template-columns:150px minmax(0,1fr) 32px; gap:14px; padding:8px 0 }
-    .ppage .row .lbl{ font-size:9px; letter-spacing:.18em }
-    .ppage .row .lbl small{ font-size:8.5px }
-    .ppage .bar{ height:20px } .ppage .bar .rv{ font-size:11px }
-    .ppage .bar .cx{ font-size:8px } .ppage .cbadge{ width:24px; height:24px; font-size:8px }
-    .ppage .ghead{ font-size:8.5px; padding:16px 0 2px }
-    .ppage .callout{ margin-top:18px; padding:13px 16px } .ppage .callout div{ font-size:12px }
-    .ppage .ppanel{ margin-top:20px; padding-top:18px }
-    .ppage .ppanel h3{ font-size:19px } .ppage .ppanel .pdesc{ font-size:12px; margin-top:8px }
-    .ppage .pgrid{ grid-template-columns:minmax(0,1fr) 210px; gap:18px; margin-top:16px }
-    .ppage table{ font-size:9px } .ppage thead th{ font-size:7.5px }
+    .ppage .big, .ppage .hcard .hval, .ppage .itile .ival, .ppage .big, .ppage .hcard .hval, .ppage .itile .ival{ font-size:30px; margin-top:7px }
+    .ppage .hcard p.hdesc, .ppage .hcard p.hdesc{ font-size:10.5px; margin-top:7px }
+    .ppage .hcard .hfoot, .ppage .hcard .hfoot{ font-size:8px; padding-top:7px }
+    .ppage .brk, .ppage .chart-wrap, .ppage .itile, .ppage .brk, .ppage .chart-wrap, .ppage .itile{ padding:14px 18px }
+    .ppage .chart-grid, .ppage .chart-grid{ grid-template-columns:repeat(2,minmax(0,1fr)) !important; gap:14px; margin-top:16px }
+    .ppage .chart-title, .ppage .chart-title{ font-size:8px; letter-spacing:.22em; margin-bottom:8px }
+    .ppage .split, .ppage .split{ grid-template-columns:minmax(0,1fr) !important; gap:16px; margin-top:16px }
+    .ppage .trend, .ppage .trend{ position:static }
+    .ppage .rhead, .ppage .rhead{ grid-template-columns:150px minmax(0,1fr) 32px; gap:14px; font-size:8px; margin-top:14px }
+    .ppage .row, .ppage .row{ grid-template-columns:150px minmax(0,1fr) 32px; gap:14px; padding:8px 0 }
+    .ppage .row .lbl, .ppage .row .lbl{ font-size:9px; letter-spacing:.18em }
+    .ppage .row .lbl small, .ppage .row .lbl small{ font-size:8.5px }
+    .ppage .bar, .ppage .bar{ height:20px } .ppage .bar .rv{ font-size:11px }
+    .ppage .bar .cx, .ppage .bar .cx{ font-size:8px } .ppage .cbadge{ width:24px; height:24px; font-size:8px }
+    .ppage .ghead, .ppage .ghead{ font-size:8.5px; padding:16px 0 2px }
+    .ppage .callout, .ppage .callout{ margin-top:18px; padding:13px 16px } .ppage .callout div{ font-size:12px }
+    .ppage .ppanel, .ppage .ppanel{ margin-top:20px; padding-top:18px }
+    .ppage .ppanel h3, .ppage .ppanel h3{ font-size:19px }
+    .ppage .ppanel .pdesc, .ppage .ppanel .pdesc{ font-size:12px; margin-top:8px }
+    .ppage .pgrid, .ppage .pgrid{ grid-template-columns:minmax(0,1fr) 210px; gap:18px; margin-top:16px }
+    .ppage table, .ppage table{ font-size:9px } .ppage thead th, .ppage thead th{ font-size:7.5px }
     .ppage .ffoot{ padding:10mm 0 0 }
 
     .row, .hcard, .hl, .chart-wrap, .ppanel, .itile, .callout, .brk,
@@ -548,7 +566,7 @@
   }
 
   /* ── print ────────────────────────────────────────────────────────────── */
-  @page{ size:A4; margin:12mm 0 }
+  /* page box is set once, above — a second @page here would win and leave a band */
   @media print{
     *{ -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important }
     html,body{ background:#2A2A2A !important }
@@ -612,7 +630,7 @@
 
 <section class="drawer no-print" id="drawer" hidden>
   <div class="wrap">
-    <div class="eb">Data &amp; settings · <span id="buildTag">Build 52</span></div>
+    <div class="eb">Data &amp; settings · <span id="buildTag">Build 53</span></div>
     <h2 class="h2">Connect your Google Sheet</h2>
     <p class="lead">Two published tabs, <b>Athletes</b> and <b>Results</b> — exactly as they are set up now. In Google Sheets: File → Share → Publish to web, pick the tab, choose CSV, paste the link here. Nothing in your sheet needs to move.</p>
     <div class="dgrid">
@@ -1967,7 +1985,7 @@ function renderMain(){
     </section>
 
     <footer class="ffoot no-print"><div class="wrap">
-      <img src="${document.querySelector('.brandmark img')?.src||''}" alt="FOOTBALLFIT">
+      <span class="plogo"><img src="${document.querySelector('.brandmark img')?.src||''}" alt="FOOTBALLFIT"></span>
       <span>Individual physical performance coaching</span>
     </div></footer>
   `;
@@ -2447,15 +2465,18 @@ function generateFeedback() {
 // permitted sections into #printAll, swap each Chart.js canvas for a PNG of
 // itself (a cloned canvas is blank), and let the browser print that. There is
 // no second stylesheet to keep in step.
+// Page 1 is a cover (hero only). Everything after it flows, so pages fill
+// instead of each group forcing a break and leaving half a page empty.
+// Only these start a fresh page.
+// Grouped into page-sized blocks. Each .ppage is at least one A4 sheet tall so
+// the dark ground bleeds to the trim, and grows past it rather than clipping
+// when an athlete has a long battery.
 const PRINT_PAGES = [
-  { keys:['s-power'],                         hero:true  },
-  { keys:['s-speed','s-key'],                 hero:false },
-  { keys:['s-results'],                       hero:false },
-  { keys:['s-radar'],                         hero:false },
-  { keys:['s-runs'],                          hero:false },
-  { keys:['s-trends'],                        hero:false },
-  { keys:['s-asr'],                           hero:false },
-  { keys:['s-history'],                       hero:false },
+  ['s-power','s-speed'],
+  ['s-results'],
+  ['s-radar','s-runs'],
+  ['s-trends'],
+  ['s-asr','s-history','s-key'],
 ];
 // Which print toggle, if any, governs each section.
 const PRINT_GATE = { 's-radar':'radar', 's-trends':'charts', 's-quadrant':'quadrant',
@@ -2489,32 +2510,35 @@ function snapshotSection(el){
 function buildPrintPages(){
   const a = athleteMap[selectedId]; if (!a) return '';
   const prefs = printPrefs();
-  const logo  = document.querySelector('.brandmark img')?.outerHTML || '';
+  const logoSrc = document.querySelector('.brandmark img')?.src || '';
+  const logo  = logoSrc ? `<span class="plogo"><img src="${logoSrc}" alt="FOOTBALLFIT"></span>` : '';
   const today = new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'});
   const coach = getConfig().coachName || '';
-  const runhdr = `<div class="runhdr"><div class="wrap">${logo}
-      <span>${a.name} · ${a.sessions[0]?.test_date||''}${coach?` · ${coach}`:''}</span></div></div>`;
-  const heroHtml = `<header class="hero"><div class="wrap">
-      <div class="topbar">${logo}<span class="eb">Performance report · ${today}</span></div>
-      ${document.getElementById('hero')?.innerHTML||''}</div></header>`;
 
-  let out = '', firstPage = true;
-  PRINT_PAGES.forEach(page => {
-    const blocks = page.keys.map(k => {
-      const el = document.getElementById(k);
-      if (!el) return '';
-      if (el.classList.contains('coachonly')) return '';      // never printed
-      const gate = PRINT_GATE[k];
-      if (gate && prefs[gate] === false) return '';
-      return snapshotSection(el);
-    }).filter(Boolean).join('');
-    if (!blocks && !page.hero) return;
-    out += `<div class="ppage">${page.hero ? heroHtml : (firstPage ? '' : runhdr)}${blocks}</div>`;
-    firstPage = false;
-  });
-  const foot = document.querySelector('.ffoot');
-  if (foot) out += `<div class="ppage">${runhdr}${foot.outerHTML.replace('no-print','')}</div>`;
-  return out;
+  const sectionHtml = k => {
+    const el = document.getElementById(k);
+    if (!el) return '';
+    if (el.classList.contains('coachonly')) return '';          // never printed
+    const gate = PRINT_GATE[k];
+    if (gate && prefs[gate] === false) return '';
+    return snapshotSection(el);
+  };
+
+  const foot = `<div class="runfoot"><div class="wrap">${logo}
+      <span>${a.name} · ${a.sessions[0]?.test_date||''}${coach?` · ${coach}`:''}</span></div></div>`;
+
+  const cover = `<div class="ppage cover">
+      <header class="hero"><div class="wrap">
+        <div class="topbar">${logo}<span class="eb">Performance report · ${today}</span></div>
+        ${document.getElementById('hero')?.innerHTML || ''}
+      </div></header>
+    </div>`;
+
+  const pages = PRINT_PAGES
+    .map(keys => keys.map(sectionHtml).join(''))
+    .filter(Boolean);
+  return cover + pages.map((h,i) =>
+    `<div class="ppage">${h}${i===pages.length-1 ? foot : ''}</div>`).join('');
 }
 
 function generatePrintReport(){
