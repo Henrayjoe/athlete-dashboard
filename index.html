@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>FootballFit · Performance Dashboard · Build 56</title>
+<title>FootballFit · Performance Dashboard · Build 57</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
   /* Neue Haas Display — all five weights, embedded so the file stays self-contained */
@@ -492,40 +492,21 @@
     .ppage .topbar{ padding-bottom:9mm; border-bottom:1px solid rgba(255,255,255,.14) }
     .ppage.cover .hero{ width:100% }
     .ppage .hero .wrap{ padding-top:11mm; padding-bottom:11mm }
-    .ppage .hero h1{ font-size:38px; margin-top:10px }
-    .ppage .hero .sub{ font-size:13px; margin-top:10px; line-height:1.5 }
     .ppage .heroGrid{ grid-template-columns:minmax(0,1fr) 220px !important; gap:18px; margin-top:18px }
-    .ppage .meta{ margin-top:16px; gap:20px }
-    .ppage .meta b{ font-size:17px } .ppage .meta span{ font-size:7.5px; letter-spacing:.2em }
-    .ppage .ringBox svg{ width:220px } .ppage .rcap{ font-size:8px }
-    .ppage .hnote{ margin-top:14px; padding:12px 14px } .ppage .hnote p{ font-size:12px }
+    .ppage .meta{ margin-top:16px; gap:20px } .ppage .rcap{ font-size:8px } .ppage .hnote p{ font-size:12px }
 
 
-    .ppage .sec .h2, .pflow .sec .h2, .ppage .sec .h2, .pflow .sec .h2{ font-size:22px; margin-top:9px }
     .ppage .ebrow svg, .ppage .ebrow svg, .pflow .ebrow svg{ width:19px; height:19px }
-    .ppage .eb, .ppage .eb, .pflow .eb{ font-size:8.5px; letter-spacing:.24em }
-    .ppage .lead, .ppage .lead, .pflow .lead{ font-size:13px; margin-top:8px; max-width:none }
     .ppage .hlgrid, .ppage .hcgrid, .ppage .hlgrid, .ppage .hcgrid, .pflow .hlgrid, .pflow .hcgrid{ grid-template-columns:repeat(3,minmax(0,1fr)) !important;
                                     gap:14px; margin-top:18px }
-    .ppage .big, .ppage .hcard .hval, .ppage .itile .ival, .ppage .big, .ppage .hcard .hval, .ppage .itile .ival, .pflow .big, .pflow .hcard .hval, .pflow .itile .ival{ font-size:30px; margin-top:7px }
-    .ppage .hcard p.hdesc, .ppage .hcard p.hdesc, .pflow .hcard p.hdesc{ font-size:10.5px; margin-top:7px }
-    .ppage .hcard .hfoot, .ppage .hcard .hfoot, .pflow .hcard .hfoot{ font-size:8px; padding-top:7px }
     .ppage .brk, .ppage .chart-wrap, .ppage .itile, .ppage .brk, .ppage .chart-wrap, .ppage .itile, .pflow .brk, .pflow .chart-wrap, .pflow .itile{ padding:14px 18px }
     .ppage .chart-grid, .ppage .chart-grid, .pflow .chart-grid{ grid-template-columns:repeat(2,minmax(0,1fr)) !important; gap:14px; margin-top:16px }
-    .ppage .chart-title, .ppage .chart-title, .pflow .chart-title{ font-size:8px; letter-spacing:.22em; margin-bottom:8px }
     .ppage .split, .ppage .split, .pflow .split{ grid-template-columns:minmax(0,1fr) !important; gap:16px; margin-top:16px }
     .ppage .trend, .pflow .trend{ display:none !important }
-    .ppage .rhead, .ppage .rhead, .pflow .rhead{ grid-template-columns:150px minmax(0,1fr) 32px; gap:14px; font-size:8px; margin-top:14px }
     .ppage .row, .ppage .row, .pflow .row{ grid-template-columns:150px minmax(0,1fr) 32px; gap:14px; padding:8px 0 }
-    .ppage .row .lbl, .ppage .row .lbl, .pflow .row .lbl{ font-size:9px; letter-spacing:.18em }
-    .ppage .row .lbl small, .ppage .row .lbl small{ font-size:8.5px }
     .ppage .bar, .ppage .bar, .pflow .bar{ height:20px } .ppage .bar .rv{ font-size:11px }
-    .ppage .bar .cx, .ppage .bar .cx, .pflow .bar .cx{ font-size:8px } .ppage .cbadge, .pflow .cbadge{ width:24px; height:24px; font-size:8px }
-    .ppage .ghead, .ppage .ghead, .pflow .ghead{ font-size:8.5px; padding:16px 0 2px }
     .ppage .callout, .ppage .callout, .pflow .callout{ margin-top:18px; padding:13px 16px } .ppage .callout div{ font-size:12px }
     .ppage .ppanel, .ppage .ppanel, .pflow .ppanel{ margin-top:20px; padding-top:18px }
-    .ppage .ppanel h3, .ppage .ppanel h3{ font-size:19px }
-    .ppage .ppanel .pdesc, .ppage .ppanel .pdesc{ font-size:12px; margin-top:8px }
     .ppage .pgrid, .ppage .pgrid, .pflow .pgrid{ grid-template-columns:minmax(0,1fr) 210px; gap:18px; margin-top:16px }
     .ppage table, .ppage table, .pflow table{ font-size:9px } .ppage thead th, .ppage thead th, .pflow thead th{ font-size:7.5px }
     .ppage .ffoot{ padding:10mm 0 0 }
@@ -592,25 +573,6 @@
 
   /* ── print ────────────────────────────────────────────────────────────── */
   /* page box is set once, above — a second @page here would win and leave a band */
-  @media print{
-    *{ -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important }
-    html,body{ background:#2A2A2A !important }
-    .ctrls,.secnav,.drawer,.no-print,details,#tip{ display:none !important }
-    .wrap{ max-width:none; padding-left:18px; padding-right:18px }
-    .sec{ box-shadow:none; margin-top:-24px; border-radius:24px 24px 0 0; padding:34px 0 40px;
-          break-inside:auto }
-    .heroGrid{ grid-template-columns:minmax(0,1fr) 250px !important; gap:20px; margin-top:22px }
-    .hero h1{ font-size:40px } .hero .sub{ font-size:14px } .hero .wrap{ padding-bottom:56px }
-    .meta b{ font-size:18px } .meta span{ font-size:8.5px }
-    .sec .h2{ font-size:24px } .lead{ font-size:14px }
-    .hlgrid,.hcgrid{ grid-template-columns:repeat(3,minmax(0,1fr)) !important; gap:14px }
-    .big,.hcard .hval,.itile .ival{ font-size:30px }
-    .chart-grid{ grid-template-columns:repeat(2,minmax(0,1fr)) !important; gap:14px }
-    .row,.hcard,.hl,.chart-wrap,.ppanel,.itile,.callout{ break-inside:avoid }
-    .eb,.h2,.lead{ break-after:avoid }
-    body{ font-size:13px }
-    a{ color:inherit; text-decoration:none }
-  }
 
   /* ── responsive ────────────────────────────────────────────────────────── */
   @media(max-width:980px){
@@ -637,7 +599,7 @@
       <div class="brandmark">
         <img src="data:image/png;base64,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" alt="FOOTBALLFIT">
         <div class="bsub">Performance<br>Dashboard</div>
-        <span class="buildtag">Build 56</span>
+        <span class="buildtag">Build 57</span>
       </div>
       <div class="ctrls">
         <div class="seg2" role="group" aria-label="View">
@@ -656,7 +618,7 @@
 
 <section class="drawer no-print" id="drawer" hidden>
   <div class="wrap">
-    <div class="eb">Data &amp; settings · <span id="buildTag">Build 56</span></div>
+    <div class="eb">Data &amp; settings · <span id="buildTag">Build 57</span></div>
     <h2 class="h2">Connect your Google Sheet</h2>
     <p class="lead">Two published tabs, <b>Athletes</b> and <b>Results</b> — exactly as they are set up now. In Google Sheets: File → Share → Publish to web, pick the tab, choose CSV, paste the link here. Nothing in your sheet needs to move.</p>
     <div class="dgrid">
