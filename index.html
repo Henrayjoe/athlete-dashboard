@@ -253,14 +253,17 @@
   .chart-wrap  { background:transparent; border:0; padding:18px 22px 14px; position:relative; }
   .chart-wrap::before, .chart-wrap::after {
     content:''; position:absolute; top:0; bottom:0; width:14px; pointer-events:none;
-    border-top:1px solid var(--dark-3); border-bottom:1px solid var(--dark-3);
+    border-top:1px solid var(--rule); border-bottom:1px solid var(--rule);
   }
-  .chart-wrap::before { left:0;  border-left:1px solid var(--dark-3); }
-  .chart-wrap::after  { right:0; border-right:1px solid var(--dark-3); }
-  .chart-title { font-size:9px; font-weight:400; color:var(--onDark-soft);
+  .chart-wrap::before { left:0;  border-left:1px solid var(--rule); }
+  .chart-wrap::after  { right:0; border-right:1px solid var(--rule); }
+  .dark .chart-wrap::before, .dark .chart-wrap::after { border-color:var(--dark-3); }
+  .chart-title { font-size:9px; font-weight:400; color:var(--muted);
                  text-transform:uppercase; letter-spacing:.2em; margin-bottom:14px; }
+  .dark .chart-title { color:var(--onDark-soft); }
   .chart-note  { font-size:9.5px; letter-spacing:.15em; text-transform:uppercase;
-                 color:var(--onDark-dim); display:flex; gap:22px; flex-wrap:wrap; margin-top:6px; }
+                 color:var(--muted); display:flex; gap:22px; flex-wrap:wrap; margin-top:6px; }
+  .dark .chart-note { color:var(--onDark-dim); }
 
   /* ── controls ──────────────────────────────────────────────────────────── */
   .quadrant-controls, .quad-ctrl-row { display:flex; align-items:center; gap:9px; flex-wrap:wrap; }
@@ -427,6 +430,76 @@
   .cat-name { font-size:9px; color:var(--muted); text-transform:uppercase; letter-spacing:.2em; margin-bottom:8px; }
   .cat-status { font-size:17px; font-weight:300; }
 
+  /* ══ HIGHLIGHT CARDS + PROFILE PANELS ══════════════════════════════════════
+     The explanatory layer: a plain-language card per headline test, and paired
+     bar panels with a dark index tile for the derived ratios.
+     ───────────────────────────────────────────────────────────────────────── */
+  .hcgrid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:16px; margin-top:26px; }
+  .hcard { background:var(--white); border:1px solid var(--rule); border-radius:12px;
+           padding:20px 20px 22px; display:flex; flex-direction:column; gap:12px; min-width:0; }
+  .alt .hcard { background:var(--paper); }
+  .hcard .eb { line-height:1.5; }
+  .hcard .hval { font-size:38px; font-weight:100; letter-spacing:-.02em; line-height:1;
+                 font-variant-numeric:tabular-nums; }
+  .hcard .hval small { font-size:13px; font-weight:400; color:var(--muted); margin-left:4px; letter-spacing:0; }
+  .hpill { align-self:flex-start; border-radius:6px; padding:5px 11px; font-size:9.5px; font-weight:500;
+           letter-spacing:.15em; text-transform:uppercase; }
+  .hpill.ok   { background:#BFD6C6; color:#2C4F39; }
+  .hpill.warn { background:#D9A95B; color:#4A3708; }
+  .hpill.high { background:#A8BCF2; color:#1B3A6B; }
+  .hbar { position:relative; height:7px; background:#E4E2DC; border-radius:4px; }
+  .hbar .zone { position:absolute; top:0; bottom:0; background:#BFD6C6; border-radius:4px; }
+  .hbar .pin  { position:absolute; top:-3px; width:4px; height:13px; margin-left:-2px;
+                border-radius:2px; background:var(--ink); }
+  .hscale { display:flex; justify-content:space-between; align-items:baseline; gap:8px;
+            font-size:10px; color:var(--muted); }
+  .hscale b { color:#3F7D55; font-weight:500; font-variant-numeric:tabular-nums; }
+  .hcard p.hdesc { font-size:12.5px; line-height:1.55; color:var(--text-2); font-weight:300; }
+  .hcard .hfoot { font-size:11px; color:var(--muted); margin-top:auto; padding-top:6px; }
+
+  /* paired-bar panel with a dark index tile */
+  .ppanel { background:var(--white); border:1px solid var(--rule); border-radius:14px;
+            padding:22px 24px 24px; margin-top:18px; }
+  .alt .ppanel { background:var(--paper); }
+  .ppanel h3 { font-size:19px; font-weight:300; letter-spacing:-.015em; margin-top:7px; }
+  .ppanel .pdesc { font-size:13px; color:var(--text-2); margin-top:9px; max-width:620px;
+                   line-height:1.55; font-weight:300; }
+  .pgrid { display:grid; grid-template-columns:minmax(0,1fr) 270px; gap:26px; margin-top:22px; align-items:start; }
+  .prow { margin-bottom:16px; }
+  .prow .ptop { display:flex; justify-content:space-between; align-items:baseline; gap:12px; margin-bottom:7px; }
+  .prow .pname { font-size:13px; color:var(--text); font-weight:400; }
+  .prow .pv { font-size:14px; font-weight:500; font-variant-numeric:tabular-nums; }
+  .prow .pv small { font-size:10px; color:var(--muted); margin-left:3px; font-weight:400; }
+  .ptrack { height:13px; background:#EFEDE7; border-radius:3px; overflow:hidden; }
+  .pfill  { height:13px; border-radius:3px; }
+  .pfill.ink  { background:var(--ink); }
+  .pfill.grey { background:#B6B4AE; }
+  .pfill.gold { background:#D9A95B; }
+  .pfill.blue { background:linear-gradient(90deg,var(--grad-0),var(--grad-mid)); }
+  .pverdict { font-size:13px; color:var(--text-2); margin-top:16px; font-weight:300; line-height:1.55; }
+
+  .itile { background:var(--ink); color:#fff; border-radius:12px; padding:20px 20px 22px;
+           -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+  .itile .eb { color:#9D9C9A; }
+  .itile .ival { font-size:44px; font-weight:100; letter-spacing:-.025em; line-height:1; margin-top:10px;
+                 font-variant-numeric:tabular-nums; }
+  .itile .ipill { display:inline-block; margin-top:12px; border-radius:6px; padding:5px 11px;
+                  font-size:9.5px; font-weight:500; letter-spacing:.15em; text-transform:uppercase; }
+  .itile .iscale { position:relative; height:7px; background:#3A3A39; border-radius:4px; margin-top:16px; }
+  .itile .iscale .zone { position:absolute; top:0; bottom:0; background:#BFD6C6; border-radius:4px; }
+  .itile .iscale .pin { position:absolute; top:-3px; width:4px; height:13px; margin-left:-2px;
+                        border-radius:2px; background:#fff; }
+  .itile .ikeys { display:flex; justify-content:space-between; gap:8px; margin-top:9px;
+                  font-size:10px; color:#9D9C9A; }
+  .itile .ikeys b { color:#BFD6C6; font-weight:500; }
+  .itile .inote { font-size:11.5px; color:#C9C8C5; margin-top:12px; font-weight:300; }
+  .pchips { display:flex; gap:9px; flex-wrap:wrap; margin-top:16px; }
+  .pchip { border:1px solid var(--rule); border-radius:999px; padding:7px 15px; font-size:12px;
+           color:var(--text-2); }
+
+  @media(max-width:980px){ .hcgrid{grid-template-columns:repeat(2,minmax(0,1fr))} .pgrid{grid-template-columns:1fr} }
+  @media(max-width:620px){ .hcgrid{grid-template-columns:1fr} }
+
   /* ── print ─────────────────────────────────────────────────────────────── */
   @page { size:A4; margin:12mm 11mm; }
   @media print {
@@ -487,7 +560,7 @@
 
 <section class="drawer no-print" id="drawer" hidden>
   <div class="wrap">
-    <div class="eb">Data &amp; settings · <span id="buildTag">Build 47</span></div>
+    <div class="eb">Data &amp; settings · <span id="buildTag">Build 49</span></div>
     <h2 class="h2">Connect your Google Sheet</h2>
     <p class="lead">Two published tabs, <b>Athletes</b> and <b>Results</b> — exactly as they are set up now. In Google Sheets: File → Share → Publish to web, pick the tab, choose CSV, paste the link here. Nothing in your sheet needs to move.</p>
     <div class="dgrid">
@@ -623,9 +696,9 @@ const SC = ['p0','p1','p2','p3','p4'];
 // red -> orange -> amber -> blue -> green.
 // House data gradient: [start, mid, end, secondary-series]. Mirrors --grad-* in
 // the stylesheet; change both together.
-const GRAD = ['#2A4FB7','#7292E4','#C9D6F7','#8A8A88'];
+const GRAD = ['#2A4FB7','#5577D2','#A8BCF2','#9D9C9A'];
 Chart.defaults.font.family = "'Neue Haas Display','Inter',-apple-system,sans-serif";
-Chart.defaults.color = '#9D9C9A';   // trend charts live on the dark panel
+Chart.defaults.color = '#706F6D';   // trend charts sit on the paper panel
 
 const SCORE_COLS = ['#C2563B','#D07D4A','#D9A95B','#4A6FD4','#5E9E76'];
 const SD = SCORE_COLS;
@@ -1086,6 +1159,211 @@ function selectAthlete(id){ selectedId=id; renderList(); renderMain(); }
 // switchTab is retained so any older onclick reference scrolls instead of throwing.
 function switchTab(t){ document.getElementById('s-'+t)?.scrollIntoView({behavior:'smooth',block:'start'}); }
 
+// ─── PLAIN-LANGUAGE COPY ──────────────────────────────────────────────────────
+// One sentence per headline test, written for the athlete rather than the coach.
+const PLAIN = {
+  cmj:          'How high you jump from a standing start, compared with professional football reference ranges.',
+  cmj_mrsi:     'How much height you get for the time it takes to produce it — your jump explosiveness.',
+  imtp:         'How hard you push into an immovable bar, relative to your body weight.',
+  dj_rsi:       'The height you get back for each bit of time spent on the ground after a drop.',
+  broad_jump:   'How far you jump forward from a standing start — horizontal power.',
+  sq_1rm_bw:    'The heaviest back squat you could manage for one rep, as a multiple of your body weight.',
+  tb_1rm_bw:    'The heaviest trap bar deadlift you could manage for one rep, per kilo of body weight.',
+  max_vel:      'Your fastest running speed, measured over a flying 20 m.',
+  sprint10:     'How quickly you cover the first 10 m from a standstill — pure acceleration.',
+  sprint20:     'How quickly you cover 20 m from a standstill.',
+  mas:          'The fastest pace you can hold aerobically, before you start dipping into your reserve.',
+  slbj_LSI:     'How evenly your left and right leg produce force — 100% means they match.',
+  eur:          'How much extra height the dip before a jump gives you, over jumping from still.',
+  triple_hop:   'Three consecutive hops on one leg — single-leg power and control.',
+};
+
+// Which tests get a highlight card, in the order they should appear.
+const HIGHLIGHT_SETS = [
+  { icon:'bolt', eb:'Highlights', title:'Power, spring and strength',
+    keys:['cmj','cmj_mrsi','imtp','dj_rsi','broad_jump','sq_1rm_bw','tb_1rm_bw','eur'] },
+  { icon:'wave', eb:'Highlights · endurance and speed', title:'Speed and running capacity',
+    keys:['max_vel','sprint10','sprint20','mas','vo2max'] },
+];
+
+function hCard(nk, val, d, sessionCount){
+  const n = NORMS[nk]; if (!n || val==null) return '';
+  const sc = bs(val, nk);
+  let pill = { cls:'ok', txt:'In range' };
+  if (sc===null)      pill = { cls:'high', txt:'No norm' };
+  else if (sc>=4)     pill = { cls:'high', txt:n.lb?'Faster than range':'Above range' };
+  else if (sc===3)    pill = { cls:'ok',   txt:'In range' };
+  else                pill = { cls:'warn', txt:n.lb?'Slower than range':'Below range' };
+
+  let bar = '';
+  if (n.min!=null && !n.noNorm){
+    const span=(n.max-n.min)||Math.abs(n.max||1)*0.2||1;
+    const lo=n.min-span*0.95, hi=n.max+span*0.95;
+    const pc=v=>Math.max(0,Math.min(100,(v-lo)/(hi-lo)*100));
+    bar = `<div class="hbar">
+        <div class="zone" style="left:${pc(n.min).toFixed(1)}%;width:${(pc(n.max)-pc(n.min)).toFixed(1)}%"></div>
+        <div class="pin" style="left:${pc(val).toFixed(1)}%"></div>
+      </div>
+      <div class="hscale"><span>${n.lb?'Slower':'Lower'}</span><b>${n.min}–${n.max}</b><span>${n.lb?'Faster':'Higher'}</span></div>`;
+  }
+  const tested = sessionCount<=1 ? 'First test'
+    : `${sessionCount} sessions recorded`;
+  return `<div class="hcard">
+    <div class="eb">${n.label}</div>
+    <div class="hval">${val}<small>${n.u||''}</small></div>
+    <span class="hpill ${pill.cls}">${pill.txt}</span>
+    ${bar}
+    ${PLAIN[nk]?`<p class="hdesc">${PLAIN[nk]}</p>`:''}
+    <div class="hfoot">${tested}</div>
+  </div>`;
+}
+
+function highlightSection(set, d, a){
+  const cards = set.keys.map(k => hCard(k, d[k], d, a.sessions.length)).filter(Boolean);
+  if (!cards.length) return '';
+  return `${ebrow(set.icon, set.eb)}
+    <h2 class="h2">${set.title}</h2>
+    <div class="hcgrid">${cards.slice(0,8).join('')}</div>`;
+}
+
+// ─── PAIRED-BAR PANEL ─────────────────────────────────────────────────────────
+// eyebrow + heading + explanation, two or three measured bars, and a dark tile
+// carrying the derived index with its own reference scale.
+function pPanel({eb, title, desc, bars, tile, verdict}){
+  // Each bar scales against its own reference where one is given, so rows in
+  // different units (seconds against metres per second) stay comparable.
+  const groupMax = Math.max(...bars.map(b=>b.v||0), 0.0001);
+  const barHtmlP = bars.map(b=>{
+    const m = b.max || groupMax;
+    return `
+    <div class="prow">
+      <div class="ptop"><span class="pname">${b.name}</span>
+        <span class="pv">${b.v}<small>${b.u||''}</small></span></div>
+      <div class="ptrack"><div class="pfill ${b.cls||'ink'}" style="width:${Math.max(5,Math.min(100,(b.v/m)*100)).toFixed(1)}%"></div></div>
+    </div>`;
+  }).join('');
+  let tileHtml = '';
+  if (tile){
+    const pc = v => Math.max(0,Math.min(100, ((v-tile.lo)/(tile.hi-tile.lo))*100));
+    tileHtml = `<div class="itile">
+      <div class="eb">${tile.label}</div>
+      <div class="ival">${tile.value}</div>
+      <span class="ipill hpill ${tile.cls}">${tile.status}</span>
+      <div class="iscale">
+        <div class="zone" style="left:${pc(tile.bandLo).toFixed(1)}%;width:${(pc(tile.bandHi)-pc(tile.bandLo)).toFixed(1)}%"></div>
+        <div class="pin" style="left:${pc(tile.at).toFixed(1)}%"></div>
+      </div>
+      <div class="ikeys"><span>${tile.loLabel}</span><b>${tile.bandLo}–${tile.bandHi}</b><span>${tile.hiLabel}</span></div>
+      ${tile.note?`<p class="inote">${tile.note}</p>`:''}
+    </div>`;
+  }
+  return `<div class="ppanel">
+    <div class="eb">${eb}</div>
+    <h3>${title}</h3>
+    ${desc?`<p class="pdesc">${desc}</p>`:''}
+    <div class="pgrid"><div>${barHtmlP}</div>${tileHtml}</div>
+    ${verdict?`<p class="pverdict">${verdict}</p>`:''}
+  </div>`;
+}
+
+// ─── LOCOMOTION: "HOW <NAME> RUNS" ────────────────────────────────────────────
+// Built from the sprint splits and the VueMotion step data. Everything here is
+// raw kinematics and athlete-safe — the injury associations stay in the
+// coach-only motor preference section.
+function runsSection(a, d){
+  const first = a.name.split(' ')[0];
+  const S = a.sessions;
+  const pick = k => { for (const x of S) if (x[k]!=null) return x[k]; return null; };
+  const avg2 = (l,r) => (l!=null&&r!=null) ? (l+r)/2 : (l!=null?l:(r!=null?r:null));
+
+  const slL=pick('fly_sl_L'), slR=pick('fly_sl_R');
+  const sfL=pick('fly_sf_L'), sfR=pick('fly_sf_R');
+  const gcL=pick('fly_gct_L'), gcR=pick('fly_gct_R');
+  const ftL=pick('fly_ft_L'),  ftR=pick('fly_ft_R');
+  const SL=avg2(slL,slR), SF=avg2(sfL,sfR), GC=avg2(gcL,gcR), FT=avg2(ftL,ftR);
+
+  const panels = [];
+  const chips  = [];
+
+  // ── acceleration vs top speed ──────────────────────────────────────────
+  if (d.sprint10!=null || d.max_vel!=null){
+    const bars=[];
+    if (d.sprint10!=null) bars.push({name:'10 m from a standstill', v:d.sprint10, u:'s',  cls:'ink',  max:2.2});
+    if (d.sprint20!=null) bars.push({name:'20 m from a standstill', v:d.sprint20, u:'s',  cls:'grey', max:3.6});
+    if (d.max_vel!=null)  bars.push({name:'Top speed, flying 20 m', v:d.max_vel,  u:'m/s', cls:'blue', max:11.5});
+    let tile=null;
+    if (d.sprint10!=null && d.max_vel!=null){
+      // share of top speed already reached inside the first 10 m
+      const early = (10/d.sprint10) / d.max_vel;
+      const pctv = +(early*100).toFixed(0);
+      const ok = early>=0.62;
+      tile = { label:'Early acceleration', value:pctv+'%',
+        status: ok?'Strong off the mark':'Build the first steps',
+        cls: ok?'ok':'warn',
+        lo:40, hi:85, bandLo:62, bandHi:72, at:pctv,
+        loLabel:'Slower start', hiLabel:'Faster start',
+        note:`Average speed over the first 10 m as a share of your top speed.` };
+      chips.push(ok?'Quick off the mark':'Acceleration to build');
+    }
+    panels.push(pPanel({ eb:'Acceleration', title:'Getting up to speed',
+      desc:'How quickly you reach speed from a standstill, and how fast you are once you are there.',
+      bars, tile,
+      verdict: (d.max_vel!=null && bs(d.max_vel,'max_vel')>=3)
+        ? 'Top-end speed is at the professional standard. The work is in reaching it sooner.'
+        : 'Top-end speed is the clearest place to add. Max velocity exposure once a week is the lever.' }));
+  }
+
+  // ── step length vs step rate ───────────────────────────────────────────
+  if (SL!=null && SF!=null){
+    const ratio = +(SL/SF).toFixed(3);
+    const longStride = ratio > 0.38;
+    chips.push(longStride ? 'Long stride' : 'High turnover');
+    panels.push(pPanel({ eb:'Stride', title:'Step length versus step rate',
+      desc:'Two ways to run fast: cover more ground per step, or take more steps per second. Most athletes lean one way.',
+      bars:[
+        {name:'Step length', v:+SL.toFixed(2), u:'m',  cls:'ink',  max:2.4},
+        {name:'Step rate',   v:+SF.toFixed(2), u:'Hz', cls:'gold', max:5.2},
+      ],
+      tile:{ label:'Length ÷ rate', value:ratio.toFixed(2),
+        status: longStride?'Stride-driven':'Turnover-driven', cls: longStride?'high':'ok',
+        lo:0.28, hi:0.50, bandLo:0.36, bandHi:0.42, at:ratio,
+        loLabel:'More steps', hiLabel:'Longer steps',
+        note:`${longStride?'You cover ground with fewer, longer steps.':'You run with quicker, shorter steps.'}` },
+      verdict: (slL!=null&&slR!=null&&Math.abs(slL-slR)/Math.max(slL,slR)>0.05)
+        ? `Your legs are not matched: ${slL.toFixed(2)} m left against ${slR.toFixed(2)} m right. Worth a closer look.`
+        : 'Left and right step length are well matched.' }));
+  }
+
+  // ── ground contact vs flight ───────────────────────────────────────────
+  if (GC!=null && FT!=null){
+    const cf = +(GC/FT).toFixed(2);
+    const quick = GC <= 0.14;
+    chips.push(quick ? 'Quick off the ground' : 'Longer contacts');
+    panels.push(pPanel({ eb:'Reactive', title:'Time on the ground',
+      desc:'At top speed the foot is down for roughly a tenth of a second. Shorter contacts mean a stiffer, faster spring.',
+      bars:[
+        {name:'Ground contact time', v:+(GC*1000).toFixed(0), u:'ms', cls:'ink',  max:220},
+        {name:'Flight time',         v:+(FT*1000).toFixed(0), u:'ms', cls:'grey', max:220},
+      ],
+      tile:{ label:'Contact ÷ flight', value:cf.toFixed(2),
+        status: quick?'Fast spring':'Spring to develop', cls: quick?'ok':'warn',
+        lo:0.8, hi:3.2, bandLo:1.3, bandHi:1.9, at:cf,
+        loLabel:'More flight', hiLabel:'More contact',
+        note:`${(GC*1000).toFixed(0)} ms on the ground per step at top speed.` },
+      verdict: quick
+        ? 'Contact times are short — the elastic qualities are there to build on.'
+        : 'Longer contacts than ideal. Low-amplitude plyometrics and sprint drills are the route in.' }));
+  }
+
+  if (!panels.length) return '';
+  return `${ebrow('person','Locomotion')}
+    <h2 class="h2">How ${first} runs</h2>
+    <p class="lead">Raw sprint mechanics from your timing gates and VueMotion run — what your running is actually
+    made of, rather than only how fast it came out.</p>
+    ${chips.length?`<div class="pchips">${chips.map(c=>`<span class="pchip">${c}</span>`).join('')}</div>`:''}
+    ${panels.join('')}`;
+}
+
 // ─── SECTION ICONS ────────────────────────────────────────────────────────────
 // Thin line glyphs that sit beside each eyebrow label, as in the GPS report.
 const ICO = (() => {
@@ -1236,8 +1514,8 @@ function drawInspector(nk){
     const tint = dk ? '#9D9C9A' : '#706F6D';
     let g = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${n.label} over time">`
       + `<defs><linearGradient id="ffg" x1="0" y1="0" x2="1" y2="0">`
-      + `<stop offset="0%" stop-color="${GRAD[0]}"/><stop offset="55%" stop-color="${GRAD[1]}"/>`
-      + `<stop offset="100%" stop-color="${GRAD[2]}"/></linearGradient></defs>`;
+      + `<stop offset="0%" stop-color="${dk?GRAD[1]:GRAD[0]}"/><stop offset="55%" stop-color="${dk?'#8FA9ED':GRAD[1]}"/>`
+      + `<stop offset="100%" stop-color="${dk?'#DCE4F8':GRAD[2]}"/></linearGradient></defs>`;
 
     // bracket frame, as the report's charts
     const BX0=PL-14, BX1=W-PR+14, BY0=PT-10, BY1=H-PB+8, BW=9;
@@ -1277,9 +1555,9 @@ function drawInspector(nk){
     pts.forEach((p,i) => {
       const last = i===pts.length-1;
       if (last) g += `<circle cx="${X(i).toFixed(1)}" cy="${Y(p.v).toFixed(1)}" r="9"
-                       fill="${GRAD[0]}" opacity=".22"/>`;
+                       fill="${dk?'#8FA9ED':GRAD[0]}" opacity=".22"/>`;
       g += `<circle cx="${X(i).toFixed(1)}" cy="${Y(p.v).toFixed(1)}" r="${last?4.6:3}"
-             fill="${last?GRAD[0]:(dk?'#2A2A2A':'#FFFFFF')}" stroke="${GRAD[0]}" stroke-width="1.5"/>`;
+             fill="${last?(dk?'#8FA9ED':GRAD[0]):(dk?'#2A2A2A':'#FFFFFF')}" stroke="${dk?'#8FA9ED':GRAD[0]}" stroke-width="1.5"/>`;
       if (i===0 || last){
         g += `<text x="${X(i).toFixed(1)}" y="${H-9}" fill="${tint}" font-size="7" letter-spacing=".9"
                text-anchor="${pts.length>1?(last?'end':'start'):'middle'}">${p.d.toUpperCase()}</text>`;
@@ -1475,12 +1753,17 @@ function renderMain(){
   // a plain-language read on the block, in the report's voice
   const summaryCallout = (()=>{
     const bits = [];
-    if (gains.length) bits.push(`Your biggest step up this block was in <b>${NORMS[gains[0].k].label.toLowerCase()}</b>`);
+    if (gains.length) bits.push(`Your biggest step up this block was in <b>${NORMS[gains[0].k].label}</b>`);
     const tops = scored.filter(m=>m.s>=4);
     if (tops.length) bits.push(`${tops.length} test${tops.length>1?'s are':' is'} above the professional standard`);
-    if (worst && worst.s<=1) bits.push(`<b>${NORMS[worst.k].label.toLowerCase()}</b> is the clearest gap to close`);
+    if (worst && worst.s<=1) bits.push(`<b>${NORMS[worst.k].label}</b> is the clearest gap to close`);
     return bits.length ? callout(bits.join('. ') + '.') : '';
   })();
+
+  // explanatory sections — only rendered where the data exists
+  const hiPower  = highlightSection(HIGHLIGHT_SETS[0], d, a);
+  const hiSpeed  = highlightSection(HIGHLIGHT_SETS[1], d, a);
+  const runsHtml = runsSection(a, d);
 
   // ── DOCUMENT ────────────────────────────────────────────────────────────
   document.getElementById('main').innerHTML = `
@@ -1493,6 +1776,12 @@ function renderMain(){
       <div class="hlgrid">${tiles}</div>
       ${summaryCallout}
     </div></section>
+
+    ${hiPower ? `<section class="sec alt" id="s-power" data-nav="Power">
+      <div class="wrap">${hiPower}</div></section>` : ''}
+
+    ${hiSpeed ? `<section class="sec light" id="s-speed" data-nav="Speed">
+      <div class="wrap">${hiSpeed}</div></section>` : ''}
 
     <section class="sec dark" id="s-results" data-nav="Results"><div class="wrap">
       ${ebrow('grid','Test battery')}
@@ -1514,9 +1803,12 @@ function renderMain(){
       <div class="tc" data-t="radar"><div id="radarContent" style="padding:22px 0;display:flex;flex-direction:column;align-items:center;gap:14px"></div></div>
     </div></section>
 
-    <section class="sec dark" id="s-trends" data-nav="Trends">
+    ${runsHtml ? `<section class="sec alt" id="s-runs" data-nav="How they run">
+      <div class="wrap">${runsHtml}</div></section>` : ''}
+
+    <section class="sec light" id="s-trends" data-nav="Trends">
       <div class="wrap">
-        ${ebrow('wave','Your season')}
+        ${ebrow('wave','Your tests')}
         <h2 class="h2">How each test is building</h2>
         <p class="lead">Shaded band is the professional range. On sprint times a downward line is an improvement.</p>
         <div class="tc" data-t="trends"><div class="charts-body">
@@ -1577,7 +1869,7 @@ function renderMain(){
       <div class="tc" data-t="history"><div id="historyContent" style="overflow-x:auto;padding:20px 0"></div></div>
     </div></section>
 
-    <section class="sec dark coachonly" id="s-feedback" data-nav="Feedback"><div class="wrap">
+    <section class="sec alt coachonly" id="s-feedback" data-nav="Feedback"><div class="wrap">
       ${ebrow('note','Coach view')}
       <h2 class="h2">Written feedback</h2>
       <p class="lead">Coach notes stay here. Only the athlete message is included on the printout.</p>
@@ -1658,8 +1950,8 @@ function mkChart(id,labels,datasets,yLabel,nMin,nMax){
   const dMax=hasNorm?Math.max(...allV,nMax):Math.max(...allV);
   const pad=(dMax-dMin)*0.22;
   const bandDS=hasNorm?[
-    {label:'_nu',data:labels.map(()=>nMax),borderColor:'transparent',backgroundColor:'rgba(74,111,212,0.17)',fill:'+1',pointRadius:0,tension:0,borderWidth:0},
-    {label:'_nl',data:labels.map(()=>nMin),borderColor:'rgba(143,169,237,0.55)',backgroundColor:'transparent',fill:false,pointRadius:0,tension:0,borderDash:[4,3],borderWidth:1.5}
+    {label:'_nu',data:labels.map(()=>nMax),borderColor:'transparent',backgroundColor:'rgba(42,79,183,0.10)',fill:'+1',pointRadius:0,tension:0,borderWidth:0},
+    {label:'_nl',data:labels.map(()=>nMin),borderColor:'rgba(42,79,183,0.38)',backgroundColor:'transparent',fill:false,pointRadius:0,tension:0,borderDash:[4,3],borderWidth:1.5}
   ]:[];
   CI[id]=new Chart(el.getContext('2d'),{
     type:'line',
@@ -1672,7 +1964,7 @@ function mkChart(id,labels,datasets,yLabel,nMin,nMax){
       },
       scales:{
         x:{ticks:{font:{size:8.5}},grid:{display:false}},
-        y:{min:+(dMin-pad).toFixed(2),max:+(dMax+pad).toFixed(2),ticks:{font:{size:8.5},maxTicksLimit:4},grid:{color:'rgba(255,255,255,0.07)'},title:{display:true,text:(yLabel||'').toUpperCase(),font:{size:8},color:'#8A8A88'}}
+        y:{min:+(dMin-pad).toFixed(2),max:+(dMax+pad).toFixed(2),ticks:{font:{size:8.5},maxTicksLimit:4},grid:{color:'rgba(22,22,22,0.07)'},title:{display:true,text:(yLabel||'').toUpperCase(),font:{size:8},color:'#8A8986'}}
       }
     }
   });
@@ -1694,7 +1986,7 @@ const ValueLabelPlugin = {
           :String(v);
         ctx.save();
         ctx.font="500 9px 'Neue Haas Display',-apple-system,BlinkMacSystemFont,sans-serif";
-        ctx.fillStyle='#C9C8C5';
+        ctx.fillStyle='#706F6D';
         ctx.textAlign='center';
         ctx.textBaseline='bottom';
         ctx.fillText(disp,pt.x,pt.y-5);
@@ -2208,52 +2500,47 @@ function _buildAndOpenPrintReport(a, chartImages, quadrantSVG, radarSVG, radarMo
   ];
 
   function pctHtml(val, prev, lb) {
-    if (val==null||prev==null||isNaN(prev)||prev===0) return '<span style="color:#ccc">—</span>';
+    if (val==null||prev==null||isNaN(prev)||prev===0) return '<span style="color:#A8A7A3">—</span>';
     const d=((val-prev)/Math.abs(prev)*100);
-    const imp=lb?d<0:d>0; const unc=Math.abs(d)<0.5;
-    const col=unc?'#888':imp?'#16a34a':'#dc2626';
-    return `<span style="color:${col};font-weight:600">${unc?'→':imp?'↑':'↓'} ${d>0?'+':''}${d.toFixed(1)}%</span>`;
+    const unc=Math.abs(d)<0.5, imp=lb?d<0:d>0;
+    const col=unc?'#8A8986':imp?'#3F7D55':'#B5523B';
+    return `<span style="color:${col}">${unc?'=':imp?'▲':'▼'} ${d>0?'+':''}${d.toFixed(1)}%</span>`;
   }
-
   function badge(score, noNorm) {
-    if (noNorm||score===null) return '<span style="color:#aaa;font-size:10px;font-style:italic">No validated norm</span>';
-    const cols=SCORE_COLS;
-    return `<span style="color:${cols[score]};font-weight:700;font-size:10.5px">● ${SL[score]}</span>`;
+    if (noNorm||score===null) return '<span class="cap">No norm</span>';
+    return `<span class="chip c-s${score}">${SL[score]}</span>`;
   }
-
+  // Range strip, identical in construction to the on-screen rows.
+  function stripHtml(val, m) {
+    if (m.noNorm || m.nMin==null || val==null) return '<span class="cap">Tracked individually</span>';
+    const span=(m.nMax-m.nMin)||Math.abs(m.nMax||1)*0.2||1;
+    const lo=m.nMin-span*0.95, hi=m.nMax+span*0.95;
+    const pc=v=>Math.max(0,Math.min(100,(v-lo)/(hi-lo)*100));
+    const b0=pc(m.nMin), b1=pc(m.nMax);
+    const col = m.score===null ? '#2A4FB7' : SCORE_COLS[m.score];
+    return `<div class="strip">
+      <span class="cx" style="left:${b0.toFixed(1)}%">${m.nMin}</span>
+      <span class="cx" style="left:${b1.toFixed(1)}%">${m.nMax}</span>
+      <div class="trk"></div>
+      <div class="band" style="left:${b0.toFixed(1)}%;width:${(b1-b0).toFixed(1)}%"></div>
+      <div class="mk" style="left:${pc(val).toFixed(1)}%;background:${col}"></div>
+    </div>`;
+  }
   function section(title, metrics) {
     const rows = metrics.filter(m => m.val != null);
     if (!rows.length) return '';
-    const tbody = rows.map((m,i) => {
-      const normStr = m.noNorm ? '<i style="color:#aaa">No validated norm</i>'
-        : `<span style="color:#666">${m.nMin}–${m.nMax} ${m.u}</span>`;
-      const autoTag = m.auto ? '<span style="font-size:9px;background:#eef2ff;color:#4a6fa5;border-radius:3px;padding:1px 4px;margin-left:5px">auto</span>' : '';
-      const subSpan = m.sub ? `<br><span style="font-size:9.5px;color:#999">${m.sub}</span>` : '';
-      const dateSpan = m.date && m.date !== latestDate
-        ? `<br><span style="font-size:9px;color:#bbb">Tested ${m.date}</span>` : '';
-      return `<tr style="background:${i%2===0?'#fff':'#fafafa'}">
-        <td style="padding:6px 10px;color:#444;font-size:10.5px;border-bottom:1px solid #f0f0f0">${m.label}${autoTag}</td>
-        <td style="padding:6px 10px;font-size:11.5px;font-weight:700;border-bottom:1px solid #f0f0f0">${m.val}<span style="font-size:10px;font-weight:400;color:#999;margin-left:3px">${m.u}</span>${subSpan}${dateSpan}</td>
-        <td style="padding:6px 10px;border-bottom:1px solid #f0f0f0">${badge(m.score, m.noNorm)}</td>
-        <td style="padding:6px 10px;font-size:10.5px;border-bottom:1px solid #f0f0f0">${normStr}</td>
-        <td style="padding:6px 10px;font-size:10.5px;text-align:right;border-bottom:1px solid #f0f0f0">${pctHtml(m.val,m.prevVal,m.lb)}</td>
-      </tr>`;
+    const body = rows.map(m => {
+      const sub = [m.sub, (m.date && m.date!==latestDate) ? `tested ${m.date}` : '']
+                    .filter(Boolean).join(' · ');
+      return `<div class="rrow">
+        <span class="rlbl">${m.label}${sub?`<small>${sub}</small>`:''}</span>
+        <span class="rval">${m.val}<small>${m.u||''}</small></span>
+        ${stripHtml(m.val, m)}
+        <span class="rchg">${pctHtml(m.val,m.prevVal,m.lb)}</span>
+      </div>`;
     }).join('');
-    return `<div style="margin-bottom:16px;page-break-inside:avoid">
-      <div style="font-size:9px;font-weight:700;color:#7a8290;text-transform:uppercase;letter-spacing:.08em;margin-bottom:5px;padding-left:2px;padding-bottom:3px;border-bottom:1px solid #ebebeb">${title}</div>
-      <table style="width:100%;border-collapse:collapse;border:1px solid #e8e8e8">
-        <thead><tr style="background:#f5f5f5">
-          <th style="padding:5px 10px;text-align:left;font-size:9px;font-weight:700;color:#999;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid #e8e8e8">Test</th>
-          <th style="padding:5px 10px;text-align:left;font-size:9px;font-weight:700;color:#999;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid #e8e8e8">Result</th>
-          <th style="padding:5px 10px;text-align:left;font-size:9px;font-weight:700;color:#999;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid #e8e8e8">Status</th>
-          <th style="padding:5px 10px;text-align:left;font-size:9px;font-weight:700;color:#999;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid #e8e8e8">Normative range</th>
-          <th style="padding:5px 10px;text-align:right;font-size:9px;font-weight:700;color:#999;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid #e8e8e8">vs previous</th>
-        </tr></thead>
-        <tbody>${tbody}</tbody>
-      </table>
-    </div>`;
+    return `<div class="ghd">${title}</div>${body}`;
   }
-
   function mk(nk, val, prevVal, sub='', auto=false) {
     if (val==null) return {val:null};
     const n=NORMS[nk]||{};
@@ -2306,9 +2593,12 @@ function _buildAndOpenPrintReport(a, chartImages, quadrantSVG, radarSVG, radarMo
 
   const catCardsHtml = catDefs.map(c=>{
     const cl=getCatStatus(c.keys); const col=cl?cl.c:'#94a3b8'; const lbl=cl?cl.l:'No data';
-    return `<div style="flex:1;border:1px solid #e8e8e8;border-left:3px solid ${col};border-radius:6px;padding:9px 11px;background:#fff">
-      <div style="font-size:9px;font-weight:700;color:#999;text-transform:uppercase;letter-spacing:.07em;margin-bottom:4px">${c.name}</div>
-      <div style="font-size:11.5px;font-weight:700;color:${col}">${lbl}</div>
+    const scores=c.keys.map(k=>bs(ld[k],k)).filter(v=>v!==null);
+    const avg=scores.length?scores.reduce((x,y)=>x+y,0)/scores.length:null;
+    return `<div class="brk" style="flex:1">
+      <div class="eb">${c.name}</div>
+      <div class="big" style="margin-top:7px;color:${col}">${avg!==null?avg.toFixed(1):'—'}<small>/ 4</small></div>
+      <div class="cap" style="margin-top:5px">${lbl}</div>
     </div>`;
   }).join('');
 
@@ -2509,51 +2799,92 @@ function _buildAndOpenPrintReport(a, chartImages, quadrantSVG, radarSVG, radarMo
       -webkit-print-color-adjust:exact;print-color-adjust:exact}
     .page{max-width:182mm;margin:0 auto}
     img{max-width:100%}
-    /* tabular figures so columns of results line up down the page */
     td,th{font-variant-numeric:tabular-nums}
-    /* eyebrow-style column headers and section labels */
-    th{letter-spacing:.12em!important;text-transform:uppercase}
-    h1,h2,h3{letter-spacing:-.015em;font-weight:600}
+    h1,h2,h3{letter-spacing:-.02em;font-weight:300}
+    /* report system, matched to the on-screen document */
+    .eb{font-size:7.5px;font-weight:400;letter-spacing:.2em;text-transform:uppercase;color:#706F6D}
+    .hero{background:#161616;color:#fff;border-radius:10px;padding:18px 20px;margin-bottom:16px;
+          -webkit-print-color-adjust:exact;print-color-adjust:exact}
+    .hero .eb{color:#9D9C9A}
+    .hero h1{font-size:26px;font-weight:300;color:#fff;margin-top:6px;line-height:1.05}
+    .hero .sub{font-size:10.5px;color:#D8D7D4;margin-top:6px;font-weight:300}
+    .meta{display:flex;gap:22px;flex-wrap:wrap;margin-top:14px}
+    .meta div{display:flex;flex-direction:column;gap:3px}
+    .meta b{font-weight:300;font-size:14px;color:#fff}
+    .meta span{font-size:6.5px;letter-spacing:.18em;text-transform:uppercase;color:#9D9C9A}
+    .h2{font-size:15px;font-weight:300;letter-spacing:-.015em;margin:0 0 3px}
+    .secline{border-top:1px solid #D7D6D2;padding-top:11px;margin-top:16px}
+    .brk{position:relative;padding:11px 14px 12px}
+    .brk::before,.brk::after{content:'';position:absolute;top:0;bottom:0;width:9px;
+      border-top:1px solid #D7D6D2;border-bottom:1px solid #D7D6D2}
+    .brk::before{left:0;border-left:1px solid #D7D6D2}
+    .brk::after{right:0;border-right:1px solid #D7D6D2}
+    .big{font-size:22px;font-weight:300;line-height:1;letter-spacing:-.015em}
+    .big small{font-size:9px;color:#706F6D;margin-left:3px}
+    .cap{font-size:7px;letter-spacing:.15em;text-transform:uppercase;color:#706F6D;line-height:1.6}
+    .chip{display:inline-block;border-radius:999px;padding:2.5px 9px;font-size:6.5px;font-weight:500;
+          letter-spacing:.16em;text-transform:uppercase}
+    .c-s4{background:rgba(94,158,118,.16);color:#3F7D55}
+    .c-s3{background:rgba(42,79,183,.10);color:#2A4FB7}
+    .c-s2{background:rgba(217,169,91,.20);color:#8A6416}
+    .c-s1{background:rgba(194,86,59,.13);color:#9A4228}
+    .c-s0{background:rgba(194,86,59,.22);color:#8C2F1C}
+    /* result rows */
+    .rrow{display:grid;grid-template-columns:1.25fr 72px 1.4fr 52px;gap:10px;align-items:center;
+          padding:7px 2px;border-bottom:1px dotted #D7D6D2}
+    .rhd{display:grid;grid-template-columns:1.25fr 72px 1.4fr 52px;gap:10px;padding:0 2px 6px;
+         border-bottom:1px solid #161616;font-size:6.5px;letter-spacing:.18em;text-transform:uppercase;color:#706F6D}
+    .rhd span:nth-child(2){text-align:right}.rhd span:last-child{text-align:center}
+    .rlbl{font-size:7.5px;letter-spacing:.13em;text-transform:uppercase;color:#4A4A49}
+    .rlbl small{display:block;font-size:7px;letter-spacing:.02em;text-transform:none;color:#8A8986;margin-top:2px}
+    .rval{text-align:right;font-size:14px;font-weight:300}
+    .rval small{font-size:7px;letter-spacing:.1em;text-transform:uppercase;color:#8A8986;margin-left:2px}
+    .rchg{text-align:center;font-size:7.5px}
+    .strip{position:relative;height:16px}
+    .strip .trk{position:absolute;left:0;right:0;top:7.5px;height:1px;background:#D7D6D2}
+    .strip .band{position:absolute;top:6.5px;height:3px;border-radius:2px;
+      background:linear-gradient(90deg,#2A4FB7,#7292E4,#EEF2FC)}
+    .strip .mk{position:absolute;top:3px;width:9px;height:9px;margin-left:-4.5px;border-radius:50%;
+      box-shadow:0 0 0 1.5px #fff}
+    .strip .cx{position:absolute;top:-3px;font-size:6px;letter-spacing:.1em;color:#8A8986;transform:translateX(-50%)}
+    .ghd{font-size:7px;letter-spacing:.2em;text-transform:uppercase;color:#706F6D;padding:13px 2px 6px}
+    .pfoot{margin-top:18px;border-top:2px solid #2A4FB7;padding-top:9px;display:flex;
+           justify-content:space-between;align-items:center}
+    .pfoot span{font-size:6.5px;letter-spacing:.18em;text-transform:uppercase;color:#8A8986}
   </style>
 </head><body><div class="page">
 
-  <!-- Page 1 Header -->
-  <div style="display:flex;align-items:center;justify-content:space-between;padding-bottom:12px;border-bottom:2px solid #111;margin-bottom:16px">
-    <div style="display:flex;align-items:center;gap:12px">
-      ${logoSrc?`<img src="${logoSrc}" style="height:26px;width:auto" alt="FootballFit">`:''}
-      <div>
-        <div style="font-size:17px;font-weight:700;color:#111;letter-spacing:-.02em">Performance Report</div>
-        ${coachName?`<div style="font-size:11px;font-weight:500;color:#444;margin-top:2px">${coachName}</div>`:''}
-        <div style="font-size:10px;color:#888;margin-top:1px">Generated ${today}</div>
+  <div class="hero">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px">
+      <div style="flex:1;min-width:0">
+        <div class="eb">Performance report · ${a.sessions[0]?.test_date||'—'}${coachName?` · ${coachName}`:''}</div>
+        <h1>${a.name}</h1>
+        <div class="meta">
+          <div><b>${a.position||'—'}</b><span>Position</span></div>
+          <div><b>${a.age||'—'}</b><span>Age</span></div>
+          <div><b>${a.height_cm||'—'}</b><span>Height cm</span></div>
+          <div><b>${ld.weight_kg||a.weight_kg||'—'}</b><span>Weight kg</span></div>
+          <div><b>${a.sessions.length}</b><span>Sessions</span></div>
+          ${pv?`<div><b>${pv.test_date}</b><span>Previous</span></div>`:''}
+        </div>
+        ${a.injury_hx?`<div style="margin-top:12px;font-size:9px;color:#E7C583">${a.injury_hx}</div>`:''}
+        ${a.sessions[0]?.notes?`<div style="margin-top:12px;padding:9px 12px;background:#383837;border-radius:8px">
+          <div class="eb">Session note</div>
+          <div style="font-size:9.5px;color:#D8D7D4;margin-top:3px;font-weight:300">${a.sessions[0].notes}</div></div>`:''}
       </div>
-    </div>
-    <div style="text-align:right">
-      <div style="font-size:10px;color:#888">Last tested</div>
-      <div style="font-size:14px;font-weight:700;color:#111">${a.sessions[0]?.test_date||'—'}</div>
-      ${pv?`<div style="font-size:10px;color:#aaa">Previous: ${pv.test_date}</div>`:''}
-    </div>
-  </div>
-
-  <!-- Athlete Profile -->
-  <div style="display:flex;align-items:flex-start;gap:14px;padding:13px;background:#f8f8f8;border-radius:8px;margin-bottom:16px;border:1px solid #ebebeb">
-    <div style="width:40px;height:40px;border-radius:50%;background:#1a56db;color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0">${a.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase()}</div>
-    <div>
-      <div style="font-size:17px;font-weight:700;color:#111;letter-spacing:-.01em">${a.name}</div>
-      <div style="font-size:10.5px;color:#555;margin-top:3px">${a.position||'—'} · ${a.age||'—'} yrs · ${a.height_cm||'—'} cm · ${a.weight_kg||'—'} kg · ${a.sessions.length} session${a.sessions.length!==1?'s':''}</div>
-      ${a.injury_hx?`<div style="margin-top:6px;font-size:10px;background:#fff8e6;border:1px solid #f59e0b;border-radius:12px;padding:3px 10px;display:inline-block;color:#92400e;font-weight:600">⚠ ${a.injury_hx}</div>`:''}
-      ${ld.weight_kg && ld.weight_kg !== parseFloat(a.weight_kg)?`<div style="margin-top:4px;font-size:10px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:12px;padding:3px 10px;display:inline-block;color:#1e40af;font-weight:600;margin-left:4px">⚖ Body weight at testing: ${ld.weight_kg} kg</div>`:''}
-      ${a.sessions[0]?.notes?`<div style="margin-top:10px;padding:8px 12px;background:#f8f8f8;border-left:3px solid #1a56db;border-radius:0 4px 4px 0;font-size:10.5px;color:#444;line-height:1.6"><span style="font-size:9px;font-weight:700;color:#999;text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:2px">Session note</span>${a.sessions[0].notes}</div>`:''}
+      ${logoSrc?`<img src="${logoSrc}" style="height:17px;width:auto;filter:brightness(0) invert(1)" alt="FootballFit">`:''}
     </div>
   </div>
 
   <!-- Category Overview -->
-  <div style="font-size:9px;font-weight:700;color:#7a8290;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;padding-bottom:3px;border-bottom:1px solid #ebebeb">Performance Category Status</div>
-  <div style="display:flex;gap:8px;margin-bottom:18px">${catCardsHtml}</div>
+  <div class="secline"><div class="eb">Benchmark status</div>
+  <div class="h2">Performance by domain</div></div>
+  <div style="display:flex;gap:12px;margin:12px 0 4px">${catCardsHtml}</div>
 
   <!-- Test Results -->
-  <div style="font-size:9px;font-weight:700;color:#7a8290;text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px;padding-bottom:3px;border-bottom:1px solid #ebebeb">
-    Test Results${pv?` <span style="font-weight:400;text-transform:none;letter-spacing:0;color:#bbb">vs previous: ${pv.test_date}</span>`:''}
-  </div>
+  <div class="secline"><div class="eb">Test battery</div>
+  <div class="h2">Latest results${pv?` <span style="font-size:9px;color:#8A8986">vs ${pv.test_date}</span>`:''}</div></div>
+  <div class="rhd"><span>Test</span><span>Result</span><span>Professional range</span><span>vs prev</span></div>
   ${section('Jump / Power',jumpM)}
   ${section('Aerobic Fitness',aeroM)}
   ${section('Strength — Lifts (×BW)',strM)}
@@ -2567,7 +2898,7 @@ function _buildAndOpenPrintReport(a, chartImages, quadrantSVG, radarSVG, radarMo
   ${feedbackHtml}
 
   <!-- Footer -->
-  <div style="margin-top:20px;padding-top:8px;border-top:1px solid #ebebeb;font-size:9px;color:#bbb;display:flex;justify-content:space-between">
+  <div class="pfoot">
     <span>FootballFit · Individual Coaching · ${a.name}</span>
     <span>Normative ranges: professional football literature</span>
   </div>
@@ -2879,15 +3210,15 @@ function resolveMAS(ld) {
 
 function classifySRR(srr) {
   if (srr >= 1.90) return {
-    label:'Speed', col:'#dc2626', bg:'#fef2f2',
+    label:'Speed', col:'#C2563B', bg:'rgba(194,86,59,.10)',
     desc:'Fast-twitch dominant with high power output, but fatigues quickly.'
   };
   if (srr >= 1.70) return {
-    label:'Hybrid', col:'#1a56db', bg:'#eff6ff',
+    label:'Hybrid', col:'#2A4FB7', bg:'rgba(42,79,183,.09)',
     desc:'Balanced fibre composition with versatile training tolerance.'
   };
   return {
-    label:'Endurance', col:'#16a34a', bg:'#f0fdf4',
+    label:'Endurance', col:'#5E9E76', bg:'rgba(94,158,118,.12)',
     desc:'Slow-twitch dominant with high volume tolerance.'
   };
 }
@@ -2941,13 +3272,13 @@ function mssZoneSvg(selId) {
 
   let s=`<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:${W}px;font-family:-apple-system,BlinkMacSystemFont,sans-serif">`;
   // Layer: whole rect = Endurance, then Hybrid above 1.70, then Speed above 1.90
-  s+=`<rect x="${ML}" y="${MT}" width="${CW}" height="${CH}" fill="#f0fdf4"/>`;
+  s+=`<rect x="${ML}" y="${MT}" width="${CW}" height="${CH}" fill="rgba(94,158,118,.08)"/>`;
   const hyb=clipAbove(rect,1.70), spd=clipAbove(rect,1.90);
-  if(hyb.length) s+=`<polygon points="${toPath(hyb)}" fill="#eff6ff"/>`;
-  if(spd.length) s+=`<polygon points="${toPath(spd)}" fill="#fef2f2"/>`;
+  if(hyb.length) s+=`<polygon points="${toPath(hyb)}" fill="rgba(42,79,183,.06)"/>`;
+  if(spd.length) s+=`<polygon points="${toPath(spd)}" fill="rgba(194,86,59,.06)"/>`;
 
   // Boundary lines
-  [[1.90,'#dc2626','Speed ≥ 1.90'],[1.70,'#1a56db','Hybrid ≥ 1.70']].forEach(([k,col,lbl])=>{
+  [[1.90,'#C2563B','SPEED ≥ 1.90'],[1.70,'#2A4FB7','HYBRID ≥ 1.70']].forEach(([k,col,lbl])=>{
     const ptsOn=[];
     [[xMin,k*xMin],[xMax,k*xMax],[yMin/k,yMin],[yMax/k,yMax]].forEach(([px,py])=>{
       if(px>=xMin-1e-9&&px<=xMax+1e-9&&py>=yMin-1e-9&&py<=yMax+1e-9) ptsOn.push([px,py]);
@@ -2955,42 +3286,42 @@ function mssZoneSvg(selId) {
     if(ptsOn.length<2) return;
     ptsOn.sort((a,b)=>a[0]-b[0]);
     const [p1,p2]=[ptsOn[0],ptsOn[ptsOn.length-1]];
-    s+=`<line x1="${sx(p1[0])}" y1="${sy(p1[1])}" x2="${sx(p2[0])}" y2="${sy(p2[1])}" stroke="${col}" stroke-width="1.6" stroke-dasharray="6,4"/>`;
-    s+=`<rect x="${sx(p1[0])+3}" y="${sy(p1[1])-15}" width="${lbl.length*5.9+10}" height="15" rx="3" fill="${col}" opacity="0.92"/>`;
-    s+=`<text x="${sx(p1[0])+8}" y="${sy(p1[1])-4}" font-size="9.5" font-weight="600" fill="#fff">${lbl}</text>`;
+    s+=`<line x1="${sx(p1[0])}" y1="${sy(p1[1])}" x2="${sx(p2[0])}" y2="${sy(p2[1])}" stroke="${col}" stroke-width="1" stroke-dasharray="3,4"/>`;
+    s+=`<rect x="${sx(p1[0])+3}" y="${sy(p1[1])-15}" width="${lbl.length*6.1+12}" height="14" rx="7" fill="${col}" opacity="0.14"/>`;
+    s+=`<text x="${sx(p1[0])+8}" y="${sy(p1[1])-4}" font-size="7.5" letter-spacing="1" fill="${col}">${lbl}</text>`;
   });
 
   // Zone names in the corners they occupy
-  s+=`<text x="${ML+8}" y="${MT+16}" font-size="10.5" font-weight="700" fill="#dc2626" opacity="0.75">Speed</text>`;
-  s+=`<text x="${W-MR-8}" y="${MT+CH-8}" font-size="10.5" font-weight="700" fill="#16a34a" opacity="0.75" text-anchor="end">Endurance</text>`;
+  s+=`<text x="${ML+8}" y="${MT+16}" font-size="8" letter-spacing="1.5" fill="#C2563B" opacity="0.8">SPEED</text>`;
+  s+=`<text x="${W-MR-8}" y="${MT+CH-8}" font-size="8" letter-spacing="1.5" fill="#5E9E76" opacity="0.8" text-anchor="end">ENDURANCE</text>`;
 
   // Grid + axes
   const tick=(lo,hi)=>{const r=hi-lo;const st=r<=2?0.5:r<=5?1:2;const out=[];
     for(let v=Math.ceil(lo/st)*st; v<=hi+1e-9; v+=st) out.push(+v.toFixed(2)); return out;};
   tick(xMin,xMax).forEach(v=>{
-    s+=`<line x1="${sx(v)}" y1="${MT}" x2="${sx(v)}" y2="${MT+CH}" stroke="rgba(15,23,42,0.06)" stroke-width="1"/>`;
-    s+=`<text x="${sx(v)}" y="${MT+CH+16}" font-size="9.5" fill="#7a8290" text-anchor="middle">${v}</text>`;});
+    s+=`<line x1="${sx(v)}" y1="${MT}" x2="${sx(v)}" y2="${MT+CH}" stroke="rgba(22,22,22,.055)" stroke-width=".7"/>`;
+    s+=`<text x="${sx(v)}" y="${MT+CH+16}" font-size="7.5" letter-spacing=".6" fill="#8A8986" text-anchor="middle">${v}</text>`;});
   tick(yMin,yMax).forEach(v=>{
     s+=`<line x1="${ML}" y1="${sy(v)}" x2="${ML+CW}" y2="${sy(v)}" stroke="rgba(15,23,42,0.06)" stroke-width="1"/>`;
-    s+=`<text x="${ML-7}" y="${sy(v)+3}" font-size="9.5" fill="#7a8290" text-anchor="end">${v}</text>`;});
+    s+=`<text x="${ML-7}" y="${sy(v)+3}" font-size="7.5" letter-spacing=".6" fill="#8A8986" text-anchor="end">${v}</text>`;});
   s+=`<rect x="${ML}" y="${MT}" width="${CW}" height="${CH}" fill="none" stroke="#D7D6D2" stroke-width=".8"/>`;
-  s+=`<text x="${ML+CW/2}" y="${H-8}" font-size="11" fill="#444c56" font-weight="500" text-anchor="middle">MAS (m/s)</text>`;
-  s+=`<text x="13" y="${MT+CH/2}" font-size="11" fill="#444c56" font-weight="500" text-anchor="middle" transform="rotate(-90,13,${MT+CH/2})">MSS (m/s)</text>`;
+  s+=`<text x="${ML+CW/2}" y="${H-8}" font-size="8" letter-spacing="1.8" fill="#706F6D" text-anchor="middle">MAS (M/S)</text>`;
+  s+=`<text x="13" y="${MT+CH/2}" font-size="8" letter-spacing="1.8" fill="#706F6D" text-anchor="middle" transform="rotate(-90,13,${MT+CH/2})">MSS (M/S)</text>`;
 
   // Other athletes, anonymous
   pts.filter(p=>!p.isCur).forEach(p=>{
-    s+=`<circle cx="${sx(p.mas)}" cy="${sy(p.mss)}" r="6.5" fill="#cbd5e1" stroke="#94a3b8" stroke-width="1" opacity="0.7"/>`;
+    s+=`<circle cx="${sx(p.mas)}" cy="${sy(p.mss)}" r="5" fill="#C7C5C0" stroke="none" opacity="0.9"/>`;
   });
   // Selected athlete
   const cur=pts.find(p=>p.isCur);
   const cls=classifySRR(+(cur.mss/cur.mas).toFixed(2));
-  s+=`<circle cx="${sx(cur.mas)}" cy="${sy(cur.mss)}" r="12" fill="${cls.col}" stroke="#fff" stroke-width="2.5"/>`;
-  s+=`<text x="${sx(cur.mas)}" y="${sy(cur.mss)+4}" font-size="9" font-weight="700" fill="#fff" text-anchor="middle">${cur.ini}</text>`;
+  s+=`<circle cx="${sx(cur.mas)}" cy="${sy(cur.mss)}" r="11" fill="${cls.col}" stroke="#F7F6F2" stroke-width="2.5"/>`;
+  s+=`<text x="${sx(cur.mas)}" y="${sy(cur.mss)+4}" font-size="8" letter-spacing=".6" fill="#fff" text-anchor="middle">${cur.ini}</text>`;
   const lx=sx(cur.mas)+16>W-MR-95?sx(cur.mas)-16:sx(cur.mas)+16;
   const la=sx(cur.mas)+16>W-MR-95?'end':'start';
   const ly=sy(cur.mss)-10<MT+18?sy(cur.mss)+22:sy(cur.mss)-10;
-  s+=`<text x="${lx}" y="${ly}" font-size="11" font-weight="600" fill="#0d1117" text-anchor="${la}">${cur.name}</text>`;
-  s+=`<text x="${lx}" y="${ly+13}" font-size="10" fill="#7a8290" text-anchor="${la}">SRR ${(cur.mss/cur.mas).toFixed(2)} · ${cls.label}</text>`;
+  s+=`<text x="${lx}" y="${ly}" font-size="9" letter-spacing="1.2" fill="#161616" text-anchor="${la}">${cur.name.toUpperCase()}</text>`;
+  s+=`<text x="${lx}" y="${ly+13}" font-size="8.5" fill="#8A8986" text-anchor="${la}">SRR ${(cur.mss/cur.mas).toFixed(2)} · ${cls.label}</text>`;
   s+='</svg>';
   return s;
 }
@@ -3030,35 +3361,37 @@ function renderASR() {
   const masW = px(MAS)-ML, asrW = px(MSS)-px(MAS);
 
   let s=`<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:640px;font-family:-apple-system,BlinkMacSystemFont,sans-serif">`;
-  s+=`<rect x="${ML}" y="${BY}" width="${CW}" height="${BH}" fill="#f1f3f5" rx="4"/>`;
-  s+=`<rect x="${ML}" y="${BY}" width="${masW}" height="${BH}" fill="#1a56db" rx="4"/>`;
-  s+=`<rect x="${ML+masW-6}" y="${BY}" width="6" height="${BH}" fill="#1a56db"/>`;
-  s+=`<rect x="${px(MAS)}" y="${BY}" width="${asrW}" height="${BH}" fill="#f59e0b" opacity="0.9"/>`;
-  s+=`<rect x="${px(MAS)}" y="${BY}" width="6" height="${BH}" fill="#f59e0b"/>`;
-  if (masW > 90) {
-    s+=`<text x="${ML+masW/2}" y="${BY+21}" font-size="10.5" font-weight="700" fill="#fff" text-anchor="middle">MAS (aerobic)</text>`;
-    s+=`<text x="${ML+masW/2}" y="${BY+38}" font-size="13" font-weight="700" fill="#fff" text-anchor="middle">${MAS} m/s</text>`;
-  }
-  if (asrW > 80) {
-    s+=`<text x="${px(MAS)+asrW/2}" y="${BY+21}" font-size="10.5" font-weight="700" fill="#7c4a03" text-anchor="middle">ASR (anaerobic)</text>`;
-    s+=`<text x="${px(MAS)+asrW/2}" y="${BY+38}" font-size="13" font-weight="700" fill="#7c4a03" text-anchor="middle">${ASR} m/s</text>`;
-  }
-  s+=`<line x1="${px(MAS)}" y1="${BY-10}" x2="${px(MAS)}" y2="${BY+BH+10}" stroke="#1a56db" stroke-width="1.5" stroke-dasharray="3,2"/>`;
-  s+=`<line x1="${px(MSS)}" y1="${BY-10}" x2="${px(MSS)}" y2="${BY+BH+10}" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="3,2"/>`;
-  s+=`<text x="${ML}" y="${BY-16}" font-size="10" fill="#94a3b8">0</text>`;
-  s+=`<text x="${px(MAS)}" y="${BY-16}" font-size="10.5" font-weight="700" fill="#1a56db" text-anchor="middle">MAS ${MAS}</text>`;
-  s+=`<text x="${px(MSS)}" y="${BY-16}" font-size="10.5" font-weight="700" fill="#d97706" text-anchor="${px(MSS)>W-60?'end':'middle'}">MSS ${MSS}</text>`;
-  s+=`<text x="${ML}" y="${BY+BH+26}" font-size="9.5" fill="#94a3b8">0 km/h</text>`;
-  s+=`<text x="${px(MAS)}" y="${BY+BH+26}" font-size="9.5" fill="#7a8290" text-anchor="middle">${kmh(MAS)} km/h</text>`;
-  s+=`<text x="${px(MSS)}" y="${BY+BH+26}" font-size="9.5" fill="#7a8290" text-anchor="${px(MSS)>W-60?'end':'middle'}">${kmh(MSS)} km/h</text>`;
-  s+=`<text x="${ML+CW/2}" y="${H-6}" font-size="10" fill="#94a3b8" text-anchor="middle">Anaerobic Speed Reserve = the usable speed band above aerobic capacity</text>`;
+  s+=`<defs>
+    <linearGradient id="asrMas" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#2A4FB7"/><stop offset="100%" stop-color="#7292E4"/></linearGradient>
+    <linearGradient id="asrRes" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#9FB6EE"/><stop offset="100%" stop-color="#E4EAFA"/></linearGradient>
+  </defs>`;
+  // full span, then the aerobic portion and the reserve above it
+  s+=`<rect x="${ML}" y="${BY+BH/2-2}" width="${CW}" height="4" fill="#E4E2DC" rx="2"/>`;
+  s+=`<rect x="${ML}" y="${BY+BH/2-5}" width="${masW}" height="10" fill="url(#asrMas)" rx="5"/>`;
+  s+=`<rect x="${px(MAS)}" y="${BY+BH/2-5}" width="${asrW}" height="10" fill="url(#asrRes)" rx="5"/>`;
+  // boundary ticks
+  [[px(MAS),'#2A4FB7'],[px(MSS),'#5577D2']].forEach(([X,c])=>{
+    s+=`<line x1="${X}" y1="${BY+BH/2-14}" x2="${X}" y2="${BY+BH/2+14}" stroke="${c}" stroke-width="1" stroke-dasharray="2,2"/>`;
+    s+=`<circle cx="${X}" cy="${BY+BH/2}" r="5" fill="${c}" stroke="#F7F6F2" stroke-width="2"/>`;
+  });
+  // labels, wide-tracked caps above and plain values below
+  s+=`<text x="${ML}" y="${BY-18}" font-size="8" letter-spacing="1.6" fill="#8A8986">0</text>`;
+  s+=`<text x="${px(MAS)}" y="${BY-18}" font-size="8" letter-spacing="1.6" fill="#2A4FB7" text-anchor="middle">MAS ${MAS}</text>`;
+  s+=`<text x="${px(MSS)}" y="${BY-18}" font-size="8" letter-spacing="1.6" fill="#5577D2" text-anchor="${px(MSS)>W-60?'end':'middle'}">MSS ${MSS}</text>`;
+  s+=`<text x="${ML+masW/2}" y="${BY+BH/2+30}" font-size="8" letter-spacing="1.5" fill="#706F6D" text-anchor="middle">AEROBIC ${MAS} M/S</text>`;
+  if (asrW>80) s+=`<text x="${px(MAS)+asrW/2}" y="${BY+BH/2+30}" font-size="8" letter-spacing="1.5" fill="#706F6D" text-anchor="middle">RESERVE ${ASR} M/S</text>`;
+  s+=`<text x="${ML}" y="${BY+BH+30}" font-size="8" letter-spacing="1.2" fill="#A8A7A3">0 KM/H</text>`;
+  s+=`<text x="${px(MSS)}" y="${BY+BH+30}" font-size="8" letter-spacing="1.2" fill="#A8A7A3" text-anchor="${px(MSS)>W-60?'end':'middle'}">${kmh(MSS)} KM/H</text>`;
+  s+=`<text x="${ML+CW/2}" y="${H-6}" font-size="8" letter-spacing="1.5" fill="#A8A7A3" text-anchor="middle">SPEED BAND AVAILABLE ABOVE AEROBIC CAPACITY</text>`;
   s+='</svg>';
 
   const card = (lbl,val,unit,sub,col) => `
-    <div style="flex:1;min-width:120px;border:1px solid var(--border);border-left:3px solid ${col};border-radius:8px;padding:11px 13px;background:var(--surface)">
-      <div style="font-size:9px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:4px">${lbl}</div>
-      <div style="font-size:19px;font-weight:700;color:${col};line-height:1.1">${val}<span style="font-size:11px;font-weight:400;color:var(--text-muted);margin-left:3px">${unit}</span></div>
-      ${sub?`<div style="font-size:9.5px;color:var(--text-muted);margin-top:3px">${sub}</div>`:''}
+    <div class="brk" style="flex:1;min-width:132px;padding:16px 20px 18px">
+      <div class="eb">${lbl}</div>
+      <div class="big" style="font-size:32px;margin-top:10px">${val}<small>${unit}</small></div>
+      ${sub?`<p class="cap" style="margin-top:8px">${sub}</p>`:''}
     </div>`;
 
   const srrMin=1.4, srrMax=2.3;
@@ -3066,29 +3399,29 @@ function renderASR() {
   const bandPct = v => ((v-srrMin)/(srrMax-srrMin))*100;
   const srrBar = `
     <div style="margin-top:6px">
-      <div style="position:relative;height:26px;border-radius:5px;overflow:hidden;display:flex;border:1px solid var(--border)">
-        <div style="width:${bandPct(1.70)}%;background:#dcfce7"></div>
-        <div style="width:${bandPct(1.90)-bandPct(1.70)}%;background:#dbeafe"></div>
-        <div style="width:${100-bandPct(1.90)}%;background:#fee2e2"></div>
+      <div style="position:relative;height:10px;border-radius:5px;overflow:hidden;display:flex">
+        <div style="width:${bandPct(1.70)}%;background:linear-gradient(90deg,#D4E2D8,#C2D8C9)"></div>
+        <div style="width:${bandPct(1.90)-bandPct(1.70)}%;background:linear-gradient(90deg,#C9D6F7,#A8BCF2)"></div>
+        <div style="width:${100-bandPct(1.90)}%;background:linear-gradient(90deg,#EDD6CD,#E3C0B3)"></div>
       </div>
       <div style="position:relative;height:0">
-        <div style="position:absolute;left:${srrPct}%;top:-30px;transform:translateX(-50%);width:3px;height:34px;background:#0d1117;border-radius:2px"></div>
-        <div style="position:absolute;left:${srrPct}%;top:8px;transform:translateX(-50%);font-size:11px;font-weight:700;color:#0d1117;white-space:nowrap">${SRR}</div>
+        <div style="position:absolute;left:${srrPct}%;top:-14px;transform:translateX(-50%);width:2px;height:18px;background:#161616"></div>
+        <div style="position:absolute;left:${srrPct}%;top:8px;transform:translateX(-50%);font-size:15px;font-weight:300;color:#161616;white-space:nowrap;font-variant-numeric:tabular-nums">${SRR}</div>
       </div>
       <div style="display:flex;font-size:9.5px;color:var(--text-muted);margin-top:26px">
-        <div style="width:${bandPct(1.70)}%;text-align:center;color:#16a34a;font-weight:600">Endurance &lt;1.70</div>
-        <div style="width:${bandPct(1.90)-bandPct(1.70)}%;text-align:center;color:#1a56db;font-weight:600">Hybrid 1.70–1.90</div>
-        <div style="width:${100-bandPct(1.90)}%;text-align:center;color:#dc2626;font-weight:600">Speed ≥1.90</div>
+        <div style="width:${bandPct(1.70)}%;text-align:center;color:#5E9E76;font-size:8px;letter-spacing:.14em;text-transform:uppercase">Endurance &lt;1.70</div>
+        <div style="width:${bandPct(1.90)-bandPct(1.70)}%;text-align:center;color:#2A4FB7;font-size:8px;letter-spacing:.14em;text-transform:uppercase">Hybrid 1.70–1.90</div>
+        <div style="width:${100-bandPct(1.90)}%;text-align:center;color:#C2563B;font-size:8px;letter-spacing:.14em;text-transform:uppercase">Speed ≥1.90</div>
       </div>
     </div>`;
 
   el.innerHTML = `
     <div style="display:flex;flex-direction:column;gap:16px">
       <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
-        <div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.07em">Profile</div>
-        <div style="display:inline-flex;align-items:center;gap:7px;background:${cls.bg};border:1px solid ${cls.col};border-radius:20px;padding:5px 14px">
-          <span style="width:9px;height:9px;border-radius:50%;background:${cls.col};display:inline-block"></span>
-          <span style="font-size:14px;font-weight:700;color:${cls.col}">${cls.label}</span>
+        <div class="control-label">Profile</div>
+        <div class="chip" style="background:${cls.bg};color:${cls.col};box-shadow:inset 0 0 0 1px ${cls.col}55">
+          <span style="width:7px;height:7px;border-radius:50%;background:${cls.col};display:inline-block"></span>
+          <span>${cls.label}</span>
         </div>
         <span style="font-size:12px;color:var(--text-secondary)">${cls.desc}</span>
       </div>
@@ -3492,9 +3825,9 @@ function renderMotorPref() {
   // Ticks
   ticks.forEach(v=>{
     s+=`<line x1="${sx(v)}" y1="${CY-3}" x2="${sx(v)}" y2="${CY+3}" stroke="#94a3b8" stroke-width="1"/>`;
-    s+=`<text x="${sx(v)}" y="${CY+13}" font-size="7" fill="#94a3b8" text-anchor="middle">${v>0?'+':''}${v}</text>`;
+    s+=`<text x="${sx(v)}" y="${CY+13}" font-size="6.5" letter-spacing=".5" fill="#A8A7A3" text-anchor="middle">${v>0?'+':''}${v}</text>`;
     s+=`<line x1="${CX-3}" y1="${sy(v)}" x2="${CX+3}" y2="${sy(v)}" stroke="#94a3b8" stroke-width="1"/>`;
-    s+=`<text x="${CX-7}" y="${sy(v)+2.5}" font-size="7" fill="#94a3b8" text-anchor="end">${v>0?'+':''}${v}</text>`;
+    s+=`<text x="${CX-7}" y="${sy(v)+2.5}" font-size="6.5" letter-spacing=".5" fill="#A8A7A3" text-anchor="end">${v>0?'+':''}${v}</text>`;
   });
   // Quadrant labels
   const qlab=[
@@ -3508,10 +3841,10 @@ function renderMotorPref() {
     s+=`<text x="${x}" y="${y+11}" font-size="7.5" fill="${isCur?'#64748b':'#c3c9d1'}" text-anchor="${anch}">${sub}</text>`;
   });
   // Axis descriptors
-  s+=`<text x="${CX}" y="${CY-R-20}" font-size="9" fill="#64748b" text-anchor="middle">greater step length relative to step rate</text>`;
-  s+=`<text x="${CX}" y="${CY+R+26}" font-size="9" fill="#64748b" text-anchor="middle">greater step rate relative to step length</text>`;
-  s+=`<text x="${CX-R-6}" y="${CY-8}" font-size="9" fill="#64748b" text-anchor="middle" transform="rotate(-90,${CX-R-6},${CY-8})">greater flight time rel. to contact</text>`;
-  s+=`<text x="${CX+R+8}" y="${CY-8}" font-size="9" fill="#64748b" text-anchor="middle" transform="rotate(90,${CX+R+8},${CY-8})">greater contact time rel. to flight</text>`;
+  s+=`<text x="${CX}" y="${CY-R-20}" font-size="7.5" letter-spacing="1.4" fill="#706F6D" text-anchor="middle">GREATER STEP LENGTH REL. TO STEP RATE</text>`;
+  s+=`<text x="${CX}" y="${CY+R+26}" font-size="7.5" letter-spacing="1.4" fill="#706F6D" text-anchor="middle">GREATER STEP RATE REL. TO STEP LENGTH</text>`;
+  s+=`<text x="${CX-R-6}" y="${CY-8}" font-size="7.5" letter-spacing="1.4" fill="#706F6D" text-anchor="middle" transform="rotate(-90,${CX-R-6},${CY-8})">GREATER FLIGHT TIME REL. TO CONTACT</text>`;
+  s+=`<text x="${CX+R+8}" y="${CY-8}" font-size="7.5" letter-spacing="1.4" fill="#706F6D" text-anchor="middle" transform="rotate(90,${CX+R+8},${CY-8})">GREATER CONTACT TIME REL. TO FLIGHT</text>`;
   // Study group centroids, shown faintly for context when using the study reference
   if (d.source.indexOf('Wild')>=0) {
     Object.entries(MP_STUDY.groups).forEach(([key,gr])=>{
@@ -3527,9 +3860,9 @@ function renderMotorPref() {
   s+=`<circle cx="${sx(d.x)}" cy="${sy(d.y)}" r="15" fill="${band.col}" fill-opacity="0.5" stroke="${band.col}" stroke-width="1.5"/>`;
   // Per-leg markers
   if (d.xL!=null&&d.yL!=null)
-    s+=`<circle cx="${sx(d.xL)}" cy="${sy(d.yL)}" r="6" fill="#2563eb" stroke="#fff" stroke-width="1.6"/>`;
+    s+=`<circle cx="${sx(d.xL)}" cy="${sy(d.yL)}" r="5.5" fill="#2A4FB7" stroke="#ECEAE4" stroke-width="1.8"/>`;
   if (d.xR!=null&&d.yR!=null)
-    s+=`<circle cx="${sx(d.xR)}" cy="${sy(d.yR)}" r="6" fill="#ec4899" stroke="#fff" stroke-width="1.6"/>`;
+    s+=`<circle cx="${sx(d.xR)}" cy="${sy(d.yR)}" r="5.5" fill="#C2563B" stroke="#ECEAE4" stroke-width="1.8"/>`;
   if (d.xL!=null&&d.xR!=null&&d.yL!=null&&d.yR!=null)
     s+=`<line x1="${sx(d.xL)}" y1="${sy(d.yL)}" x2="${sx(d.xR)}" y2="${sy(d.yR)}" stroke="#64748b" stroke-width="1" stroke-dasharray="2,2" opacity="0.6"/>`;
   s+='</svg>';
@@ -3540,15 +3873,15 @@ function renderMotorPref() {
     const bTicks=[]; for(let v=-LIM; v<=LIM; v+=tickStep) bTicks.push(v);
     const bx = v => BML + ((v+LIM)/(2*LIM))*BCW;
     let b=`<svg viewBox="0 0 ${BW} ${BH}" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:${BW}px">`;
-    b+=`<text x="${BML}" y="12" font-size="10.5" font-weight="700" fill="#334155">${leftLbl}</text>`;
-    b+=`<text x="${BW-BML}" y="12" font-size="10.5" font-weight="700" fill="#334155" text-anchor="end">${rightLbl}</text>`;
+    b+=`<text x="${BML}" y="12" font-size="8" letter-spacing="1.4" fill="#706F6D">${leftLbl.toUpperCase()}</text>`;
+    b+=`<text x="${BW-BML}" y="12" font-size="8" letter-spacing="1.4" fill="#706F6D" text-anchor="end">${rightLbl.toUpperCase()}</text>`;
     b+=`<line x1="${BML}" y1="${ByC}" x2="${BW-BML}" y2="${ByC}" stroke="#334155" stroke-width="1.2"/>`;
     bTicks.forEach(v=>{
       b+=`<line x1="${bx(v)}" y1="${ByC-4}" x2="${bx(v)}" y2="${ByC+4}" stroke="#94a3b8" stroke-width="1"/>`;
       b+=`<text x="${bx(v)}" y="${ByC+16}" font-size="7" fill="#94a3b8" text-anchor="middle">${v>0?'+':''}${v}</text>`;
     });
     b+=`<circle cx="${bx(val)}" cy="${ByC}" r="11" fill="${band.col}" fill-opacity="0.55" stroke="${band.col}" stroke-width="1.5"/>`;
-    b+=`<text x="${bx(val)}" y="${ByC+3.5}" font-size="8" font-weight="700" fill="#0d1117" text-anchor="middle">${val>0?'+':''}${val}${U}</text>`;
+    b+=`<text x="${bx(val)}" y="${ByC+3.5}" font-size="7.5" letter-spacing=".4" fill="#161616" text-anchor="middle">${val>0?'+':''}${val}${U}</text>`;
     b+='</svg>';
     return b;
   };
@@ -3562,7 +3895,7 @@ function renderMotorPref() {
     return `<div style="margin-bottom:7px">
       <div style="display:flex;align-items:center;gap:8px">
         <span style="flex:1;font-size:11px;color:var(--text-secondary)">${site}</span>
-        <span style="font-size:11.5px;font-weight:700;color:${col}">${rr.toFixed(2)}×${sig?' *':''}</span>
+        <span style="font-size:14px;font-weight:300;color:${col};font-variant-numeric:tabular-nums">${rr.toFixed(2)}×${sig?' *':''}</span>
       </div>
       <div style="height:4px;background:#eef0f2;border-radius:2px;margin-top:2px;position:relative">
         <div style="position:absolute;left:0;top:0;height:4px;border-radius:2px;width:${barW}%;background:${col}"></div>
@@ -3571,29 +3904,29 @@ function renderMotorPref() {
     </div>`;
   }).join('') + `<p style="font-size:10px;color:var(--text-secondary);line-height:1.55;margin-top:8px;padding-top:7px;border-top:1px solid var(--border)">${q.note}</p>`;
 
-  const card=(l,v,sub)=>`<div style="flex:1;min-width:105px;border:1px solid var(--border);border-radius:8px;padding:10px 12px;background:var(--surface)">
-    <div style="font-size:9px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:3px">${l}</div>
-    <div style="font-size:17px;font-weight:700;color:var(--text-primary);line-height:1.1">${v}</div>
+  const card=(l,v,sub)=>`<div class="brk" style="flex:1;min-width:118px;padding:15px 18px 17px">
+    <div class="eb">${l}</div>
+    <div class="big" style="font-size:26px;margin-top:9px">${v}</div>
     ${sub?`<div style="font-size:9.5px;color:var(--text-muted);margin-top:2px">${sub}</div>`:''}</div>`;
 
   el.innerHTML = `
     <div style="display:flex;flex-direction:column;gap:14px;align-items:center;width:100%">
       ${toggle}
       <div style="display:flex;align-items:center;gap:11px;flex-wrap:wrap;justify-content:center">
-        <span style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.07em">Preference</span>
-        <span style="display:inline-flex;align-items:center;gap:7px;background:var(--surface-alt);border:1px solid var(--border);border-radius:20px;padding:5px 14px">
+        <span class="control-label">Preference</span>
+        <span class="chip c-line" style="gap:8px">
           <span style="width:9px;height:9px;border-radius:50%;background:${band.col};display:inline-block"></span>
-          <span style="font-size:14px;font-weight:700;color:var(--text-primary)">${q.name}</span></span>
+          <span style="font-size:11px;letter-spacing:.14em">${q.name}</span></span>
         <span style="font-size:12px;color:var(--text-secondary)">${q.sub}</span>
       </div>
       ${s}
       <div style="display:flex;align-items:center;gap:14px;font-size:10.5px;color:var(--text-muted);flex-wrap:wrap;justify-content:center">
         <span><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#2563eb;margin-right:4px"></span>Left leg</span>
-        <span><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#ec4899;margin-right:4px"></span>Right leg</span>
+        <span><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#C2563B;margin-right:4px"></span>Right leg</span>
         <span><span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:${band.col};opacity:.5;margin-right:4px;vertical-align:middle"></span>Session average — ${band.label}</span>
         <span style="color:#c3c9d1">Rings = ${ringVals.join(' / ')}${isSD?' SD':'% from norm'} · axis ±${LIM}${U}</span>
         ${d.source.indexOf('Wild')>=0?'<span style="color:#c3c9d1">Dashed circles = study group centroids</span>':''}
-        <span style="color:${d.source.indexOf('VueMotion')>=0?'#16a34a':(isSD&&!d.legEstimated)?'#1a56db':'#c2410c'};font-weight:600">${
+        <span style="color:${d.source.indexOf('VueMotion')>=0?'#5E9E76':(isSD&&!d.legEstimated)?'#2A4FB7':'#C2563B'}">${
           d.source.indexOf('VueMotion')>=0 ? '✓ VueMotion chart values'
           : d.source.indexOf('Wild')>=0 ? (d.legEstimated
               ? '<span style="color:#c2410c">⚠ leg length estimated'+(d.legCalib?' (calibrated)':'')+'</span>'
@@ -3613,8 +3946,8 @@ function renderMotorPref() {
         ${bar('flight time','ground contact time', d.x)}
         ${bar('step frequency','step length', d.y)}
       </div>
-      <div class="no-print" style="width:100%;max-width:520px;border:1px solid var(--border);border-left:3px solid #64748b;border-radius:0 8px 8px 0;padding:12px 15px;background:var(--surface-alt)">
-        <div style="font-size:9.5px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:7px">
+      <div class="no-print" style="width:100%;max-width:540px;padding:16px 20px 18px" class="brk coachonly">
+        <div class="eb" style="margin-bottom:12px">
           Injury association — ${q.name} · coach reference only</div>
         ${rrRows}
         <p style="font-size:9.5px;color:var(--text-muted);line-height:1.55;margin-top:7px">
