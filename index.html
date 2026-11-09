@@ -426,6 +426,128 @@
   }
 
   /* ── print ────────────────────────────────────────────────────────────── */
+  /* The printout is not a separate document: #printAll is filled with the live
+     sections' own markup, so the PDF can never drift from the screen. */
+  #printAll{ display:none }
+  @page{ size:A4; margin:0 }
+  @media print{
+    *{ -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important }
+    html,body{ background:#2A2A2A !important; margin:0 }
+    body.pall #main, body.pall .secnav, body.pall > .hero, body.pall .drawer,
+    .no-print, .ctrls{ display:none !important }
+    body.pall #printAll{ display:block !important }
+
+    .ppage{ background:#2A2A2A; break-after:page; page-break-after:always; position:relative;
+            padding-bottom:10mm }
+    .ppage:last-child{ break-after:auto; page-break-after:auto }
+    .ppage .wrap{ max-width:none; padding-left:14mm; padding-right:14mm }
+
+    /* running header on every page after the first */
+    .runhdr{ background:#2A2A2A; padding:10mm 0 6mm }
+    .runhdr .wrap{ display:flex; justify-content:space-between; align-items:center; gap:12px;
+                   font-size:8.5px; letter-spacing:.22em; text-transform:uppercase; color:#A6A39D }
+    .runhdr img{ height:13px; width:auto; display:block; filter:brightness(0) invert(1) }
+
+    .ppage .hero .wrap{ padding-top:12mm; padding-bottom:22mm }
+    .ppage .hero h1{ font-size:38px; margin-top:10px }
+    .ppage .hero .sub{ font-size:13px; margin-top:10px; line-height:1.5 }
+    .ppage .heroGrid{ grid-template-columns:minmax(0,1fr) 220px !important; gap:18px; margin-top:18px }
+    .ppage .meta{ margin-top:16px; gap:20px }
+    .ppage .meta b{ font-size:17px } .ppage .meta span{ font-size:7.5px; letter-spacing:.2em }
+    .ppage .ringBox svg{ width:220px } .ppage .rcap{ font-size:8px }
+    .ppage .hnote{ margin-top:14px; padding:12px 14px } .ppage .hnote p{ font-size:12px }
+
+    .ppage .sec{ margin-top:-18px; border-radius:20px 20px 0 0; padding:24px 0 26px;
+                 box-shadow:0 -8px 18px rgba(0,0,0,.25); break-inside:auto }
+    .ppage .sec .h2{ font-size:22px; margin-top:9px }
+    .ppage .ebrow svg{ width:19px; height:19px }
+    .ppage .eb{ font-size:8.5px; letter-spacing:.24em }
+    .ppage .lead{ font-size:13px; margin-top:8px; max-width:none }
+    .ppage .hlgrid, .ppage .hcgrid{ grid-template-columns:repeat(3,minmax(0,1fr)) !important;
+                                    gap:14px; margin-top:18px }
+    .ppage .big, .ppage .hcard .hval, .ppage .itile .ival{ font-size:30px; margin-top:7px }
+    .ppage .hcard p.hdesc{ font-size:10.5px; margin-top:7px }
+    .ppage .hcard .hfoot{ font-size:8px; padding-top:7px }
+    .ppage .brk, .ppage .chart-wrap, .ppage .itile{ padding:14px 18px }
+    .ppage .chart-grid{ grid-template-columns:repeat(2,minmax(0,1fr)) !important; gap:14px; margin-top:16px }
+    .ppage .chart-title{ font-size:8px; letter-spacing:.22em; margin-bottom:8px }
+    .ppage .split{ grid-template-columns:minmax(0,1fr) !important; gap:16px; margin-top:16px }
+    .ppage .trend{ position:static }
+    .ppage .rhead{ grid-template-columns:150px minmax(0,1fr) 32px; gap:14px; font-size:8px; margin-top:14px }
+    .ppage .row{ grid-template-columns:150px minmax(0,1fr) 32px; gap:14px; padding:8px 0 }
+    .ppage .row .lbl{ font-size:9px; letter-spacing:.18em }
+    .ppage .row .lbl small{ font-size:8.5px }
+    .ppage .bar{ height:20px } .ppage .bar .rv{ font-size:11px }
+    .ppage .bar .cx{ font-size:8px } .ppage .cbadge{ width:24px; height:24px; font-size:8px }
+    .ppage .ghead{ font-size:8.5px; padding:16px 0 2px }
+    .ppage .callout{ margin-top:18px; padding:13px 16px } .ppage .callout div{ font-size:12px }
+    .ppage .ppanel{ margin-top:20px; padding-top:18px }
+    .ppage .ppanel h3{ font-size:19px } .ppage .ppanel .pdesc{ font-size:12px; margin-top:8px }
+    .ppage .pgrid{ grid-template-columns:minmax(0,1fr) 210px; gap:18px; margin-top:16px }
+    .ppage table{ font-size:9px } .ppage thead th{ font-size:7.5px }
+    .ppage .ffoot{ padding:10mm 0 0 }
+
+    .row, .hcard, .hl, .chart-wrap, .ppanel, .itile, .callout, .brk,
+    .hlgrid, .hcgrid, .ringBox, tr{ break-inside:avoid }
+    .eb, .h2, .lead, .ebrow, .sechd{ break-after:avoid }
+    .coachonly{ display:none !important }
+    a{ color:inherit; text-decoration:none }
+  }
+
+  /* ══ PAIRED-BAR PANELS ═════════════════════════════════════════════════════
+     The explanatory layer, built on the same tokens so it inverts with the
+     sheet it sits on.
+     ───────────────────────────────────────────────────────────────────────── */
+  .ppanel{ margin-top:34px; border-top:1px solid var(--rule); padding-top:28px }
+  .ppanel h3{ font-size:26px; font-weight:300; letter-spacing:-.015em; margin-top:12px; color:var(--ink) }
+  .ppanel .pdesc{ font-size:16px; color:var(--muted); margin-top:12px; max-width:640px;
+                  line-height:1.55; font-weight:300 }
+  .pgrid{ display:grid; grid-template-columns:minmax(0,1fr) 280px; gap:30px; margin-top:26px; align-items:start }
+  .prow{ margin-bottom:18px }
+  .prow .ptop{ display:flex; justify-content:space-between; align-items:baseline; gap:12px; margin-bottom:8px }
+  .prow .pname{ font-size:11px; letter-spacing:.22em; text-transform:uppercase; color:var(--muted) }
+  .prow .pv{ font-size:15px; font-variant-numeric:tabular-nums; color:var(--ink) }
+  .prow .pv small{ font-size:10px; color:var(--muted); margin-left:4px; letter-spacing:.12em;
+                   text-transform:uppercase }
+  .ptrack{ height:6px; background:var(--rule2); border-radius:3px; overflow:hidden }
+  .pfill{ height:6px; border-radius:3px }
+  .pfill.ink{ background:var(--grad) }
+  .pfill.blue{ background:var(--grad) }
+  .pfill.grey{ background:var(--sv-dot) }
+  .pfill.gold{ background:var(--sv-dot) }
+  .pverdict{ font-size:14px; color:var(--muted); margin-top:18px; line-height:1.55 }
+
+  /* the index tile reads as a bracketed stat, not a floating dark card */
+  .itile{ position:relative; padding:22px 26px }
+  .itile::before,.itile::after{ content:""; position:absolute; top:0; bottom:0; width:9px;
+    border:1px solid var(--sv-br); pointer-events:none }
+  .itile::before{ left:0; border-right:0 } .itile::after{ right:0; border-left:0 }
+  .itile .ival{ font-size:44px; font-weight:200; letter-spacing:-.02em; line-height:1; margin-top:10px;
+                font-variant-numeric:tabular-nums; color:var(--ink) }
+  .itile .ipill{ display:block; margin-top:8px; font-size:10px; letter-spacing:.22em;
+                 text-transform:uppercase; font-weight:600; color:var(--accent); background:none }
+  .itile .ipill.warn{ color:#D9A95B }
+  .itile .iscale{ position:relative; height:6px; background:var(--rule2); border-radius:3px; margin-top:18px }
+  .itile .iscale .zone{ position:absolute; top:0; bottom:0; background:var(--grad); border-radius:3px; opacity:.85 }
+  .itile .iscale .pin{ position:absolute; top:-4px; width:3px; height:14px; margin-left:-1.5px;
+                       background:var(--sv-fg) }
+  .itile .ikeys{ display:flex; justify-content:space-between; gap:8px; margin-top:10px;
+                 font-size:10px; letter-spacing:.18em; text-transform:uppercase; color:var(--dim) }
+  .itile .ikeys b{ color:var(--muted); font-weight:400; font-variant-numeric:tabular-nums }
+  .itile .inote{ font-size:12.5px; color:var(--dim); margin-top:14px; line-height:1.5 }
+
+  @media screen and (max-width:820px){
+    .heroGrid,.pgrid,.split{ grid-template-columns:1fr }
+    .hlgrid,.hcgrid{ grid-template-columns:1fr }
+    .chart-grid{ grid-template-columns:1fr }
+    .rhead,.row{ grid-template-columns:110px minmax(0,1fr) 30px; gap:12px }
+    .brk,.chart-wrap,.itile{ padding:18px 20px }
+    .sec{ border-radius:22px 22px 0 0; margin-top:-22px; padding:44px 0 64px }
+    .sec .h2{ font-size:27px } .lead{ font-size:17px }
+    .trend{ position:static }
+  }
+
+  /* ── print ────────────────────────────────────────────────────────────── */
   @page{ size:A4; margin:12mm 0 }
   @media print{
     *{ -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important }
@@ -490,7 +612,7 @@
 
 <section class="drawer no-print" id="drawer" hidden>
   <div class="wrap">
-    <div class="eb">Data &amp; settings · <span id="buildTag">Build 51</span></div>
+    <div class="eb">Data &amp; settings · <span id="buildTag">Build 52</span></div>
     <h2 class="h2">Connect your Google Sheet</h2>
     <p class="lead">Two published tabs, <b>Athletes</b> and <b>Results</b> — exactly as they are set up now. In Google Sheets: File → Share → Publish to web, pick the tab, choose CSV, paste the link here. Nothing in your sheet needs to move.</p>
     <div class="dgrid">
@@ -505,6 +627,7 @@
 <nav class="secnav no-print" id="secnav" hidden><div class="wrap" id="secnavInner"></div></nav>
 
 <main id="main"></main>
+<div id="printAll"></div>
 
 <script>
 // ─── NORMATIVE BANDS ─────────────────────────────────────────────────────────
@@ -2319,75 +2442,95 @@ function generateFeedback() {
 }
 
 // ─── PRINT REPORT GENERATOR ──────────────────────────────────────────────────
-function generatePrintReport() {
-  const a = athleteMap[selectedId];
-  if (!a || !a.sessions.length) { alert('No data available to print.'); return; }
+// ─── PRINT ────────────────────────────────────────────────────────────────────
+// The printout is the live document, paginated. We clone the hero and the
+// permitted sections into #printAll, swap each Chart.js canvas for a PNG of
+// itself (a cloned canvas is blank), and let the browser print that. There is
+// no second stylesheet to keep in step.
+const PRINT_PAGES = [
+  { keys:['s-power'],                         hero:true  },
+  { keys:['s-speed','s-key'],                 hero:false },
+  { keys:['s-results'],                       hero:false },
+  { keys:['s-radar'],                         hero:false },
+  { keys:['s-runs'],                          hero:false },
+  { keys:['s-trends'],                        hero:false },
+  { keys:['s-asr'],                           hero:false },
+  { keys:['s-history'],                       hero:false },
+];
+// Which print toggle, if any, governs each section.
+const PRINT_GATE = { 's-radar':'radar', 's-trends':'charts', 's-quadrant':'quadrant',
+                     's-motorpref':'motorpref', 's-asr':'speedres', 's-feedback':'feedback' };
 
-  // Temporarily show hidden tabs so Chart.js and the quadrant SVG can render
-  const trendsEl   = document.querySelector('.tc[data-t="trends"]');
-  const quadrantEl = document.querySelector('.tc[data-t="quadrant"]');
-  const radarEl    = document.querySelector('.tc[data-t="radar"]');
-  const origT = trendsEl?.style.display;
-  const origQ = quadrantEl?.style.display;
-  const origR = radarEl?.style.display;
-  const origRadarMode = radarMode;
-  if (trendsEl)   trendsEl.style.display   = 'block';
-  if (quadrantEl) quadrantEl.style.display = 'block';
-  if (radarEl)    radarEl.style.display    = 'block';
-  // Render the radar in "all tests" mode for the printout; fall back to domains
-  // if the athlete doesn't have enough scored metrics for a detailed spider.
-  radarMode = 'tests';
-  renderRadar();
-  if (!(document.getElementById('radarContent')?.innerHTML || '').includes('<svg')) {
-    radarMode = 'domains';
-    renderRadar();
-  }
-  const radarModeUsed = radarMode;
-  drawCharts();
-  drawQuadrant(currentXAxis, currentYAxis);
-
-  // Wait for Chart.js to finish rendering before capturing canvas data
-  setTimeout(() => {
-    // ── Capture trend chart images ──────────────────────────────────────────
-    const chartImages = [];
-    document.getElementById('chartGrid')?.querySelectorAll('.chart-wrap').forEach(wrap => {
-      if (wrap.style.display === 'none') return;
-      const title  = wrap.querySelector('.chart-title')?.textContent?.trim() || '';
-      const canvas = wrap.querySelector('canvas');
-      if (canvas) {
-        try {
-          const url = canvas.toDataURL('image/png', 0.85);
-          if (url && url.length > 200) chartImages.push({ title, url });
-        } catch(e) {}
-      }
-    });
-
-    // ── Capture radar SVG ───────────────────────────────────────────────────
-    const rWrap = document.getElementById('radarContent');
-    const rHtml = rWrap?.innerHTML || '';
-    let radarSVG = '';
-    if (rHtml.includes('<svg')) {
-      const st = rHtml.indexOf('<svg');
-      const en = rHtml.indexOf('</svg>', st);
-      if (en > st) radarSVG = rHtml.slice(st, en + 6);
-    }
-
-    // ── Capture quadrant SVG ────────────────────────────────────────────────
-    const qContainer = document.getElementById('quadrantContainer');
-    const quadrantSVG = (qContainer?.innerHTML || '').includes('<svg') ? qContainer.innerHTML : '';
-
-    // Restore tabs to original state
-    if (trendsEl)   trendsEl.style.display   = origT   || '';
-    if (quadrantEl) quadrantEl.style.display = origQ   || '';
-    if (radarEl)    radarEl.style.display    = origR   || '';
-    radarMode = origRadarMode; renderRadar();
-
-    // ── Build the print report ──────────────────────────────────────────────
-    _buildAndOpenPrintReport(a, chartImages, quadrantSVG, radarSVG, radarModeUsed);
-  }, 350);
+function snapshotSection(el){
+  const clone = el.cloneNode(true);
+  // a cloned <canvas> carries no bitmap, so bake each one into an <img>
+  const srcCanvases = el.querySelectorAll('canvas');
+  const dstCanvases = clone.querySelectorAll('canvas');
+  dstCanvases.forEach((c,i) => {
+    try {
+      const url = srcCanvases[i].toDataURL('image/png');
+      const img = document.createElement('img');
+      img.src = url; img.style.width = '100%'; img.style.height = 'auto'; img.style.display = 'block';
+      c.replaceWith(img);
+    } catch(e) { c.remove(); }
+  });
+  clone.querySelectorAll('.no-print').forEach(n => n.remove());
+  // coach-only content is stripped outright, not merely hidden
+  clone.querySelectorAll('.coachonly').forEach(n => n.remove());
+  // ids would collide with the live document; querySelectorAll misses the root,
+  // so prefix that too, and SVG gradient references along with it
+  if (clone.id) clone.id = 'p_' + clone.id;
+  clone.querySelectorAll('[id]').forEach(n => { n.id = 'p_' + n.id; });
+  let html = clone.outerHTML;
+  html = html.replace(/url\(#(?!p_)/g, 'url(#p_');
+  return html;
 }
 
-function _buildAndOpenPrintReport(a, chartImages, quadrantSVG, radarSVG, radarModeUsed) {
+function buildPrintPages(){
+  const a = athleteMap[selectedId]; if (!a) return '';
+  const prefs = printPrefs();
+  const logo  = document.querySelector('.brandmark img')?.outerHTML || '';
+  const today = new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'});
+  const coach = getConfig().coachName || '';
+  const runhdr = `<div class="runhdr"><div class="wrap">${logo}
+      <span>${a.name} · ${a.sessions[0]?.test_date||''}${coach?` · ${coach}`:''}</span></div></div>`;
+  const heroHtml = `<header class="hero"><div class="wrap">
+      <div class="topbar">${logo}<span class="eb">Performance report · ${today}</span></div>
+      ${document.getElementById('hero')?.innerHTML||''}</div></header>`;
+
+  let out = '', firstPage = true;
+  PRINT_PAGES.forEach(page => {
+    const blocks = page.keys.map(k => {
+      const el = document.getElementById(k);
+      if (!el) return '';
+      if (el.classList.contains('coachonly')) return '';      // never printed
+      const gate = PRINT_GATE[k];
+      if (gate && prefs[gate] === false) return '';
+      return snapshotSection(el);
+    }).filter(Boolean).join('');
+    if (!blocks && !page.hero) return;
+    out += `<div class="ppage">${page.hero ? heroHtml : (firstPage ? '' : runhdr)}${blocks}</div>`;
+    firstPage = false;
+  });
+  const foot = document.querySelector('.ffoot');
+  if (foot) out += `<div class="ppage">${runhdr}${foot.outerHTML.replace('no-print','')}</div>`;
+  return out;
+}
+
+function generatePrintReport(){
+  const a = athleteMap[selectedId];
+  if (!a || !a.sessions.length){ alert('No data available to print.'); return; }
+  const host = document.getElementById('printAll'); if (!host) return;
+  host.innerHTML = buildPrintPages();
+  document.body.classList.add('pall');
+  setTimeout(() => { try { window.print(); } catch(e) {} }, 120);
+}
+window.addEventListener('afterprint', () => {
+  document.body.classList.remove('pall');
+  const host = document.getElementById('printAll'); if (host) host.innerHTML = '';
+});
+
+function _unused_buildAndOpenPrintReport(a, chartImages, quadrantSVG, radarSVG, radarModeUsed) {
   const ld    = buildLatestAcrossSessions(a.sessions);
   // prevVal(key): find most recent previous session with a value for this key
   const prevVal = k => { for(let i=1;i<a.sessions.length;i++){ if(a.sessions[i][k]!=null) return a.sessions[i][k]; } return null; };
