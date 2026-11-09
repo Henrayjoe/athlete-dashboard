@@ -38,7 +38,7 @@
     --shadow-md:0 8px 26px rgba(23,24,26,.10);
   }
   body {
-    font-family:var(--font); background:var(--bg); color:var(--text-primary);
+    font-family:var(--font); background:var(--cream); color:var(--text-primary);
     font-size:13px; line-height:1.55; min-height:100vh;
     -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
     font-feature-settings:'tnum' 0;
@@ -209,8 +209,9 @@
   }
   .tab:hover { color:var(--text-primary); background:rgba(0,0,0,.018); }
   .tab.active { color:var(--text-primary); border-bottom-color:var(--ink); background:var(--surface); font-weight:600; }
-  .tc { display:none; }
-  .tc.active { display:block; }
+  /* panels are sections in one document now; .tc kept so the print capture
+     code and the panel renderers keep finding their containers */
+  .tc { display:block; }
   .results-body { padding:20px 22px 22px; display:flex; flex-direction:column; gap:20px; }
   .quadrant-body, .feedback-wrap { padding:20px 22px 22px; }
   #quadrantContainer, #radarContainer, #asrContainer, #mpContainer { display:flex; justify-content:center; }
@@ -369,6 +370,156 @@
   .feedback-meta { font-size:11px; color:var(--text-muted); padding:0 2px 14px; }
   .regenerate-row { display:flex; justify-content:flex-end; padding-top:4px; }
 
+  /* ══ REPORT ARCHITECTURE ═══════════════════════════════════════════════════
+     Full-bleed charcoal hero band, then one cream reading column of eyebrow-
+     labelled sections. Replaces the sidebar + tab-card layout.
+     ───────────────────────────────────────────────────────────────────────── */
+  .wrap { max-width:1060px; margin:0 auto; padding-left:max(20px,env(safe-area-inset-left,0px)); padding-right:max(20px,env(safe-area-inset-right,0px)); }
+
+  /* ── HERO ──────────────────────────────────────────────────────────────── */
+  .hero { background:var(--charcoal); color:var(--surface); }
+  .hero .wrap { padding-block:20px 32px; }
+  .topbar { display:flex; justify-content:space-between; align-items:center; gap:14px; flex-wrap:wrap;
+            border-bottom:1px solid var(--charcoal-2); padding-bottom:16px; }
+  .brandmark { display:flex; align-items:center; gap:14px; }
+  .brandmark img { width:150px; height:auto; display:block; filter:brightness(0) invert(1); }
+  .brandmark .bsub { font-size:9px; letter-spacing:.2em; text-transform:uppercase; color:var(--on-dark-soft);
+                     border-left:1px solid var(--charcoal-2); padding-left:14px; line-height:1.5; }
+  .ctrls { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+  .hsel, .hbtn {
+    background:transparent; border:1px solid #4A4C50; color:var(--surface); border-radius:999px;
+    padding:7px 15px; font-size:12.5px; font-family:var(--font); cursor:pointer; transition:all .14s;
+  }
+  .hsel { padding-right:10px; max-width:230px; }
+  .hsel option { color:var(--ink); }
+  .hbtn:hover, .hsel:hover { border-color:#7A7C80; }
+  .hbtn.on { background:var(--surface); color:var(--ink); border-color:var(--surface); }
+  .seg2 { display:inline-flex; background:rgba(255,255,255,.08); border-radius:999px; padding:3px; gap:2px; }
+  .seg2 button {
+    background:transparent; border:0; color:var(--on-dark-soft); border-radius:999px;
+    padding:6px 14px; font-size:12.5px; font-family:var(--font); cursor:pointer; transition:all .14s;
+  }
+  .seg2 button[aria-pressed="true"] { background:var(--surface); color:var(--ink); font-weight:500; }
+
+  .heroGrid { display:grid; grid-template-columns:minmax(0,1fr) 250px; gap:32px; align-items:center; margin-top:26px; }
+  .hero h1 { font-size:clamp(30px,5vw,46px); line-height:1.06; font-weight:500; letter-spacing:-.028em;
+             color:#fff; margin-top:10px; text-wrap:balance; }
+  .hero .sub { font-size:15px; color:var(--on-dark); margin-top:11px; max-width:540px; line-height:1.55; }
+  .meta { display:flex; gap:26px; flex-wrap:wrap; margin-top:22px; }
+  .meta div { display:flex; flex-direction:column; gap:3px; }
+  .meta b { font-weight:500; font-size:15px; color:#fff; font-variant-numeric:tabular-nums; }
+  .meta span { font-size:9px; letter-spacing:.16em; text-transform:uppercase; color:var(--on-dark-soft); }
+  .ringBox { display:flex; flex-direction:column; align-items:center; gap:9px; }
+  .ringBox svg { max-width:100%; height:auto; }
+  .rcap { font-size:11px; color:var(--on-dark-soft); text-align:center; max-width:230px; line-height:1.45; }
+  .hnote { margin-top:18px; padding:11px 14px; background:rgba(255,255,255,.055);
+           border-left:2px solid var(--amber-rule, #D9A95B); border-radius:0 7px 7px 0; }
+  .hnote .eb { color:var(--on-dark-soft); }
+  .hnote p { font-size:13px; color:var(--on-dark); margin-top:3px; }
+
+  /* ── CHIPS ─────────────────────────────────────────────────────────────── */
+  .chip { display:inline-flex; align-items:center; gap:6px; border-radius:999px; padding:4px 11px;
+          font-size:9.5px; font-weight:600; letter-spacing:.14em; text-transform:uppercase; white-space:nowrap; }
+  .c-s4 { background:#D8EADF; color:#1F5134; }
+  .c-s3 { background:#DDE7FA; color:#1B3A6B; }
+  .c-s2 { background:#F4E6C2; color:#6E5410; }
+  .c-s1 { background:#F6DCC8; color:#7E3C14; }
+  .c-s0 { background:#F3D4CE; color:#76241B; }
+  .c-line { border:1px solid var(--border); color:var(--text-muted); }
+  .c-dark { background:var(--ink); color:#fff; }
+
+  /* ── SECTION RHYTHM ────────────────────────────────────────────────────── */
+  main.wrap { padding-bottom:64px; }
+  .sec { border-top:1px solid var(--border); padding-top:28px; margin-top:36px; scroll-margin-top:68px; }
+  .sec.first { border-top:0; margin-top:28px; padding-top:0; }
+  .h2 { font-size:26px; font-weight:500; letter-spacing:-.022em; margin-top:7px; text-wrap:balance; }
+  .lead { color:var(--text-muted); margin-top:8px; max-width:660px; font-size:13.5px; line-height:1.6; }
+  .sechead { display:flex; justify-content:space-between; align-items:flex-end; gap:16px; flex-wrap:wrap; }
+
+  /* sticky section nav */
+  .secnav { position:sticky; top:0; z-index:40; background:rgba(255,254,250,.93);
+            backdrop-filter:blur(8px); border-bottom:1px solid var(--border); }
+  .secnav .wrap { display:flex; gap:3px; overflow-x:auto; scrollbar-width:none; padding-block:8px; }
+  .secnav .wrap::-webkit-scrollbar { display:none; }
+  .secnav a { font-size:12px; color:var(--text-muted); text-decoration:none; padding:6px 12px;
+              border-radius:999px; white-space:nowrap; transition:all .14s; }
+  .secnav a:hover { background:var(--stone); color:var(--text-primary); }
+  .secnav a.on { background:var(--ink); color:#fff; }
+
+  /* ── HIGHLIGHT TILES ───────────────────────────────────────────────────── */
+  .hlgrid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; margin-top:18px; }
+  .hl { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:17px 16px;
+        display:flex; flex-direction:column; gap:9px; min-width:0; }
+  .hl .chip { align-self:flex-start; }
+  .big { font-size:29px; letter-spacing:-.025em; font-variant-numeric:tabular-nums; line-height:1.08; font-weight:500; }
+  .big small { font-size:13px; color:var(--text-muted); margin-left:3px; font-weight:400; letter-spacing:0; }
+  .cap { font-size:12.5px; color:var(--text-muted); line-height:1.45; }
+  .up { color:#2F7A4A; font-weight:600; } .down { color:#B5523B; font-weight:600; } .flat { color:var(--text-muted); font-weight:600; }
+
+  /* ── RESULT ROWS (replaces the results tables) ─────────────────────────── */
+  .split { display:grid; grid-template-columns:minmax(0,1.5fr) minmax(0,1fr); gap:22px; margin-top:16px; align-items:start; }
+  .rhead, .row { display:grid; grid-template-columns:minmax(0,1.45fr) 98px minmax(0,1.3fr) 72px; gap:12px; align-items:center; }
+  .rhead { padding:0 10px 8px; font-size:9px; font-weight:600; letter-spacing:.15em; color:var(--text-muted);
+           border-bottom:1.5px solid var(--ink); margin-top:14px; text-transform:uppercase; }
+  .rhead span:nth-child(2), .rhead span:last-child { text-align:right; }
+  .ghead { font-size:9px; font-weight:600; letter-spacing:.16em; text-transform:uppercase;
+           color:var(--text-muted); padding:18px 10px 6px; }
+  .row { all:unset; box-sizing:border-box;
+         display:grid; grid-template-columns:minmax(0,1.45fr) 98px minmax(0,1.3fr) 72px; gap:12px;
+         align-items:center; padding:11px 10px; border-bottom:1px solid var(--line-soft);
+         border-radius:8px; cursor:pointer; font-size:13.5px; width:100%; }
+  .row:hover { background:var(--stone); }
+  .row[aria-pressed="true"] { background:var(--surface); box-shadow:inset 0 0 0 1.5px var(--ink); }
+  .row:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+  .row .lbl { min-width:0; color:var(--text-primary); font-weight:400; }
+  .row .lbl small { display:block; font-size:11.5px; color:var(--text-muted); margin-top:1px; }
+  .row .val { text-align:right; font-weight:600; font-variant-numeric:tabular-nums; }
+  .row .val small { font-weight:400; color:var(--text-muted); font-size:11px; margin-left:2px; }
+  .row .chg { text-align:right; font-size:12px; font-variant-numeric:tabular-nums; }
+  .row.dim .val, .row.dim .lbl { color:var(--text-muted); }
+  .bar { position:relative; height:8px; background:var(--line-soft); border-radius:4px; }
+  .bar .band { position:absolute; top:0; bottom:0; background:#BFD6C6; opacity:.75; border-radius:4px; }
+  .bar .mk { position:absolute; top:-4px; width:11px; height:16px; margin-left:-5.5px; border-radius:3px;
+             background:var(--ink); border:2px solid var(--surface); }
+  .bar.none { background:transparent; height:auto; font-size:11.5px; color:var(--text-muted); font-style:italic; }
+
+  /* sticky inspector */
+  .trend { position:sticky; top:62px; background:var(--surface); border:1px solid var(--border);
+           border-radius:12px; padding:17px; min-width:0; }
+  .trend h3 { font-size:18px; font-weight:500; margin-top:6px; letter-spacing:-.015em; }
+  .trend svg { width:100%; height:auto; display:block; margin-top:12px; }
+  .tleg { display:flex; gap:14px; flex-wrap:wrap; font-size:11.5px; color:var(--text-muted); margin-top:8px; }
+  .tleg i { display:inline-block; width:14px; height:3px; border-radius:2px; margin-right:6px; vertical-align:middle; }
+  .trend .note { font-size:12px; color:var(--text-muted); margin-top:11px; line-height:1.5; }
+  .trend .src { font-size:10.5px; color:#AFADA6; margin-top:9px; font-style:italic; line-height:1.45; }
+
+  /* ── DETAILS / DRAWER ──────────────────────────────────────────────────── */
+  details { border-top:1px solid var(--border); padding:12px 0; }
+  details > summary { cursor:pointer; font-size:13px; font-weight:500; list-style:none; display:flex;
+                      align-items:center; gap:8px; color:var(--text-secondary); }
+  details > summary::-webkit-details-marker { display:none; }
+  details > summary::before { content:'+'; display:inline-flex; align-items:center; justify-content:center;
+    width:17px; height:17px; border:1px solid var(--border); border-radius:5px; font-size:12px; color:var(--text-muted); }
+  details[open] > summary::before { content:'–'; }
+  .drawer { background:var(--stone); border-bottom:1px solid var(--border); }
+  .drawer .wrap { padding-block:26px 30px; }
+  .dgrid { display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:14px; margin-top:16px; }
+  .field label { display:block; font-size:9px; font-weight:600; letter-spacing:.14em; text-transform:uppercase;
+                 color:var(--text-muted); margin-bottom:5px; }
+  .field input { width:100%; padding:9px 12px; font-size:13px; font-family:var(--font);
+                 border:1px solid var(--border); border-radius:var(--radius-sm); background:var(--surface);
+                 outline:none; color:var(--text-primary); }
+  .field input:focus { border-color:var(--accent); }
+  .btns { display:flex; gap:9px; flex-wrap:wrap; align-items:center; margin-top:14px; }
+  .btns .btn { margin-top:0; }
+  .btn.ghost { background:transparent; color:var(--text-secondary); border:1px solid var(--border); }
+  .btn.ghost:hover { background:var(--surface); color:var(--text-primary); }
+  .msg { font-size:12px; color:var(--text-muted); }
+
+  /* coach-only content, hidden in athlete view and never printed */
+  body[data-view="athlete"] .coachonly { display:none !important; }
+  @media print { .coachonly { display:none !important; } }
+
   /* ── PRINT ─────────────────────────────────────────────────────────────── */
   .print-header { display:none; }
   @page { size:A4; margin:12mm 11mm; }
@@ -414,20 +565,48 @@
   }
 </style>
 </head>
-<body>
-<div class="app">
-  <aside class="sidebar">
-    <div class="sb-brand">
-      <img src="data:image/png;base64,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" alt="FOOTBALLFIT" style="width:184px;height:auto;display:block;max-width:100%;margin-bottom:14px">
-      <h1>Performance Dashboard</h1>
-      <p>Individual Coaching</p>
+<body data-view="coach">
+
+<header class="hero">
+  <div class="wrap">
+    <div class="topbar">
+      <div class="brandmark">
+        <img src="data:image/png;base64,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" alt="FOOTBALLFIT">
+        <div class="bsub">Performance<br>Dashboard</div>
+      </div>
+      <div class="ctrls">
+        <div class="seg2" role="group" aria-label="View">
+          <button type="button" data-mode="coach"   aria-pressed="true"  onclick="setView('coach')">Coach view</button>
+          <button type="button" data-mode="athlete" aria-pressed="false" onclick="setView('athlete')">Athlete view</button>
+        </div>
+        <select class="hsel" id="athleteSel" aria-label="Choose an athlete" onchange="selectAthlete(this.value)"></select>
+        <button class="hbtn" id="btnPrint" type="button" onclick="generatePrintReport()">Save as PDF</button>
+        <button class="hbtn" type="button" title="Choose which sections appear on the printout" onclick="togglePrintMenu(event)">Report sections</button>
+        <button class="hbtn" id="btnSettings" type="button" onclick="toggleDrawer()">Data &amp; settings</button>
+      </div>
     </div>
-    <div class="sb-search"><input id="sq" type="text" placeholder="Search athlete…" oninput="filterAthletes(this.value)"></div>
-    <div class="alist" id="alist"><div style="padding:16px;font-size:12px;color:#7a8290;text-align:center">Connect Google Sheet to load athletes</div></div>
-    <div class="settings-bar"><span id="sheetStatus">No sheet connected</span><span style="font-size:9px;color:#c8ccd2;margin:0 6px" title="Build version">BUILD 44</span><button class="btn-sm" onclick="showConfig()">⚙ Settings</button></div>
-  </aside>
-  <main class="main" id="main"></main>
-</div>
+    <div id="hero"></div>
+  </div>
+</header>
+
+<section class="drawer no-print" id="drawer" hidden>
+  <div class="wrap">
+    <div class="eb">Data &amp; settings · <span id="buildTag">Build 45</span></div>
+    <h2 class="h2">Connect your Google Sheet</h2>
+    <p class="lead">Two published tabs, <b>Athletes</b> and <b>Results</b> — exactly as they are set up now. In Google Sheets: File → Share → Publish to web, pick the tab, choose CSV, paste the link here. Nothing in your sheet needs to move.</p>
+    <div class="dgrid">
+      <div class="field"><label for="urlA">Athletes tab (published CSV link)</label><input id="urlA" type="url" placeholder="https://docs.google.com/spreadsheets/d/e/…/pub?gid=0&amp;single=true&amp;output=csv"></div>
+      <div class="field"><label for="urlR">Results tab (published CSV link)</label><input id="urlR" type="url" placeholder="https://docs.google.com/spreadsheets/d/e/…/pub?gid=…&amp;single=true&amp;output=csv"></div>
+      <div class="field"><label for="coachName">Coach name on the report</label><input id="coachName" type="text" placeholder="Henri Joensuu"></div>
+    </div>
+    <div class="btns"><button class="btn" type="button" onclick="connectSheet()">Sync from sheet</button><span class="msg" id="syncMsg"></span></div>
+  </div>
+</section>
+
+<nav class="secnav no-print" id="secnav" hidden><div class="wrap" id="secnavInner"></div></nav>
+
+<main class="wrap" id="main"></main>
+
 <script>
 // ─── NORMATIVE BANDS ─────────────────────────────────────────────────────────
 // Sources:
@@ -920,320 +1099,525 @@ async function loadData() {
       if(athleteMap[r.athlete_id]) athleteMap[r.athlete_id].sessions.push(deriveSession(r,athleteMap[r.athlete_id].weight_kg,athleteMap[r.athlete_id].age,athleteMap[r.athlete_id].height_cm));
     });
     Object.values(athleteMap).forEach(a=>a.sessions.sort((x,y)=>new Date(y.test_date)-new Date(x.test_date)));
-    document.getElementById('sheetStatus').textContent=`${athletes.length} athletes · ${results.length} sessions`;
+    const st=document.getElementById('syncMsg');
+    if(st) st.textContent=`Synced — ${athletes.length} athletes · ${results.length} sessions`;
     renderList();
     const ids=Object.keys(athleteMap);
     if(ids.length){selectedId=ids[0];renderMain();}
   } catch(e){showError(e.message);}
 }
 
+// ─── VIEW MODE ────────────────────────────────────────────────────────────────
+// Coach view shows everything. Athlete view hides the coach-only sections
+// (quadrants, motor preference / injury risk, coach notes) so the screen can be
+// turned around and shown to the athlete without editing anything.
+let viewMode = 'coach';
+function setView(m){
+  viewMode = m;
+  document.body.dataset.view = m;
+  document.querySelectorAll('.seg2 button[data-mode]').forEach(b =>
+    b.setAttribute('aria-pressed', String(b.dataset.mode === m)));
+  buildSecNav();
+}
+
+function toggleDrawer(force){
+  const d = document.getElementById('drawer'); if(!d) return;
+  const willOpen = (force === true) || (force !== false && d.hasAttribute('hidden'));
+  if (willOpen){
+    const cfg = getConfig();
+    const set = (id,v) => { const el=document.getElementById(id); if(el) el.value = v||''; };
+    set('urlA', cfg.athletesUrl); set('urlR', cfg.resultsUrl); set('coachName', cfg.coachName);
+    d.removeAttribute('hidden');
+    d.scrollIntoView({behavior:'smooth', block:'start'});
+  } else {
+    d.setAttribute('hidden','');
+  }
+}
+
 // ─── STATE SCREENS ────────────────────────────────────────────────────────────
 function showSetup(){
-  document.getElementById('main').innerHTML=`<div class="state-screen"><div class="config-box">
-    <h3>Connect your Google Sheet</h3>
-    <p>Paste the two published CSV URLs. See <strong>SETUP.md</strong> for instructions.</p>
-    <label>Athletes tab — CSV URL</label><input id="urlA" type="text" placeholder="https://docs.google.com/spreadsheets/d/…/pub?gid=0&single=true&output=csv">
-    <label>Test results tab — CSV URL</label><input id="urlR" type="text" placeholder="https://docs.google.com/spreadsheets/d/…/pub?gid=1&single=true&output=csv">
-    <label>Your name (shown on printouts)</label><input id="urlCN" type="text" placeholder="e.g. Performance Coach Henri Joensuu">
-    <button class="btn" onclick="connectSheet()">Connect sheet</button>
-    <p class="hint">URLs saved in your browser only.</p>
-  </div></div>`;
+  document.getElementById('main').innerHTML = `<div class="sec first">
+    <div class="eb">Getting started</div>
+    <h2 class="h2">Connect your Google Sheet to begin</h2>
+    <p class="lead">Open <b>Data &amp; settings</b> above and paste the two published CSV links —
+    the Athletes tab and the Results tab. Your existing sheet works as it is; see SETUP.md for the
+    column reference.</p>
+    <div class="btns"><button class="btn" onclick="toggleDrawer(true)">Open data &amp; settings</button></div>
+  </div>`;
+  document.getElementById('secnav')?.setAttribute('hidden','');
+  toggleDrawer(true);
 }
-function showLoading(){document.getElementById('main').innerHTML='<div class="state-screen"><h2>Loading…</h2><p>Fetching data from Google Sheets</p></div>';}
-function showError(msg){document.getElementById('main').innerHTML=`<div class="state-screen"><h2>Could not load data</h2><p>${msg}</p><button class="btn" onclick="showSetup()">Update settings</button></div>`;}
-function showConfig(){
-  const cfg=getConfig();
-  document.getElementById('main').innerHTML=`<div class="state-screen"><div class="config-box">
-    <h3>Sheet settings</h3><p>Update published CSV URLs below.</p>
-    <label>Athletes tab URL</label><input id="urlA" type="text" value="${cfg.athletesUrl||''}">
-    <label>Test results tab URL</label><input id="urlR" type="text" value="${cfg.resultsUrl||''}">
-    <label>Your name (shown on printouts)</label><input id="urlCN" type="text" value="${cfg.coachName||'Physical Performance Coach - Henri Joensuu'}" placeholder="e.g. Performance Coach Henri Joensuu">
-    <button class="btn" onclick="connectSheet()">Save & reload</button>
-    <button class="btn-sm" style="margin-top:12px;margin-left:8px" onclick="loadData()">Cancel</button>
-  </div></div>`;
+function showLoading(){
+  document.getElementById('main').innerHTML =
+    '<div class="sec first"><div class="eb">Syncing</div><h2 class="h2">Loading results…</h2><p class="lead">Fetching the latest rows from your Google Sheet.</p></div>';
 }
+function showError(msg){
+  document.getElementById('main').innerHTML = `<div class="sec first">
+    <div class="eb">Sync failed</div><h2 class="h2">Could not load the sheet</h2>
+    <p class="lead">${msg}</p>
+    <div class="btns"><button class="btn" onclick="toggleDrawer(true)">Check the links</button></div>
+  </div>`;
+}
+function showConfig(){ toggleDrawer(true); }
+
 function connectSheet(){
-  const a=document.getElementById('urlA').value.trim(), r=document.getElementById('urlR').value.trim();
-  if(!a||!r){alert('Please enter both URLs.');return;}
-  const cn=document.getElementById('urlCN')?.value.trim()||'';
-  saveConfig({athletesUrl:a,resultsUrl:r,coachName:cn}); loadData();
+  const a = document.getElementById('urlA').value.trim();
+  const r = document.getElementById('urlR').value.trim();
+  if(!a||!r){ const m=document.getElementById('syncMsg'); if(m) m.textContent='Both links are needed.'; return; }
+  const cn = (document.getElementById('coachName')||document.getElementById('urlCN'))?.value.trim() || '';
+  saveConfig({athletesUrl:a, resultsUrl:r, coachName:cn});
+  toggleDrawer(false);
+  loadData();
 }
 
-// ─── SIDEBAR ──────────────────────────────────────────────────────────────────
-function filterAthletes(v){searchQ=v.toLowerCase();renderList();}
+// ─── ATHLETE PICKER ───────────────────────────────────────────────────────────
+function filterAthletes(v){ searchQ=(v||'').toLowerCase(); renderList(); }
 function renderList(){
-  const el=document.getElementById('alist');
-  const list=Object.values(athleteMap).filter(a=>a.name.toLowerCase().includes(searchQ)||(a.position||'').toLowerCase().includes(searchQ));
-  if(!list.length){el.innerHTML='<div style="padding:16px;font-size:12px;color:#7a8290;text-align:center">No athletes found</div>';return;}
-  el.innerHTML=list.map(a=>{
-    const ini=a.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
-    return `<div class="aitem${a.id===selectedId?' active':''}" onclick="selectAthlete('${a.id}')">
-      <div class="av">${ini}</div>
-      <div class="ameta"><div class="aname">${a.name}</div><div class="apos">${a.position||'—'} · ${a.age||'—'}y</div></div>
-      <div class="sdot" style="background:${sidebarCol(a.sessions[0]||null)}"></div>
-    </div>`;
-  }).join('');
+  const sel = document.getElementById('athleteSel'); if(!sel) return;
+  const list = Object.values(athleteMap);
+  sel.innerHTML = list.map(a =>
+    `<option value="${a.id}"${a.id===selectedId?' selected':''}>${a.name}${a.position?' · '+a.position:''}</option>`
+  ).join('');
 }
-function selectAthlete(id){selectedId=id;renderList();renderMain();}
+function selectAthlete(id){ selectedId=id; renderList(); renderMain(); }
 
-// ─── TAB SWITCH ───────────────────────────────────────────────────────────────
-function switchTab(t){
-  document.querySelectorAll('.tab').forEach(e=>e.classList.toggle('active',e.dataset.t===t));
-  document.querySelectorAll('.tc').forEach(e=>e.classList.toggle('active',e.dataset.t===t));
-  if(t==='trends')   setTimeout(drawCharts,60);
-  if(t==='quadrant') setTimeout(()=>drawQuadrant(currentXAxis,currentYAxis),60);
-  if(t==='history')  setTimeout(renderHistory,60);
-  if(t==='radar')    setTimeout(renderRadar,60);
-  if(t==='asr')      setTimeout(renderASR,60);
-  if(t==='motorpref')setTimeout(renderMotorPref,60);
+// switchTab is retained so any older onclick reference scrolls instead of throwing.
+function switchTab(t){ document.getElementById('s-'+t)?.scrollIntoView({behavior:'smooth',block:'start'}); }
+
+// ─── READINESS RING ───────────────────────────────────────────────────────────
+// Four arcs, one per performance domain, each filled to that domain's mean
+// benchmark score out of 4. The centre carries the overall score.
+const RING_CATS = [
+  { key:'jump',     label:'Power',    keys:['broad_jump','slbj_LSI','triple_hop','triple_hop_LSI','cmj','sj','eur','cmj_mrsi','cmj_con_force','dj','dj_rsi','dsi'] },
+  { key:'speed',    label:'Speed',    keys:['sprint10','sprint20','max_vel'] },
+  { key:'strength', label:'Strength', keys:['sq_1rm_bw','tb_1rm_bw','bp_1rm_bw','imtp'] },
+  { key:'aero',     label:'Aerobic',  keys:['mas','vo2max','yoyo_ir2','bronco'] },
+];
+function catMean(keys, ld){
+  const sc = keys.map(k=>bs(ld[k],k)).filter(v=>v!==null);
+  return sc.length ? sc.reduce((x,y)=>x+y,0)/sc.length : null;
+}
+function _pxy(cx,cy,r,deg){ const a=(deg-90)*Math.PI/180; return [cx+r*Math.cos(a), cy+r*Math.sin(a)]; }
+function _arc(cx,cy,r,a0,a1){
+  const [x0,y0]=_pxy(cx,cy,r,a0), [x1,y1]=_pxy(cx,cy,r,a1);
+  return `M ${x0.toFixed(2)} ${y0.toFixed(2)} A ${r} ${r} 0 ${(a1-a0)>180?1:0} 1 ${x1.toFixed(2)} ${y1.toFixed(2)}`;
+}
+function readinessRing(ld){
+  const S=260, c=S/2, r=78, GAP=7;
+  let svg=`<svg viewBox="0 0 ${S} ${S}" width="${S}" height="${S}" role="img" aria-label="Benchmark readiness by domain">`;
+  const means=[];
+  RING_CATS.forEach((cat,i)=>{
+    const m = catMean(cat.keys, ld); means.push(m);
+    const a0 = i*90 + GAP/2, a1 = (i+1)*90 - GAP/2;
+    svg += `<path d="${_arc(c,c,r,a0,a1)}" fill="none" stroke="rgba(255,255,255,.13)" stroke-width="11" stroke-linecap="round"/>`;
+    if (m!==null){
+      const end = a0 + (a1-a0)*Math.max(0.04, m/4);
+      const col = SCORE_COLS[Math.max(0,Math.min(4,Math.round(m)))];
+      svg += `<path d="${_arc(c,c,r,a0,end)}" fill="none" stroke="${col}" stroke-width="11" stroke-linecap="round"/>`;
+    }
+    const [lx,ly]=_pxy(c,c,r+22,(a0+a1)/2);
+    svg += `<text x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" fill="#9E9C96" font-size="8.5" font-weight="600"
+      letter-spacing="1.4" text-anchor="middle" dominant-baseline="middle">${cat.label.toUpperCase()}</text>`;
+  });
+  const valid = means.filter(m=>m!==null);
+  const overall = valid.length ? valid.reduce((x,y)=>x+y,0)/valid.length : null;
+  svg += `<text x="${c}" y="${c-4}" fill="#fff" font-size="34" font-weight="500" letter-spacing="-1"
+    text-anchor="middle" dominant-baseline="middle">${overall!==null?overall.toFixed(1):'—'}</text>`;
+  svg += `<text x="${c}" y="${c+20}" fill="#9E9C96" font-size="8.5" font-weight="600" letter-spacing="1.6"
+    text-anchor="middle" dominant-baseline="middle">OF 4</text>`;
+  svg += `</svg>`;
+  return { svg, overall };
+}
+
+// ─── RESULT ROWS ──────────────────────────────────────────────────────────────
+let inspectKey = null;
+
+function barHtml(val, nk){
+  const n = NORMS[nk];
+  if (!n || n.noNorm || n.min==null || val==null) return '<div class="bar none">tracked individually</div>';
+  const span = (n.max - n.min) || Math.abs(n.max||1)*0.2 || 1;
+  const lo = n.min - span*0.9, hi = n.max + span*0.9;
+  const pc = v => Math.max(0, Math.min(100, (v-lo)/(hi-lo)*100));
+  const b0 = pc(n.min), b1 = pc(n.max);
+  const sc = bs(val, nk);
+  const mkCol = sc===null ? 'var(--ink)' : SCORE_COLS[sc];
+  return `<div class="bar"><div class="band" style="left:${b0.toFixed(1)}%;width:${(b1-b0).toFixed(1)}%"></div>`
+       + `<div class="mk" style="left:${pc(val).toFixed(1)}%;background:${mkCol}"></div></div>`;
+}
+function chgHtml(val, prev, lb){
+  if (val==null||prev==null||prev===0) return '<span class="flat">—</span>';
+  const d = (val-prev)/Math.abs(prev)*100;
+  if (Math.abs(d) < 0.5) return `<span class="flat">→ ${d>0?'+':''}${d.toFixed(1)}%</span>`;
+  const imp = lb ? d<0 : d>0;
+  return `<span class="${imp?'up':'down'}">${imp?'↑':'↓'} ${d>0?'+':''}${d.toFixed(1)}%</span>`;
+}
+function vRow(nk, val, prev, sub){
+  const n = NORMS[nk]; if (!n || val==null) return '';
+  const dsrc = _rDateSrc[nk];
+  const stale = dsrc && _rLatestDate && dsrc !== _rLatestDate ? `tested ${dsrc}` : '';
+  const note  = [sub, stale].filter(Boolean).join(' · ');
+  return `<button class="row" type="button" data-k="${nk}" aria-pressed="${inspectKey===nk}" onclick="inspect('${nk}')">
+    <span class="lbl">${n.label}${note?`<small>${note}</small>`:''}</span>
+    <span class="val">${val}<small>${n.u||''}</small></span>
+    ${barHtml(val, nk)}
+    <span class="chg">${chgHtml(val, prev, n.lb)}</span>
+  </button>`;
+}
+
+function inspect(nk){
+  inspectKey = nk;
+  document.querySelectorAll('.row[data-k]').forEach(r =>
+    r.setAttribute('aria-pressed', String(r.dataset.k === nk)));
+  drawInspector(nk);
+}
+
+function drawInspector(nk){
+  const box = document.getElementById('inspector'); if(!box) return;
+  const a = athleteMap[selectedId]; const n = NORMS[nk];
+  if (!a || !n){ box.innerHTML=''; return; }
+  const pts = [...a.sessions].reverse()
+    .map(s => ({ d:s.test_date, v:s[nk] })).filter(p => p.v!=null);
+  const cur = pts.length ? pts[pts.length-1].v : null;
+  const sc  = bs(cur, nk);
+
+  const W=340, H=150, PL=38, PR=12, PT=14, PB=26;
+  let chart;
+  if (!pts.length){
+    chart = `<p class="note">No recorded value for this test yet.</p>`;
+  } else {
+    const vals = pts.map(p=>p.v).concat(n.noNorm?[]:[n.min,n.max]);
+    let lo=Math.min(...vals), hi=Math.max(...vals);
+    const pad=(hi-lo)*0.2 || Math.abs(hi)*0.08 || 1; lo-=pad; hi+=pad;
+    const X = i => PL + (pts.length===1 ? (W-PL-PR)/2 : i*(W-PL-PR)/(pts.length-1));
+    const Y = v => PT + (H-PT-PB) * (1 - (v-lo)/(hi-lo));
+    let g = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${n.label} over time">`;
+    if (!n.noNorm && n.min!=null){
+      const yTop=Y(n.max), yBot=Y(n.min);
+      g += `<rect x="${PL}" y="${Math.min(yTop,yBot).toFixed(1)}" width="${W-PL-PR}"
+             height="${Math.abs(yBot-yTop).toFixed(1)}" fill="#BFD6C6" opacity=".38"/>`;
+      g += `<line x1="${PL}" x2="${W-PR}" y1="${yBot.toFixed(1)}" y2="${yBot.toFixed(1)}"
+             stroke="#8FB49C" stroke-width="1" stroke-dasharray="4,3"/>`;
+    }
+    [lo,hi].forEach(v => {
+      g += `<text x="${PL-7}" y="${Y(v).toFixed(1)}" fill="#86857F" font-size="9" text-anchor="end"
+             dominant-baseline="middle">${(+v.toFixed(2))}</text>`;
+    });
+    if (pts.length>1){
+      g += `<polyline fill="none" stroke="#17181A" stroke-width="1.8" stroke-linejoin="round"
+             points="${pts.map((p,i)=>`${X(i).toFixed(1)},${Y(p.v).toFixed(1)}`).join(' ')}"/>`;
+    }
+    pts.forEach((p,i) => {
+      const last = i===pts.length-1;
+      g += `<circle cx="${X(i).toFixed(1)}" cy="${Y(p.v).toFixed(1)}" r="${last?4.5:3.2}"
+             fill="${last?'#17181A':'#FFFFFF'}" stroke="#17181A" stroke-width="1.6"/>`;
+      if (i===0 || last){
+        g += `<text x="${X(i).toFixed(1)}" y="${H-8}" fill="#86857F" font-size="8.5"
+               text-anchor="${pts.length>1?(last?'end':'start'):'middle'}">${p.d}</text>`;
+      }
+    });
+    g += `</svg>`;
+    chart = g;
+  }
+
+  const range = n.noNorm || n.min==null ? 'No validated professional norm'
+              : `${n.min}–${n.max} ${n.u||''}`;
+  box.innerHTML = `
+    <div class="eb">Inspecting</div>
+    <h3>${n.label}</h3>
+    <div style="display:flex;align-items:baseline;gap:10px;margin-top:8px;flex-wrap:wrap">
+      <span class="big">${cur??'—'}<small>${n.u||''}</small></span>
+      ${sc!==null?`<span class="chip c-s${sc}">${SL[sc]}</span>`:''}
+    </div>
+    ${chart}
+    <div class="tleg"><span><i style="background:#BFD6C6"></i>Professional range ${range}</span></div>
+    ${n.note?`<p class="note">${n.note}</p>`:''}
+    ${n.source?`<p class="src coachonly">Source: ${n.source}</p>`:''}`;
+}
+
+// ─── SECTION NAV ──────────────────────────────────────────────────────────────
+let _secObserver = null;
+function buildSecNav(){
+  const nav = document.getElementById('secnav'), inner = document.getElementById('secnavInner');
+  if(!nav||!inner) return;
+  const secs = [...document.querySelectorAll('main .sec[id]')]
+    .filter(s => !(viewMode==='athlete' && s.classList.contains('coachonly')));
+  if(!secs.length){ nav.setAttribute('hidden',''); return; }
+  nav.removeAttribute('hidden');
+  inner.innerHTML = secs.map(s => `<a href="#${s.id}">${s.dataset.nav||s.id}</a>`).join('');
+  if (_secObserver) _secObserver.disconnect();
+  _secObserver = new IntersectionObserver(es => {
+    es.forEach(e => {
+      if (!e.isIntersecting) return;
+      inner.querySelectorAll('a').forEach(l =>
+        l.classList.toggle('on', l.getAttribute('href') === '#'+e.target.id));
+    });
+  }, { rootMargin:'-60px 0px -70% 0px' });
+  secs.forEach(s => _secObserver.observe(s));
 }
 
 // ─── MAIN RENDER ──────────────────────────────────────────────────────────────
 function renderMain(){
-  const a=athleteMap[selectedId]; if(!a) return;
-  _rSessions=a.sessions; // set for PB detection in mRow
+  const a = athleteMap[selectedId]; if(!a) return;
+  _rSessions = a.sessions;
   const latestSession = a.sessions[0];
-  // Results tables show the most recent recorded value for EACH metric across all
-  // sessions — matches Category Status and the print report. A sparse latest session
-  // no longer blanks out tests that were recorded earlier.
-  const d = { ...buildLatestAcrossSessions(a.sessions), ...{
-    test_date: latestSession?.test_date,
-    notes: latestSession?.notes,
-    weight_kg: latestSession?.weight_kg,
-  }};
-  // Carry through raw/derived fields that aren't in NORMS but are needed for display
-  ['sq_1rm','tb_1rm','bp_1rm','sq_kg_raw','tb_kg_raw','bp_kg_raw','sq_reps_raw','tb_reps_raw','bp_reps_raw',
-   'imtp_raw_N','cmj_con_force_N','tt5min_dist','tt_dist','tt_time','tt_speed','tt_vo2max',
-   'yoyo_vo2max','beep_shuttle','beep_speed','beep_vo2max','cmj_ct_ms','dj_ct_ms']
-    .forEach(k => { for(const s of a.sessions){ if(s[k]!=null){ d[k]=s[k]; break; } } });
-  // Which session did each metric come from? Used to flag older values.
+
+  if (!a.sessions.length){
+    document.getElementById('hero').innerHTML =
+      `<div class="heroGrid"><div><div class="eb">Athlete</div><h1>${a.name}</h1>
+       <p class="sub">No test sessions recorded yet. Add a row to the Results tab of your sheet.</p></div><div></div></div>`;
+    document.getElementById('main').innerHTML = '';
+    document.getElementById('secnav')?.setAttribute('hidden','');
+    return;
+  }
+
+  const d = { ...buildLatestAcrossSessions(a.sessions),
+    test_date: latestSession?.test_date, notes: latestSession?.notes, weight_kg: latestSession?.weight_kg };
   const dateSrcMain = {};
   Object.keys(NORMS).forEach(k => { for(const s of a.sessions){ if(s[k]!=null){ dateSrcMain[k]=s.test_date; break; } } });
   _rDateSrc = dateSrcMain; _rLatestDate = latestSession?.test_date;
-  const pv=a.sessions[1]||null;
-  // prevVal(key): find the most recent previous session that has a value for this key.
-  // Fixes "vs Previous" showing — when the 2nd session didn't test a metric, look further back.
   const prevVal = k => { for(let i=1;i<a.sessions.length;i++){ if(a.sessions[i][k]!=null) return a.sessions[i][k]; } return null; };
-  if(!d){document.getElementById('main').innerHTML=`<div class="state-screen"><h2>${a.name}</h2><p>No test sessions recorded yet.</p></div>`;return;}
-  const ini=a.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
-  const inj=a.injury_hx?`<span class="ptag inj">⚠ Injury hx</span><span class="ptag" style="font-size:10px">${a.injury_hx}</span>`:'';
 
-  const jumpKeys     = ['broad_jump','slbj_LSI','triple_hop','triple_hop_LSI','cmj','cmj_flight','sj','sj_flight','eur','cmj_mrsi','cmj_con_force','dj','dj_rsi','dsi'];
-  const aeroKeys     = ['mas','vo2max','yoyo_ir2','bronco'];
-  const strengthKeys = ['sq_1rm_bw','tb_1rm_bw','bp_1rm_bw','imtp'];
-  const speedKeys    = ['sprint10','sprint20','max_vel'];
+  // ── HERO ────────────────────────────────────────────────────────────────
+  const ring = readinessRing(d);
+  const overallChip = ring.overall===null ? '' :
+    (()=>{ const cl=catLabel(ring.overall); const idx=ring.overall>=3.5?4:ring.overall>=2.5?3:ring.overall>=1.5?1:0;
+           return `<span class="chip c-s${idx}">${cl.l}</span>`; })();
+  const meta = [
+    ['Position', a.position||'—'],
+    ['Age', a.age?a.age+' yrs':'—'],
+    ['Height', a.height_cm?a.height_cm+' cm':'—'],
+    ['Weight', (d.weight_kg||a.weight_kg)?((d.weight_kg||a.weight_kg)+' kg'):'—'],
+    ['Last tested', d.test_date||'—'],
+    ['Sessions', String(a.sessions.length)],
+  ].map(([l,v])=>`<div><b>${v}</b><span>${l}</span></div>`).join('');
 
-  document.getElementById('main').innerHTML=`
-    <div class="print-header">
-      <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAfQAAAH0CAYAAADL1t+KAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAEs2lUWHRYTUw6Y29tLmFkb2JlLnhtcAAAAAAAPD94cGFja2V0IGJlZ2luPSfvu78nIGlkPSdXNU0wTXBDZWhpSHpyZVN6TlRjemtjOWQnPz4KPHg6eG1wbWV0YSB4bWxuczp4PSdhZG9iZTpuczptZXRhLyc+CjxyZGY6UkRGIHhtbG5zOnJkZj0naHR0cDovL3d3dy53My5vcmcvMTk5OS8wMi8yMi1yZGYtc3ludGF4LW5zIyc+CgogPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9JycKICB4bWxuczpBdHRyaWI9J2h0dHA6Ly9ucy5hdHRyaWJ1dGlvbi5jb20vYWRzLzEuMC8nPgogIDxBdHRyaWI6QWRzPgogICA8cmRmOlNlcT4KICAgIDxyZGY6bGkgcmRmOnBhcnNlVHlwZT0nUmVzb3VyY2UnPgogICAgIDxBdHRyaWI6Q3JlYXRlZD4yMDI1LTExLTIzPC9BdHRyaWI6Q3JlYXRlZD4KICAgICA8QXR0cmliOkV4dElkPmRhMTFiNjZhLTBlZTgtNDcxMS1hODA2LWRmMWYyNDczY2M2YTwvQXR0cmliOkV4dElkPgogICAgIDxBdHRyaWI6RmJJZD41MjUyNjU5MTQxNzk1ODA8L0F0dHJpYjpGYklkPgogICAgIDxBdHRyaWI6VG91Y2hUeXBlPjI8L0F0dHJpYjpUb3VjaFR5cGU+CiAgICA8L3JkZjpsaT4KICAgPC9yZGY6U2VxPgogIDwvQXR0cmliOkFkcz4KIDwvcmRmOkRlc2NyaXB0aW9uPgoKIDxyZGY6RGVzY3JpcHRpb24gcmRmOmFib3V0PScnCiAgeG1sbnM6ZGM9J2h0dHA6Ly9wdXJsLm9yZy9kYy9lbGVtZW50cy8xLjEvJz4KICA8ZGM6dGl0bGU+CiAgIDxyZGY6QWx0PgogICAgPHJkZjpsaSB4bWw6bGFuZz0neC1kZWZhdWx0Jz5GT09UQkFMTEZJVCAtIDE8L3JkZjpsaT4KICAgPC9yZGY6QWx0PgogIDwvZGM6dGl0bGU+CiA8L3JkZjpEZXNjcmlwdGlvbj4KCiA8cmRmOkRlc2NyaXB0aW9uIHJk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" alt="FOOTBALLFIT" style="width:120px;height:auto">
-      <div class="print-header-meta">
-        <strong>${a.name}</strong> — Performance Report
-        <span>${a.position||'—'} · Generated ${new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'})}</span>
+  document.getElementById('hero').innerHTML = `
+    <div class="heroGrid">
+      <div>
+        <div class="eb">Performance report · ${getConfig().coachName||'FootballFit'}</div>
+        <h1>${a.name}</h1>
+        <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
+          ${overallChip}
+          ${a.injury_hx?`<span class="chip c-s2">⚠ ${a.injury_hx}</span>`:''}
+        </div>
+        <div class="meta">${meta}</div>
+        ${d.notes?`<div class="hnote"><div class="eb">Session note</div><p>${d.notes}</p></div>`:''}
       </div>
-    </div>
-    <div class="profile-card">
-      <div class="pav">${ini}</div>
-      <div class="pinfo">
-        <h2>${a.name}</h2>
-        <p class="pmeta">${a.position||'—'} · ${a.age||'—'} yrs · ${a.height_cm||'—'} cm · ${a.weight_kg||'—'} kg · Last tested ${d.test_date||'—'}</p>
-        <div class="ptags"><span class="ptag">Remote coaching</span><span class="ptag">Professional football / futsal</span><span class="ptag">${a.sessions.length} session${a.sessions.length!==1?'s':''}</span>${d.weight_kg && d.weight_kg !== parseFloat(a.weight_kg) ? `<span class="ptag" style="background:#eff6ff;border-color:#bfdbfe;color:#1e40af">⚖ ${d.weight_kg} kg (session)</span>` : ''}${inj}</div>
-      ${d.notes ? `<div style="margin-top:10px;padding:8px 12px;background:var(--surface-alt);border-left:3px solid var(--accent);border-radius:0 6px 6px 0;font-size:12px;color:var(--text-secondary);line-height:1.5"><span style="font-size:10px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:2px">Session note</span>${d.notes}</div>` : ''}
+      <div class="ringBox">
+        ${ring.svg}
+        <p class="rcap">Mean benchmark score per domain, against professional football reference ranges.</p>
       </div>
-      <div class="print-menu-wrap no-print" style="margin-left:auto;align-self:flex-start;display:flex;gap:6px">
-        <button class="btn-sm" onclick="generatePrintReport()">⬇ Save as PDF</button>
-        <button class="btn-sm" title="Choose which sections appear on the printout" onclick="togglePrintMenu(event)">⚙</button>
-        <div class="print-menu" id="printMenu" style="display:none">
+    </div>`;
+
+  // ── RESULT GROUPS ───────────────────────────────────────────────────────
+  const GROUPS = [
+    { name:'Jump / Power', rows:[
+      ['broad_jump'], ['slbj_L'], ['slbj_R'], ['slbj_LSI'],
+      ['triple_hop'], ['triple_hop_L'], ['triple_hop_R'], ['triple_hop_LSI'], ['triple_hop_norm'],
+      ['cmj'], ['sj'], ['cmj_flight'], ['sj_flight'],
+      ['cmj_con_force', d.cmj_con_force_N!=null?`${d.cmj_con_force_N} N raw`:''],
+      ['eur','CMJ ÷ SJ'],
+      ['cmj_mrsi', (d.cmj!=null&&d.cmj_ct_ms!=null)?`${d.cmj}cm ÷ ${d.cmj_ct_ms}ms`:''],
+      ['dj'], ['dj_rsi', (d.dj!=null&&d.dj_ct_ms!=null)?`${d.dj}cm ÷ ${d.dj_ct_ms}ms`:''], ['dsi'],
+    ]},
+    { name:'Aerobic', rows:[
+      ['mas', d.mas_src?`from ${d.mas_src}${d.mas?` · ${(d.mas*3.6).toFixed(1)} km/h`:''}`:''],
+      ['vo2max','estimated'], ['yoyo_ir2'], ['bronco'],
+    ]},
+    { name:'Strength — lifts', rows:[
+      ['sq_1rm_bw', d.sq_kg_raw?`${d.sq_kg_raw}kg × ${d.sq_reps_raw} → est. 1RM ${d.sq_1rm}kg`:''],
+      ['tb_1rm_bw', d.tb_kg_raw?`${d.tb_kg_raw}kg × ${d.tb_reps_raw} → est. 1RM ${d.tb_1rm}kg`:''],
+      ['bp_1rm_bw', d.bp_kg_raw?`${d.bp_kg_raw}kg × ${d.bp_reps_raw} → est. 1RM ${d.bp_1rm}kg`:''],
+      ['imtp', d.imtp_raw_N?`${d.imtp_raw_N} N peak force`:''],
+    ]},
+    { name:'Speed', rows:[ ['sprint10'], ['sprint20'], ['max_vel'] ]},
+  ];
+
+  const untested = [];
+  const groupHtml = GROUPS.map(g => {
+    const body = g.rows.map(([k,sub]) => {
+      if (!NORMS[k]) return '';
+      if (d[k]==null){ untested.push(k); return ''; }
+      return vRow(k, d[k], prevVal(k), sub);
+    }).join('');
+    return body ? `<div class="ghead">${g.name}</div>${body}` : '';
+  }).join('');
+
+  const untestedHtml = untested.length ? `<details><summary>Not recorded this block (${untested.length})</summary>
+    <p class="lead" style="margin-top:10px;font-size:12.5px">${untested.map(k=>{
+      const n=NORMS[k]; const hint = n.note?` — ${n.note}`:'';
+      return `<b>${n.label}</b>${hint}`;
+    }).join(' · ')}</p></details>` : '';
+
+  // first metric with a value becomes the default inspector subject
+  const firstKey = (inspectKey && d[inspectKey]!=null) ? inspectKey
+    : GROUPS.flatMap(g=>g.rows.map(r=>r[0])).find(k => NORMS[k] && d[k]!=null) || null;
+  inspectKey = firstKey;
+
+  // ── HIGHLIGHT TILES ─────────────────────────────────────────────────────
+  const scored = Object.keys(NORMS).filter(k=>d[k]!=null && bs(d[k],k)!==null)
+    .map(k => { const p=prevVal(k);
+      const ch = (p!=null&&p!==0)?((d[k]-p)/Math.abs(p)*100):null;
+      return { k, v:d[k], s:bs(d[k],k), ch, imp: ch===null?null:(NORMS[k].lb?ch<0:ch>0) }; });
+  const gains  = scored.filter(m=>m.imp===true).sort((x,y)=>Math.abs(y.ch)-Math.abs(x.ch));
+  const worst  = [...scored].sort((x,y)=>x.s-y.s)[0];
+  const atOrAbove = scored.filter(m=>m.s>=3).length;
+  const tiles = [
+    { chip:'c-dark', label:'Overall readiness',
+      big:`${ring.overall!==null?ring.overall.toFixed(1):'—'}<small>/ 4</small>`,
+      cap: ring.overall!==null ? catLabel(ring.overall).l : 'Not enough benchmarked tests yet.' },
+    { chip:'c-s4', label:'Biggest gain',
+      big: gains.length?`${gains[0].ch>0?'+':''}${gains[0].ch.toFixed(1)}<small>%</small>`:'—',
+      cap: gains.length?`${NORMS[gains[0].k].label} since the previous test`:'No previous session to compare against.' },
+    { chip:'c-s3', label:'Standards met',
+      big:`${atOrAbove}<small>/ ${scored.length}</small>`,
+      cap:'Benchmarked tests at or above the professional standard.' },
+    { chip: worst?`c-s${worst.s}`:'c-line', label:'Primary focus',
+      big: worst?`${worst.v}<small>${NORMS[worst.k].u||''}</small>`:'—',
+      cap: worst?`${NORMS[worst.k].label} — ${SL[worst.s]}`:'No benchmarked tests recorded.' },
+  ].map(t => `<div class="hl"><span class="chip ${t.chip}">${t.label}</span>
+      <div class="big">${t.big}</div><p class="cap">${t.cap}</p></div>`).join('');
+
+  // ── DOCUMENT ────────────────────────────────────────────────────────────
+  document.getElementById('main').innerHTML = `
+
+    <section class="sec first" id="s-summary" data-nav="Summary">
+      <div class="eb">At a glance</div>
+      <h2 class="h2">Where ${a.name.split(' ')[0]} stands today</h2>
+      <p class="lead">Every figure below is benchmarked against professional football reference ranges.
+      Shaded bars show the professional range; the marker is this athlete.</p>
+      <div class="hlgrid">${tiles}</div>
+    </section>
+
+    <section class="sec" id="s-results" data-nav="Results">
+      <div class="sechead">
+        <div><div class="eb">Test battery</div><h2 class="h2">Latest results</h2></div>
+      </div>
+      <p class="lead">Select any test to see how it has moved across sessions.</p>
+      <div class="split">
+        <div>
+          <div class="rhead"><span>Test</span><span>Result</span><span>Against professional range</span><span>vs prev</span></div>
+          ${groupHtml}
+          ${untestedHtml}
+        </div>
+        <aside class="trend" id="inspector"></aside>
+      </div>
+    </section>
+
+    <section class="sec" id="s-radar" data-nav="Profile">
+      <div class="eb">Athletic profile</div>
+      <h2 class="h2">Strengths and gaps across domains</h2>
+      <div class="tc" data-t="radar"><div id="radarContent" style="padding:14px 0;display:flex;flex-direction:column;align-items:center;gap:12px"></div></div>
+    </section>
+
+    <section class="sec" id="s-trends" data-nav="Trends">
+      <div class="eb">Longitudinal</div>
+      <h2 class="h2">Every test over time</h2>
+      <p class="lead">Shaded band = professional range. On sprint times a downward line is an improvement.</p>
+      <div class="tc" data-t="trends"><div class="charts-body" style="padding:14px 0">
+        <div class="chart-grid" id="chartGrid"></div>
+      </div></div>
+    </section>
+
+    <section class="sec coachonly" id="s-quadrant" data-nav="Quadrants">
+      <div class="eb">Coach view</div>
+      <h2 class="h2">Quadrant profiling</h2>
+      <p class="lead">This athlete against the rest of your roster, plotted anonymously. Coach-only — not shown in athlete view and never printed.</p>
+      <div class="tc" data-t="quadrant"><div class="quadrant-body" style="padding:14px 0">
+        <div class="quadrant-controls" style="flex-direction:column;align-items:flex-start;gap:8px">
+          <div class="quad-ctrl-row">
+            <span class="control-label">Preset</span>
+            ${QUAD_PRESETS.map(p=>`<button class="axis-btn${p.x===currentXAxis&&p.y===currentYAxis?' active':''}" onclick="applyPreset('${p.x}','${p.y}')">${p.name}</button>`).join('')}
+          </div>
+          <div class="quad-ctrl-row">
+            <span class="control-label">X axis</span>
+            <select class="axis-select" id="xAxisSel" onchange="setQuadAxes(this.value,document.getElementById('yAxisSel').value)">
+              ${QUAD_X_AXES.map(x=>`<option value="${x.key}"${x.key===currentXAxis?' selected':''}>${x.label}</option>`).join('')}
+            </select>
+            <span class="control-label">Y axis</span>
+            <select class="axis-select" id="yAxisSel" onchange="setQuadAxes(document.getElementById('xAxisSel').value,this.value)">
+              ${QUAD_Y_AXES.map(y=>`<option value="${y.key}"${y.key===currentYAxis?' selected':''}>${y.label}</option>`).join('')}
+            </select>
+          </div>
+        </div>
+        <div id="quadrantContainer"></div>
+        <div class="quadrant-legend">
+          <span class="ql-dot ql-you"></span><span>${a.name}</span>
+          <span class="ql-dot ql-anon"></span><span>Other athletes (anonymous)</span>
+          <span style="font-size:11px">Faded trail = previous sessions · Dividers at normative midpoint</span>
+        </div>
+      </div></div>
+    </section>
+
+    <section class="sec" id="s-asr" data-nav="Speed reserve">
+      <div class="eb">Anaerobic speed reserve</div>
+      <h2 class="h2">Speed reserve and training zones</h2>
+      <div class="tc" data-t="asr"><div id="asrContent" style="padding:14px 0"></div></div>
+    </section>
+
+    <section class="sec coachonly" id="s-motorpref" data-nav="Motor preference">
+      <div class="eb">Coach view</div>
+      <h2 class="h2">Motor preference</h2>
+      <p class="lead">Sprint kinematics placed against the Wild &amp; Bezodis reference or your own roster.
+      Injury relative risks here are coach-only and never reach the athlete.</p>
+      <div class="tc" data-t="motorpref"><div id="mpContent" style="padding:14px 0"></div></div>
+    </section>
+
+    <section class="sec" id="s-history" data-nav="History">
+      <div class="eb">Session log</div>
+      <h2 class="h2">Test history</h2>
+      <div class="tc" data-t="history"><div id="historyContent" style="overflow-x:auto;padding:14px 0"></div></div>
+    </section>
+
+    <section class="sec coachonly" id="s-feedback" data-nav="Feedback">
+      <div class="eb">Coach view</div>
+      <h2 class="h2">Written feedback</h2>
+      <p class="lead">Coach notes stay here. Only the athlete message is included on the printout.</p>
+      <div class="tc" data-t="feedback"><div id="feedbackContent" style="padding:14px 0">
+        <div class="feedback-empty"><h3>Generate feedback</h3>
+        <p>Builds a coach assessment and a plain-language athlete message from this athlete's results.</p>
+        <button class="btn" onclick="generateFeedback()">Generate feedback</button></div>
+      </div></div>
+    </section>
+
+    <section class="sec" id="s-key" data-nav="Key">
+      <div class="eb">Reference</div>
+      <h2 class="h2">How to read this report</h2>
+      <div class="status-key" style="background:transparent;border-top:0;padding:14px 0">
+        <span class="key-label">Status</span>
+        ${[4,3,2,1,0].map(s=>`<span class="chip c-s${s}">${SL[s]}</span>`).join('')}
+      </div>
+      <p class="lead">The shaded bar is the professional reference range for that test; the marker is this
+      athlete's latest value. <b>Above Standard</b> means at or beyond the top of the range,
+      <b>At Standard</b> inside it. The tiers below it are set at fixed distances outside the range —
+      a working convention, not a statistically derived cut-point.</p>
+      <div class="btns no-print">
+        <button class="btn ghost" onclick="generatePrintReport()">Save as PDF</button>
+        <button class="btn ghost" onclick="togglePrintMenu(event)">Choose report sections</button>
+      </div>
+      <div class="print-menu-wrap no-print" style="position:relative">
+        <div class="print-menu" id="printMenu" style="display:none;right:auto;left:0">
           <h4>Include on printout</h4>
           ${PRINT_SECTIONS.map(s=>{
             const on = printPrefs()[s.key];
             return `<label><input type="checkbox" ${on?'checked':''} onchange="togglePrintSection('${s.key}',this.checked)"> ${s.label}</label>`;
           }).join('')}
-          <div class="pm-note">Sections still only appear when the athlete has the data for them.
+          <div class="pm-note">Sections only appear when the athlete has the data.
           Coach-only content — injury relative risks, coach notes — is never printed.</div>
         </div>
       </div>
-    </div>
-    <div>
-      <div class="sec-heading">Performance category status</div>
-      <div class="cat-grid">
-        ${(()=>{ const ld=buildLatestAcrossSessions(a.sessions); return catCard('jump',jumpKeys,ld)+catCard('aero',aeroKeys,ld)+catCard('strength',strengthKeys,ld)+catCard('speed',speedKeys,ld); })()}
-      </div>
-    </div>
-    <div class="tab-card">
-      <div class="tabs">
-        <div class="tab active" data-t="results" onclick="switchTab('results')">Latest Results</div>
-        <div class="tab" data-t="trends"   onclick="switchTab('trends')">Trend Charts</div>
-        <div class="tab" data-t="quadrant" onclick="switchTab('quadrant')">Quadrants</div>
-        <div class="tab" data-t="radar"    onclick="switchTab('radar')">Athletic Profile</div>
-        <div class="tab" data-t="asr"      onclick="switchTab('asr')">Speed Reserve</div>
-        <div class="tab" data-t="motorpref" onclick="switchTab('motorpref')">Motor Preference</div>
-        <div class="tab" data-t="history"  onclick="switchTab('history')">Test History</div>
-        <div class="tab" data-t="feedback" onclick="switchTab('feedback')">Athlete Feedback</div>
-      </div>
-      <div class="tc active" data-t="results">
-        <div class="results-body">
+    </section>
+  `;
 
-          <div>
-            <div class="sec-heading">Jump / Power</div>
-            <table><thead><tr><th>Test</th><th>Result</th><th>Test result status</th><th>Normative range</th><th>vs previous</th></tr></thead><tbody>
-              ${mRow('broad_jump',  d.broad_jump,  prevVal('broad_jump'))}
-              ${mRow('slbj_L',      d.slbj_L,      pv?.slbj_L)}
-              ${mRow('slbj_R',      d.slbj_R,      pv?.slbj_R)}
-              ${d.slbj_LSI!=null ? mRow('slbj_LSI', d.slbj_LSI, pv?.slbj_LSI, null, true) : ''}
-              ${mRow('triple_hop',  d.triple_hop,  prevVal('triple_hop'))}
-              ${d.triple_hop_L!=null ? mRow('triple_hop_L', d.triple_hop_L, prevVal('triple_hop_L')) : ''}
-              ${d.triple_hop_R!=null ? mRow('triple_hop_R', d.triple_hop_R, prevVal('triple_hop_R')) : ''}
-              ${d.triple_hop_LSI!=null ? mRow('triple_hop_LSI', d.triple_hop_LSI, prevVal('triple_hop_LSI'), null, true) : ''}
-              ${d.triple_hop_norm!=null ? mRow('triple_hop_norm', d.triple_hop_norm, prevVal('triple_hop_norm'), null, true) : ''}
-              ${mRow('cmj',         d.cmj,         prevVal('cmj'))}
-              ${mRow('sj',          d.sj,          prevVal('sj'))}
-              ${d.cmj_flight!=null ? mRow('cmj_flight', d.cmj_flight, prevVal('cmj_flight')) : ''}
-              ${d.sj_flight!=null  ? mRow('sj_flight',  d.sj_flight,  prevVal('sj_flight'))  : ''}
-              ${d.cmj_con_force!=null ? mRow('cmj_con_force', d.cmj_con_force, prevVal('cmj_con_force'), `(${d.cmj_con_force_N}N raw)`, true) : ''}
-              ${d.eur!=null ? mRow('eur', d.eur, pv?.eur, '(CMJ÷SJ)', true) : ''}
-              ${d.cmj_mrsi!=null
-                ? mRow('cmj_mrsi', d.cmj_mrsi, pv?.cmj_mrsi, `(${d.cmj}cm ÷ ${d.cmj_ct_ms}ms)`, true)
-                : `<tr><td class="lbl">CMJ mRSI <span style="font-size:10px;color:var(--text-muted)">(needs contraction time)</span></td><td colspan="2" class="miss">— add cmj_contraction_time_ms to unlock</td><td style="font-size:11px;color:var(--text-muted)">${NORMS.cmj_mrsi.min}–${NORMS.cmj_mrsi.max} ${NORMS.cmj_mrsi.u}</td><td class="miss">—</td></tr>`}
-              ${mRow('dj',          d.dj,          prevVal('dj'))}
-              ${d.dj_rsi!=null
-                ? mRow('dj_rsi', d.dj_rsi, pv?.dj_rsi, `(${d.dj}cm ÷ ${d.dj_ct_ms}ms)`, true)
-                : `<tr><td class="lbl">DJ RSI <span style="font-size:10px;color:var(--text-muted)">(needs contact time)</span></td><td colspan="2" class="miss">— add dj_contact_time_ms to unlock</td><td style="font-size:11px;color:var(--text-muted)">${NORMS.dj_rsi.min}–${NORMS.dj_rsi.max} ${NORMS.dj_rsi.u}</td><td class="miss">—</td></tr>`}
-              ${mRow('dsi',         d.dsi,         pv?.dsi, '(force plate)', false)}
-            </tbody></table>
-          </div>
-
-          <div>
-            <div class="sec-heading">Aerobic fitness</div>
-            <table><thead><tr><th>Test</th><th>Result</th><th>Test result status</th><th>Normative range</th><th>vs previous</th></tr></thead><tbody>
-              <tr>
-                <td class="lbl">MAS</td>
-                <td><span class="rval">${d.mas??'—'}</span><span class="runit">m/s</span>${d.mas!=null?`<span class="rsub">${(d.mas*3.6).toFixed(1)} km/h</span>`:''}${d.mas_src?`<span class="rsub">from ${d.mas_src}</span>`:''}<span class="calc-badge">auto</span></td>
-                <td>${pill(bs(d.mas,'mas'))}</td>
-                <td style="font-size:11px;color:var(--text-muted)">${NORMS.mas.min}–${NORMS.mas.max} ${NORMS.mas.u}<span class="norm-source">${NORMS.mas.source||''}</span></td>
-                <td>${dHtml(d.mas,prevVal('mas'),false)}</td>
-              </tr>
-              <tr>
-                <td class="lbl">Est. VO₂ max</td>
-                <td><span class="rval">${d.vo2max??'—'}</span><span class="runit">ml/kg/min</span>${d.mas?'<span class="calc-badge">auto</span>':''}</td>
-                <td>${pill(bs(d.vo2max,'vo2max'))}</td>
-                <td style="font-size:11px;color:var(--text-muted)">${NORMS.vo2max.min}–${NORMS.vo2max.max} ${NORMS.vo2max.u}</td>
-                <td>${dHtml(d.vo2max,pv?.vo2max,false)}</td>
-              </tr>
-              ${d.tt_dist&&d.tt_time?`<tr>
-                <td class="lbl">Distance TT (${(d.tt_dist/1000).toFixed(d.tt_dist%1000===0?0:1)}km)</td>
-                <td><span class="rval">${fmtTime(d.tt_time)}</span><span class="runit">&nbsp;(${d.tt_time}s)</span>
-                  <span class="rsub">${d.tt_speed} m/s avg speed</span>
-                  ${d.tt_vo2max?`<span class="rsub">· est. VO₂max ${d.tt_vo2max} ml/kg/min <span class="calc-badge">auto</span></span>`:''}
-                </td>
-                <td>${pill(bs(d.tt_speed,'mas'))}</td>
-                <td style="font-size:11px;color:var(--text-muted)">${NORMS.mas.min}–${NORMS.mas.max} ${NORMS.mas.u}<span class="norm-source">${NORMS.mas.source||''}</span></td>
-                <td>${dHtml(d.tt_speed,prevVal('tt_speed'),false)}</td>
-              </tr>`:''}
-              ${d.yoyo_ir2?`<tr>
-                <td class="lbl">Yo-Yo IR2</td>
-                <td><span class="rval">${d.yoyo_ir2}</span><span class="runit">m</span>
-                  ${d.yoyo_vo2max?`<span class="rsub">· est. VO₂max ${d.yoyo_vo2max} ml/kg/min <span class="calc-badge">auto</span></span>`:''}
-                </td>
-                <td>${pill(bs(d.yoyo_ir2,'yoyo_ir2'))}</td>
-                <td style="font-size:11px;color:var(--text-muted)">${NORMS.yoyo_ir2.min}–${NORMS.yoyo_ir2.max} ${NORMS.yoyo_ir2.u}<span class="norm-source">${NORMS.yoyo_ir2.source||''}</span></td>
-                <td>${dHtml(d.yoyo_ir2,prevVal('yoyo_ir2'),false)}</td>
-              </tr>`:''}
-              ${d.beep_level?`<tr>
-                <td class="lbl">Beep test (MSFT)</td>
-                <td><span class="rval">Level ${d.beep_level}${d.beep_shuttle?`, shuttle ${d.beep_shuttle}`:''}</span>
-                  ${d.beep_speed?`<span class="rsub">(${d.beep_speed} km/h · ${d.beep_vo2max?`est. VO₂max ${d.beep_vo2max} ml/kg/min`:''} <span class="calc-badge">auto</span>)</span>`:''}
-                </td>
-                <td>${pill(bs(d.beep_level,'beep_level'))}</td>
-                <td style="font-size:11px;color:var(--text-muted)">${NORMS.beep_level.min}–${NORMS.beep_level.max} level<span class="norm-source">${NORMS.beep_level.source||''}</span></td>
-                <td>${dHtml(d.beep_level,prevVal('beep_level'),false)}</td>
-              </tr>`:''}
-              ${d.bronco?`<tr>
-                <td class="lbl">Bronco test</td>
-                <td><span class="rval">${fmtTime(d.bronco)}</span><span class="runit">&nbsp;(${d.bronco}s)</span></td>
-                <td>${pill(bs(d.bronco,'bronco'))}</td>
-                <td style="font-size:11px;color:var(--text-muted)">${NORMS.bronco.min}–${NORMS.bronco.max}s <span style="font-size:9px;color:#aaa">(lower=better)</span><span class="norm-source">${NORMS.bronco.source||''}</span></td>
-                <td>${dHtml(d.bronco,prevVal('bronco'),true)}</td>
-              </tr>`:''}
-            </tbody></table>
-          </div>
-
-          <div>
-            <div class="sec-heading">Strength — Lifts (×BW)</div>
-            <table><thead><tr><th>Test</th><th>Result</th><th>Test result status</th><th>Normative range</th><th>vs previous</th></tr></thead><tbody>
-              ${strengthRow('sq_1rm_bw',d,pv,'Back squat')}
-              ${strengthRow('tb_1rm_bw',d,pv,'Trap bar DL')}
-              ${strengthRow('bp_1rm_bw',d,pv,'Bench press')}
-            </tbody></table>
-          </div>
-
-          <div>
-            <div class="sec-heading">Strength — Force Plate</div>
-            <table><thead><tr><th>Test</th><th>Result</th><th>Test result status</th><th>Normative range</th><th>vs previous</th></tr></thead><tbody>
-              ${d.imtp!=null
-                ? mRow('imtp', d.imtp, pv?.imtp, `(${d.imtp_raw_N}N)`, true)
-                : `<tr><td class="lbl">IMTP <span style="font-size:10px;color:var(--text-muted)">(force plate)</span></td><td colspan="2" class="miss">— add imtp_N to unlock</td><td style="font-size:11px;color:var(--text-muted)">${NORMS.imtp.min}–${NORMS.imtp.max} ${NORMS.imtp.u}</td><td class="miss">—</td></tr>`}
-            </tbody></table>
-          </div>
-
-          <div>
-            <div class="sec-heading">Speed (Vuemotion)</div>
-            <table><thead><tr><th>Test</th><th>Result</th><th>Test result status</th><th>Normative range</th><th>vs previous</th></tr></thead><tbody>
-              ${mRow('sprint10', d.sprint10, prevVal('sprint10'))}
-              ${mRow('sprint20', d.sprint20, prevVal('sprint20'))}
-              ${mRow('max_vel',  d.max_vel,  prevVal('max_vel'))}
-            </tbody></table>
-          </div>
-
-        </div>
-        <div class="status-key">
-          <span class="key-label">Status key</span>
-          ${[4,3,2,1,0].map(s=>`<span class="pill ${SC[s]}"><span class="pill-dot" style="background:${SD[s]}"></span>${SL[s]}</span>`).join('')}
-          <span style="margin-left:8px;font-size:11px;color:#7a8290"><span class="calc-badge">auto</span> = calculated from your raw input</span>
-        </div>
-      </div>
-      <div class="tc" data-t="radar"><div id="radarContent" style="padding:18px 20px;display:flex;flex-direction:column;align-items:center;gap:12px"></div></div>
-      <div class="tc" data-t="asr"><div id="asrContent" style="padding:18px 20px"></div></div>
-      <div class="tc" data-t="motorpref"><div id="mpContent" style="padding:18px 20px"></div></div>
-      <div class="tc" data-t="history"><div id="historyContent" style="overflow-x:auto;padding:18px 20px"></div></div>
-      <div class="tc" data-t="feedback"><div id="feedbackContent"><div class="feedback-empty"><h3>Athlete Feedback</h3><p>Generate a personalised coach report and athlete message based on the latest test results.</p><button class="btn" onclick="generateFeedback()">Generate Feedback</button></div></div></div>
-      <div class="tc" data-t="quadrant">
-        <div class="quadrant-body">
-          <div class="quadrant-controls" style="flex-direction:column;align-items:flex-start;gap:8px">
-            <div class="quad-ctrl-row">
-              <span class="control-label">Preset</span>
-              ${QUAD_PRESETS.map(p=>`<button class="axis-btn${p.x===currentXAxis&&p.y===currentYAxis?' active':''}" onclick="applyPreset('${p.x}','${p.y}')">${p.name}</button>`).join('')}
-            </div>
-            <div class="quad-ctrl-row">
-              <span class="control-label">X axis</span>
-              <select class="axis-select" id="xAxisSel" onchange="setQuadAxes(this.value,document.getElementById('yAxisSel').value)">
-                ${QUAD_X_AXES.map(a=>`<option value="${a.key}"${a.key===currentXAxis?' selected':''}>${a.label}</option>`).join('')}
-              </select>
-              <span class="control-label">Y axis</span>
-              <select class="axis-select" id="yAxisSel" onchange="setQuadAxes(document.getElementById('xAxisSel').value,this.value)">
-                ${QUAD_Y_AXES.map(a=>`<option value="${a.key}"${a.key===currentYAxis?' selected':''}>${a.label}</option>`).join('')}
-              </select>
-            </div>
-          </div>
-          <div id="quadrantContainer"></div>
-          <div class="quadrant-legend">
-            <span class="ql-dot ql-you"></span><span>You (${a.name})</span>
-            <span class="ql-dot ql-anon"></span><span>Other athletes (anonymous)</span>
-            <span style="color:var(--text-muted);font-size:11px">Faded trail = previous sessions · Dividers at normative midpoint</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="tc" data-t="trends">
-        <div class="charts-body">
-          <div class="chart-grid" id="chartGrid"></div>
-          <div class="chart-note">
-            <span>▪ Shaded band = normative range</span>
-            <span>▪ Dashed line = lower boundary</span>
-            <span>▪ Sprint times: downward trend = improvement</span>
-          </div>
-        </div>
-      </div>
-    </div>`;
+  // panels all live in one document now, so render them together
+  if (inspectKey) drawInspector(inspectKey);
+  buildSecNav();
+  setTimeout(()=>{ try{ drawCharts(); }catch(e){ console.error('charts',e); }
+                   try{ renderRadar(); }catch(e){ console.error('radar',e); }
+                   try{ renderASR(); }catch(e){ console.error('asr',e); }
+                   try{ renderHistory(); }catch(e){ console.error('history',e); }
+                   try{ renderMotorPref(); }catch(e){ console.error('motorpref',e); }
+                   try{ drawQuadrant(currentXAxis,currentYAxis); }catch(e){ console.error('quadrant',e); } }, 50);
 }
 
 // ─── CHARTS ───────────────────────────────────────────────────────────────────
